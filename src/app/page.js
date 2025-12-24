@@ -1,63 +1,317 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { db, auth } from '../firebase';
+import { signOut, onAuthStateChanged } from "firebase/auth";
+import { 
+  collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc 
+} from 'firebase/firestore';
+
+import {
+  LoginPage,
+  Header,
+  SettingsModal,
+  TradeDetailModal,
+  RiskCalculator,
+  TradeForm,
+  StatsCards,
+  AdvancedStats,
+  ViewSelector,
+  EquityChart,
+  DrawdownChart,
+  TradesTable,
+  useTheme
+} from './components';
+
+export default function TradingJournalPRO() {
+  const { isDark } = useTheme();
+  
+  // Estado
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
+  const [trades, setTrades] = useState([]);
+  const [viewMode, setViewMode] = useState('global');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Estado para modal de detalle
+  const [selectedTrade, setSelectedTrade] = useState(null);
+  const [showTradeDetail, setShowTradeDetail] = useState(false);
+  
+  // Form con todos los campos
+  const [form, setForm] = useState({
+    res: '',
+    emo: 'Neutral',
+    activo: 'MNQ',
+    dir: 'Long',
+    lotes: '1',
+    entrada: '',
+    salida: '',
+    seguiPlan: false,
+    respetoRiesgo: false,
+    notas: '',
+    imagen: null,
+  });
+
+  // Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Load user data
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubConfig = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.config) setConfig(data.config);
+      } else {
+        setDoc(doc(db, "users", user.uid), { 
+          config: { capitalInicial: 10000, metaDiaria: 200 } 
+        }, { merge: true });
+      }
+    });
+
+    const q = query(
+      collection(db, "trades"), 
+      where("uid", "==", user.uid), 
+      orderBy("fecha", "asc")
+    );
+    const unsubTrades = onSnapshot(q, (snapshot) => {
+      const tradesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTrades(tradesData);
+      setLoading(false);
+    });
+
+    return () => { unsubConfig(); unsubTrades(); };
+  }, [user]);
+
+  // Handlers
+  const handleLogout = useCallback(async () => {
+    await signOut(auth);
+  }, []);
+
+  const saveSettingsToCloud = useCallback(async () => {
+    if (!user) return;
+    await setDoc(doc(db, "users", user.uid), { config }, { merge: true });
+  }, [user, config]);
+
+  const addTrade = useCallback(async (e) => {
+    e.preventDefault();
+    if (!form.res || form.res === '') {
+      alert("⛔️ Debes ingresar el resultado del trade.");
+      return;
+    }
+    
+    const tradeData = {
+      uid: user.uid,
+      fecha: new Date().toISOString().split('T')[0],
+      activo: form.activo,
+      dir: form.dir,
+      res: parseFloat(form.res),
+      lotes: form.lotes ? parseInt(form.lotes) : 1,
+      entrada: form.entrada ? parseFloat(form.entrada) : null,
+      salida: form.salida ? parseFloat(form.salida) : null,
+      emo: form.emo,
+      seguiPlan: form.seguiPlan,
+      respetoRiesgo: form.respetoRiesgo,
+      notas: form.notas || '',
+      imagen: form.imagen || null,
+      createdAt: new Date()
+    };
+    
+    await addDoc(collection(db, "trades"), tradeData);
+    
+    // Reset form pero mantener activo y dirección
+    setForm({ 
+      ...form, 
+      res: '', 
+      lotes: '1',
+      entrada: '',
+      salida: '',
+      emo: 'Neutral',
+      seguiPlan: false,
+      respetoRiesgo: false,
+      notas: '',
+      imagen: null,
+    });
+  }, [form, user]);
+
+  const deleteTrade = useCallback(async (id) => {
+    await deleteDoc(doc(db, "trades", id));
+  }, []);
+
+  const updateTrade = useCallback(async (id, updates) => {
+    await updateDoc(doc(db, "trades", id), updates);
+    // Actualizar el trade seleccionado si está abierto
+    if (selectedTrade && selectedTrade.id === id) {
+      setSelectedTrade({ ...selectedTrade, ...updates });
+    }
+  }, [selectedTrade]);
+
+  // Abrir modal de detalle
+  const handleTradeClick = useCallback((trade) => {
+    setSelectedTrade(trade);
+    setShowTradeDetail(true);
+  }, []);
+
+  // Filtered trades
+  const filteredTrades = useMemo(() => {
+    return trades.filter(t => {
+      const [y, m] = t.fecha.split('-').map(Number);
+      if (viewMode === 'global') return y === selectedYear;
+      return y === selectedYear && (m - 1) === selectedMonth;
+    });
+  }, [trades, viewMode, selectedMonth, selectedYear]);
+
+  // Stats calculation
+  const stats = useMemo(() => {
+    const tradesPrevios = trades.filter(t => {
+      const [y, m] = t.fecha.split('-').map(Number);
+      if (viewMode === 'global') return y < selectedYear;
+      return (y < selectedYear) || (y === selectedYear && (m - 1) < selectedMonth);
+    });
+    
+    const pnlPrevio = tradesPrevios.reduce((acc, t) => acc + parseFloat(t.res), 0);
+    const startBalance = config.capitalInicial + pnlPrevio;
+    
+    let currentBalance = startBalance;
+    let maxBal = startBalance;
+    let grossWin = 0, grossLoss = 0;
+    let winCount = 0;
+    
+    const data = [{ name: 'Inicio', bal: startBalance, dd: 0 }];
+    const sortedTrades = [...filteredTrades].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    
+    sortedTrades.forEach((t, i) => {
+      const r = parseFloat(t.res);
+      currentBalance += r;
+      if (r > 0) { grossWin += r; winCount++; }
+      else { grossLoss += Math.abs(r); }
+      if (currentBalance > maxBal) maxBal = currentBalance;
+      const dd = maxBal > 0 ? ((maxBal - currentBalance) / maxBal) * 100 : 0;
+      data.push({ name: `T${i + 1}`, bal: currentBalance, dd: -parseFloat(dd.toFixed(2)), rawDD: dd });
+    });
+    
+    const totalPnl = currentBalance - startBalance;
+    const winRate = sortedTrades.length ? ((winCount / sortedTrades.length) * 100) : 0;
+    const maxDD = Math.max(...data.map(d => d.rawDD || 0));
+    const profitFactor = grossLoss === 0 ? grossWin : (grossWin / grossLoss);
+    
+    return {
+      balance: currentBalance,
+      startBalance,
+      totalPnl,
+      winRate,
+      maxDD,
+      profitFactor,
+      data,
+      tradeCount: sortedTrades.length
+    };
+  }, [filteredTrades, trades, config, viewMode, selectedMonth, selectedYear]);
+
+  // Header calculations
+  const todayStr = new Date().toISOString().split('T')[0];
+  const pnlHoy = trades.filter(t => t.fecha === todayStr).reduce((acc, t) => acc + t.res, 0);
+  const progresoMeta = Math.min((pnlHoy / config.metaDiaria) * 100, 100);
+  const metaDiariaPct = config.capitalInicial > 0
+    ? ((config.metaDiaria / config.capitalInicial) * 100).toFixed(1)
+    : 0;
+
+  // Loading
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Cargando...</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </div>
+    );
+  }
+
+  // Login
+  if (!user) return <LoginPage />;
+
+  // Main app
+  return (
+    <div className={`min-h-screen font-sans pb-20 transition-colors duration-300 ${
+      isDark ? 'bg-slate-900' : 'bg-slate-100'
+    }`}>
+      {/* Modals */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        config={config}
+        setConfig={setConfig}
+        onSaveToCloud={saveSettingsToCloud}
+      />
+      
+      <TradeDetailModal
+        trade={selectedTrade}
+        isOpen={showTradeDetail}
+        onClose={() => {
+          setShowTradeDetail(false);
+          setSelectedTrade(null);
+        }}
+        onUpdate={updateTrade}
+        onDelete={deleteTrade}
+      />
+
+      <Header
+        user={user}
+        config={config}
+        pnlHoy={pnlHoy}
+        metaDiaria={config.metaDiaria}
+        metaDiariaPct={metaDiariaPct}
+        progresoMeta={progresoMeta}
+        onSettings={() => setShowSettings(true)}
+        onLogout={handleLogout}
+      />
+
+      <main className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          {/* Contenido principal */}
+          <div className="lg:col-span-9 space-y-6 lg:space-y-8 order-2 lg:order-1">
+            {/* Stats Cards */}
+            <StatsCards stats={stats} />
+            
+            {/* Métricas Avanzadas */}
+            <AdvancedStats trades={filteredTrades} />
+            
+            {/* Gráficas */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <EquityChart data={stats.data} startBalance={stats.startBalance} />
+              <DrawdownChart data={stats.data} />
+            </div>
+            
+            {/* Selector de Vista + Historial */}
+            <ViewSelector
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              selectedMonth={selectedMonth}
+              setSelectedMonth={setSelectedMonth}
+              selectedYear={selectedYear}
+              tradeCount={stats.tradeCount}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <TradesTable 
+              trades={filteredTrades} 
+              onTradeClick={handleTradeClick}
+            />
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
+            <RiskCalculator balance={stats.balance} />
+            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} />
+          </div>
         </div>
       </main>
     </div>
