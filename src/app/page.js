@@ -39,6 +39,7 @@ export default function TradingJournalPRO() {
   
   const [form, setForm] = useState({
     res: '',
+    esGanancia: true,
     emo: 'Neutral',
     activo: 'MNQ',
     dir: 'Long',
@@ -103,12 +104,17 @@ export default function TradingJournalPRO() {
       return;
     }
     
+    // Aplicar signo según el toggle WIN/LOSS
+    const resultadoFinal = form.esGanancia !== false 
+      ? Math.abs(parseFloat(form.res)) 
+      : -Math.abs(parseFloat(form.res));
+    
     const tradeData = {
       uid: user.uid,
       fecha: new Date().toISOString().split('T')[0],
       activo: form.activo,
       dir: form.dir,
-      res: parseFloat(form.res),
+      res: resultadoFinal,
       lotes: form.lotes ? parseInt(form.lotes) : 1,
       entrada: form.entrada ? parseFloat(form.entrada) : null,
       salida: form.salida ? parseFloat(form.salida) : null,
@@ -125,6 +131,7 @@ export default function TradingJournalPRO() {
     setForm({ 
       ...form, 
       res: '', 
+      esGanancia: true,
       lotes: '1',
       entrada: '',
       salida: '',
@@ -270,7 +277,7 @@ export default function TradingJournalPRO() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           <div className="lg:col-span-9 space-y-6 lg:space-y-8 order-2 lg:order-1">
             <StatsCards stats={stats} />
-            <AdvancedStats trades={filteredTrades} />
+            <AdvancedStats trades={filteredTrades} capitalInicial={config.capitalInicial} balance={stats.balance} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <EquityChart data={stats.data} startBalance={stats.startBalance} />
               <DrawdownChart data={stats.data} />

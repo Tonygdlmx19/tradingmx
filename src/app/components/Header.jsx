@@ -1,7 +1,9 @@
 "use client";
 import { useState } from 'react';
+import Image from 'next/image';
 import { useTheme } from './ThemeProvider';
-import { Settings, LogOut, Menu, Sun, Moon, CloudSun, Target } from 'lucide-react';
+import EconomicCalendar from './EconomicCalendar';
+import { Settings, LogOut, Menu, Sun, Moon, CloudSun, Target, Calendar } from 'lucide-react';
 
 export default function Header({ 
   user, 
@@ -14,6 +16,7 @@ export default function Header({
   onLogout 
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const { isDark, toggleTheme } = useTheme();
 
   const displayName = config?.nombreTrader || user.displayName || user.email?.split('@')[0];
@@ -60,10 +63,22 @@ export default function Header({
       <nav className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border-b sticky top-0 z-40 shadow-sm transition-colors duration-300`}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
           <div className="w-[100px] sm:w-[120px] h-[35px] sm:h-[40px] flex items-center">
-            <img src="/tradingLogo.png" alt="Trading Journal PRO" className="max-w-full max-h-full object-contain" />
+            <Image src="/tradingLogo.png" alt="Trading Journal PRO" width={120} height={40} className="max-w-full max-h-full object-contain" priority />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <button 
+              onClick={() => setShowCalendar(true)}
+              className={`p-2 rounded-full transition-all ${
+                isDark 
+                  ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' 
+                  : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+              }`}
+              title="Calendario Económico"
+            >
+              <Calendar size={18} />
+            </button>
+            
             <button 
               onClick={toggleTheme}
               className={`p-2 rounded-full transition-all ${
@@ -175,6 +190,9 @@ export default function Header({
           </div>
         </div>
       </div>
+
+      {/* Modal Calendario Económico */}
+      <EconomicCalendar isOpen={showCalendar} onClose={() => setShowCalendar(false)} />
     </>
   );
 }

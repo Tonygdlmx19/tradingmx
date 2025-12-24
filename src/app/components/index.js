@@ -11,4 +11,5 @@ export { default as ViewSelector } from './ViewSelector';
 export { default as EquityChart } from './EquityChart';
 export { default as DrawdownChart } from './DrawdownChart';
 export { default as TradesTable } from './TradesTable';
+export { default as EconomicCalendar } from './EconomicCalendar';
 export { ThemeProvider, useTheme } from './ThemeProvider';

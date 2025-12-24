@@ -1,8 +1,8 @@
 "use client";
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
-export default function AdvancedStats({ trades }) {
+export default function AdvancedStats({ trades, capitalInicial, balance }) {
   const { isDark } = useTheme();
   
   // Calcular métricas
@@ -41,8 +41,16 @@ export default function AdvancedStats({ trades }) {
     });
     
     const days = Object.entries(byDay).map(([date, amount]) => ({ date, amount }));
-    const bestDay = days.reduce((best, day) => day.amount > best.amount ? day : best, { date: '-', amount: -Infinity });
-    const worstDay = days.reduce((worst, day) => day.amount < worst.amount ? day : worst, { date: '-', amount: Infinity });
+    
+    // Mejor día = mayor ganancia (más positivo)
+    // Peor día = mayor pérdida (más negativo)
+    let bestDay = { date: '-', amount: 0 };
+    let worstDay = { date: '-', amount: 0 };
+    
+    if (days.length > 0) {
+      bestDay = days.reduce((best, day) => day.amount > best.amount ? day : best, days[0]);
+      worstDay = days.reduce((worst, day) => day.amount < worst.amount ? day : worst, days[0]);
+    }
 
     // Rachas
     let currentStreak = 0;
@@ -81,8 +89,8 @@ export default function AdvancedStats({ trades }) {
     return {
       avgWin,
       avgLoss,
-      bestDay: bestDay.amount === -Infinity ? { date: '-', amount: 0 } : bestDay,
-      worstDay: worstDay.amount === Infinity ? { date: '-', amount: 0 } : worstDay,
+      bestDay,
+      worstDay,
       maxWinStreak,
       maxLossStreak,
       currentStreak,
@@ -94,6 +102,10 @@ export default function AdvancedStats({ trades }) {
   };
 
   const m = calculateMetrics();
+
+  // Calcular crecimiento de cuenta
+  const totalPnl = balance - capitalInicial;
+  const growthPct = capitalInicial > 0 ? ((balance - capitalInicial) / capitalInicial) * 100 : 0;
 
   const formatDate = (dateStr) => {
     if (dateStr === '-') return '-';
@@ -116,6 +128,37 @@ export default function AdvancedStats({ trades }) {
         </h3>
       </div>
 
+      {/* Crecimiento de cuenta - Destacado */}
+      <div className={`mb-4 p-4 rounded-xl border ${
+        growthPct >= 0 
+          ? isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200'
+          : isDark ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${growthPct >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+              {growthPct >= 0 ? <TrendingUp size={20} className="text-green-500" /> : <TrendingDown size={20} className="text-red-500" />}
+            </div>
+            <div>
+              <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Crecimiento de Cuenta
+              </p>
+              <p className={`text-xl font-black ${growthPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {growthPct >= 0 ? '+' : ''}{growthPct.toFixed(2)}%
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              Capital: ${capitalInicial?.toLocaleString() || 0}
+            </p>
+            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
+              {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Grid de métricas - Diseño limpio tipo tabla */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-slate-200 dark:bg-slate-600 rounded-xl overflow-hidden">
         {/* Promedio Ganancia */}
@@ -123,8 +166,8 @@ export default function AdvancedStats({ trades }) {
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             Prom. Ganancia
           </p>
-          <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            ${m.avgWin.toFixed(0)}
+          <p className="text-lg font-bold text-green-500">
+            +${m.avgWin.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {m.winningTrades} trades
@@ -136,8 +179,8 @@ export default function AdvancedStats({ trades }) {
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             Prom. Pérdida
           </p>
-          <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            ${Math.abs(m.avgLoss).toFixed(0)}
+          <p className="text-lg font-bold text-red-500">
+            -${Math.abs(m.avgLoss).toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {m.losingTrades} trades
@@ -175,8 +218,8 @@ export default function AdvancedStats({ trades }) {
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             Mejor Día
           </p>
-          <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            ${m.bestDay.amount.toFixed(0)}
+          <p className={`text-lg font-bold ${m.bestDay.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {m.bestDay.amount >= 0 ? '+' : ''}${m.bestDay.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {formatDate(m.bestDay.date)}
@@ -188,8 +231,8 @@ export default function AdvancedStats({ trades }) {
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             Peor Día
           </p>
-          <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            ${m.worstDay.amount.toFixed(0)}
+          <p className={`text-lg font-bold ${m.worstDay.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {m.worstDay.amount >= 0 ? '+' : ''}${m.worstDay.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {formatDate(m.worstDay.date)}
@@ -210,8 +253,12 @@ export default function AdvancedStats({ trades }) {
           </div>
           <div className={`h-2 rounded-full overflow-hidden flex ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
             <div 
-              className="bg-slate-600 dark:bg-slate-400 transition-all duration-500"
+              className="bg-green-500 transition-all duration-500"
               style={{ width: `${winPct}%` }}
+            />
+            <div 
+              className="bg-red-500 transition-all duration-500"
+              style={{ width: `${100 - winPct}%` }}
             />
           </div>
         </div>
