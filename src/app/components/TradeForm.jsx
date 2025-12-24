@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
@@ -421,17 +422,51 @@ export default function TradeForm({ onSubmit, form, setForm }) {
                 <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
                   P&L ($)
                 </label>
+                {/* Toggle WIN/LOSS encima del input */}
+                <div className={`flex rounded-lg p-0.5 mb-1.5 ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setForm({...form, esGanancia: true})}
+                    className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all ${
+                      form.esGanancia !== false
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : isDark 
+                          ? 'text-slate-400 hover:text-white' 
+                          : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    + WIN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm({...form, esGanancia: false})}
+                    className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all ${
+                      form.esGanancia === false
+                        ? 'bg-red-500 text-white shadow-sm'
+                        : isDark 
+                          ? 'text-slate-400 hover:text-white' 
+                          : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    − LOSS
+                  </button>
+                </div>
                 <input 
                   type="number" 
+                  min="0"
                   step="0.01"
                   placeholder="0.00" 
-                  className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
-                    isDark 
-                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
-                      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                  className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none transition-colors ${
+                    form.esGanancia !== false
+                      ? isDark 
+                        ? 'bg-green-500/10 border-green-500/50 text-green-400 focus:border-green-500' 
+                        : 'bg-green-50 border-green-200 text-green-600 focus:border-green-500'
+                      : isDark 
+                        ? 'bg-red-500/10 border-red-500/50 text-red-400 focus:border-red-500' 
+                        : 'bg-red-50 border-red-200 text-red-600 focus:border-red-500'
                   }`}
                   value={form.res} 
-                  onChange={e => setForm({...form, res: e.target.value})} 
+                  onChange={e => setForm({...form, res: e.target.value.replace('-', '')})} 
                   required
                 />
               </div>
@@ -596,11 +631,7 @@ export default function TradeForm({ onSubmit, form, setForm }) {
             </div>
           ) : (
             <div className="relative">
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                className="w-full h-32 object-cover rounded-xl"
-              />
+              <Image src={imagePreview} alt="Preview" width={400} height={128} className="w-full h-32 object-cover rounded-xl" unoptimized />
               <button
                 type="button"
                 onClick={removeImage}

@@ -176,7 +176,14 @@ export default function TradingJournalPRO() {
     let winCount = 0;
     
     const data = [{ name: 'Inicio', bal: startBalance, dd: 0 }];
-    const sortedTrades = [...filteredTrades].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    const sortedTrades = [...filteredTrades].sort((a, b) => {
+      const dateCompare = new Date(a.fecha) - new Date(b.fecha);
+      if (dateCompare !== 0) return dateCompare;
+      // Si la fecha es igual, ordenar por hora de creación
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+      return aTime - bTime;
+    });
     
     sortedTrades.forEach((t, i) => {
       const r = parseFloat(t.res);

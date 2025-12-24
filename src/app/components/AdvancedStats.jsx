@@ -51,7 +51,13 @@ export default function AdvancedStats({ trades }) {
     let tempWinStreak = 0;
     let tempLossStreak = 0;
 
-    const sortedTrades = [...trades].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    const sortedTrades = [...trades].sort((a, b) => {
+      const dateCompare = new Date(a.fecha) - new Date(b.fecha);
+      if (dateCompare !== 0) return dateCompare;
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+      return aTime - bTime;
+    });
     
     sortedTrades.forEach((t, i) => {
       if (t.res > 0) {

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Activity, Percent, DollarSign, RefreshCw } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
@@ -87,19 +87,11 @@ export default function RiskCalculator({ balance }) {
   const [spread, setSpread] = useState(1); // Solo para Forex
   const [valorPorPunto, setValorPorPunto] = useState(2); // Editable por usuario
   const [riesgoPorcentaje, setRiesgoPorcentaje] = useState(1.0);
-  const [riesgoUSD, setRiesgoUSD] = useState(0);
-  const [resultado, setResultado] = useState({ cantidad: 0, stopIdeal: 0 });
-  
-  // Inicializar riesgo USD
-  useEffect(() => {
-    if (balance > 0 && riesgoUSD === 0) {
-      setRiesgoUSD((balance * 0.01).toFixed(2));
-    }
-  }, [balance]);
+  const [riesgoUSD, setRiesgoUSD] = useState(() => balance > 0 ? (balance * 0.01).toFixed(2) : 0);
 
   // Calcular posición
-  useEffect(() => {
-    if (valorPorPunto <= 0 || stopValue <= 0) return;
+  const resultado = useMemo(() => {
+    if (valorPorPunto <= 0 || stopValue <= 0) return { cantidad: 0, stopIdeal: 0, esTick: mode === 'ticks' };
     
     // Convertir stop a puntos si está en ticks
     let stopEnPuntos = mode === 'ticks' ? stopValue / 4 : stopValue;
@@ -111,7 +103,7 @@ export default function RiskCalculator({ balance }) {
     
     // Cálculo
     const costoPorUnidad = stopTotal * valorPorPunto;
-    if (costoPorUnidad <= 0) return;
+    if (costoPorUnidad <= 0) return { cantidad: 0, stopIdeal: 0, esTick: mode === 'ticks' };
     
     const cantidadReal = Math.floor(riesgoUSD / costoPorUnidad);
     const stopIdealPuntos = riesgoUSD / ((cantidadReal + 1) * valorPorPunto);
@@ -119,11 +111,11 @@ export default function RiskCalculator({ balance }) {
       ? Math.floor(stopIdealPuntos * 4)
       : stopIdealPuntos.toFixed(2);
     
-    setResultado({
+    return {
       cantidad: Math.max(0, cantidadReal),
       stopIdeal: stopIdealDisplay,
       esTick: mode === 'ticks',
-    });
+    };
   }, [riesgoUSD, stopValue, activo, mode, valorPorPunto, spread]);
 
   const handleRiesgoPctChange = (value) => {
