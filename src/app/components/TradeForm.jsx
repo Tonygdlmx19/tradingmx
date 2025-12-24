@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from 'react';
-import { PlusCircle, Save, Camera, X, Image } from 'lucide-react';
+import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 // 📊 ACTIVOS ORGANIZADOS POR CATEGORÍA
@@ -14,6 +14,13 @@ const ACTIVOS_POR_CATEGORIA = {
     { symbol: 'MYM', name: 'Micro Dow' },
     { symbol: 'RTY', name: 'Russell 2000' },
     { symbol: 'M2K', name: 'Micro Russell' },
+  ],
+  'Índices Globales': [
+    { symbol: 'DAX', name: 'DAX 40 (Alemania)' },
+    { symbol: 'FTSE', name: 'FTSE 100 (UK)' },
+    { symbol: 'CAC', name: 'CAC 40 (Francia)' },
+    { symbol: 'NIKKEI', name: 'Nikkei 225' },
+    { symbol: 'HSI', name: 'Hang Seng' },
   ],
   'Forex Majors': [
     { symbol: 'EUR/USD', name: 'Euro/Dólar' },
@@ -32,11 +39,24 @@ const ACTIVOS_POR_CATEGORIA = {
     { symbol: 'EUR/AUD', name: 'Euro/Aussie' },
     { symbol: 'GBP/AUD', name: 'Libra/Aussie' },
   ],
-  'Commodities': [
-    { symbol: 'GC', name: 'Oro (Gold)' },
+  'Forex Exóticos': [
+    { symbol: 'USD/MXN', name: 'Dólar/Peso MX' },
+    { symbol: 'EUR/MXN', name: 'Euro/Peso MX' },
+    { symbol: 'USD/BRL', name: 'Dólar/Real' },
+    { symbol: 'USD/ZAR', name: 'Dólar/Rand' },
+    { symbol: 'USD/TRY', name: 'Dólar/Lira' },
+  ],
+  'Metales': [
+    { symbol: 'XAU/USD', name: 'Oro' },
+    { symbol: 'XAG/USD', name: 'Plata' },
+    { symbol: 'GC', name: 'Oro Futuros' },
     { symbol: 'MGC', name: 'Micro Oro' },
-    { symbol: 'SI', name: 'Plata (Silver)' },
-    { symbol: 'CL', name: 'Crudo WTI' },
+    { symbol: 'SI', name: 'Plata Futuros' },
+  ],
+  'Energía': [
+    { symbol: 'WTI', name: 'Petróleo WTI' },
+    { symbol: 'BRENT', name: 'Petróleo Brent' },
+    { symbol: 'CL', name: 'Crudo Futuros' },
     { symbol: 'MCL', name: 'Micro Crudo' },
     { symbol: 'NG', name: 'Gas Natural' },
   ],
@@ -46,6 +66,8 @@ const ACTIVOS_POR_CATEGORIA = {
     { symbol: 'MBT', name: 'Micro Bitcoin CME' },
     { symbol: 'SOL/USD', name: 'Solana' },
     { symbol: 'XRP/USD', name: 'Ripple' },
+    { symbol: 'BNB/USD', name: 'Binance Coin' },
+    { symbol: 'ADA/USD', name: 'Cardano' },
   ],
 };
 
@@ -53,9 +75,12 @@ export default function TradeForm({ onSubmit, form, setForm }) {
   const { isDark } = useTheme();
   const fileInputRef = useRef(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isBinaryOptions, setIsBinaryOptions] = useState(false);
   
   // Validar que haya un resultado
-  const canSubmit = form.res !== '' && form.res !== null && form.res !== undefined;
+  const canSubmit = isBinaryOptions 
+    ? form.montoInvertido !== '' && form.montoInvertido > 0
+    : form.res !== '' && form.res !== null && form.res !== undefined;
 
   // Manejar checkbox de plan
   const handlePlanChange = (checked) => {
@@ -71,6 +96,31 @@ export default function TradeForm({ onSubmit, form, setForm }) {
       ...prev,
       respetoRiesgo: checked
     }));
+  };
+
+  // Toggle opciones binarias
+  const handleBinaryToggle = () => {
+    setIsBinaryOptions(!isBinaryOptions);
+    // Resetear campos específicos
+    setForm(prev => ({
+      ...prev,
+      res: '',
+      montoInvertido: '',
+      porcentajePago: 80,
+      resultadoBinario: 'win'
+    }));
+  };
+
+  // Calcular P&L para opciones binarias
+  const calcularPLBinario = () => {
+    const monto = parseFloat(form.montoInvertido) || 0;
+    const pago = parseFloat(form.porcentajePago) || 80;
+    
+    if (form.resultadoBinario === 'win') {
+      return (monto * (pago / 100)).toFixed(2);
+    } else {
+      return (-monto).toFixed(2);
+    }
   };
 
   // Comprimir y convertir imagen a base64
@@ -126,6 +176,13 @@ export default function TradeForm({ onSubmit, form, setForm }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Si es opciones binarias, calcular el resultado
+    if (isBinaryOptions) {
+      const plCalculado = calcularPLBinario();
+      setForm(prev => ({ ...prev, res: plCalculado }));
+    }
+    
     onSubmit(e);
     // Limpiar imagen después de guardar
     setImagePreview(null);
@@ -138,9 +195,42 @@ export default function TradeForm({ onSubmit, form, setForm }) {
     <div className={`p-4 sm:p-6 rounded-2xl shadow-xl border transition-colors ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
     }`}>
-      <h3 className={`font-bold mb-4 sm:mb-6 flex items-center text-sm uppercase tracking-wide ${isDark ? 'text-white' : 'text-slate-800'}`}>
+      <h3 className={`font-bold mb-4 sm:mb-5 flex items-center text-sm uppercase tracking-wide ${isDark ? 'text-white' : 'text-slate-800'}`}>
         <PlusCircle size={18} className="mr-2 text-blue-500"/> Registrar Trade
       </h3>
+
+      {/* Toggle Opciones Binarias */}
+      <div 
+        onClick={handleBinaryToggle}
+        className={`mb-4 p-3 rounded-xl border cursor-pointer transition-all ${
+          isBinaryOptions 
+            ? 'bg-purple-500/10 border-purple-500/50' 
+            : isDark ? 'bg-slate-700/50 border-slate-600 hover:border-slate-500' : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {isBinaryOptions ? (
+              <ToggleRight size={24} className="text-purple-500" />
+            ) : (
+              <ToggleLeft size={24} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
+            )}
+            <span className={`text-sm font-bold ${isBinaryOptions ? 'text-purple-500' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              Opciones Binarias
+            </span>
+          </div>
+          <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${
+            isBinaryOptions 
+              ? 'bg-purple-500 text-white' 
+              : isDark ? 'bg-slate-600 text-slate-400' : 'bg-slate-200 text-slate-500'
+          }`}>
+            {isBinaryOptions ? 'ON' : 'OFF'}
+          </span>
+        </div>
+        <p className={`text-[10px] mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          IQ Option, Olymp Trade, Quotex, etc.
+        </p>
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Activo */}
@@ -172,7 +262,7 @@ export default function TradeForm({ onSubmit, form, setForm }) {
         {/* Dirección */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            Dirección
+            {isBinaryOptions ? 'Predicción' : 'Dirección'}
           </label>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -186,7 +276,7 @@ export default function TradeForm({ onSubmit, form, setForm }) {
                     : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-green-500'
               }`}
             >
-              ↑ LONG
+              {isBinaryOptions ? '↑ CALL' : '↑ LONG'}
             </button>
             <button
               type="button"
@@ -199,88 +289,193 @@ export default function TradeForm({ onSubmit, form, setForm }) {
                     : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-red-500'
               }`}
             >
-              ↓ SHORT
+              {isBinaryOptions ? '↓ PUT' : '↓ SHORT'}
             </button>
           </div>
         </div>
 
-        {/* Lotes y P&L en grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-              Lotes
-            </label>
-            <input 
-              type="number" 
-              step="1"
-              min="1"
-              placeholder="1" 
-              className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
-                isDark 
-                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
-                  : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
-              }`}
-              value={form.lotes || ''} 
-              onChange={e => setForm({...form, lotes: e.target.value})} 
-            />
-          </div>
-          <div>
-            <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-              P&L ($)
-            </label>
-            <input 
-              type="number" 
-              step="0.01"
-              placeholder="0.00" 
-              className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
-                isDark 
-                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
-                  : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
-              }`}
-              value={form.res} 
-              onChange={e => setForm({...form, res: e.target.value})} 
-              required
-            />
-          </div>
-        </div>
+        {/* --- MODO OPCIONES BINARIAS --- */}
+        {isBinaryOptions ? (
+          <>
+            {/* Monto invertido */}
+            <div>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                Monto Invertido ($)
+              </label>
+              <input 
+                type="number" 
+                step="0.01"
+                placeholder="100.00" 
+                className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-purple-500 ${
+                  isDark 
+                    ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500' 
+                    : 'bg-purple-50 border-purple-200 text-slate-800 placeholder-slate-400'
+                }`}
+                value={form.montoInvertido || ''} 
+                onChange={e => setForm({...form, montoInvertido: e.target.value})} 
+                required
+              />
+            </div>
 
-        {/* Entrada y Salida (opcional) */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-              Entrada
-            </label>
-            <input 
-              type="number" 
-              step="0.01"
-              placeholder="Precio" 
-              className={`w-full p-2.5 border rounded-xl text-sm font-medium outline-none focus:border-blue-500 ${
-                isDark 
-                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
-                  : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
-              }`}
-              value={form.entrada || ''} 
-              onChange={e => setForm({...form, entrada: e.target.value})} 
-            />
-          </div>
-          <div>
-            <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-              Salida
-            </label>
-            <input 
-              type="number" 
-              step="0.01"
-              placeholder="Precio" 
-              className={`w-full p-2.5 border rounded-xl text-sm font-medium outline-none focus:border-blue-500 ${
-                isDark 
-                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
-                  : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
-              }`}
-              value={form.salida || ''} 
-              onChange={e => setForm({...form, salida: e.target.value})} 
-            />
-          </div>
-        </div>
+            {/* Porcentaje de pago */}
+            <div>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 flex items-center gap-1 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                <Percent size={10} /> Porcentaje de Pago
+              </label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  step="1"
+                  min="1"
+                  max="100"
+                  placeholder="80" 
+                  className={`w-full p-2.5 pr-8 border rounded-xl text-sm font-bold outline-none focus:border-purple-500 ${
+                    isDark 
+                      ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500' 
+                      : 'bg-purple-50 border-purple-200 text-slate-800 placeholder-slate-400'
+                  }`}
+                  value={form.porcentajePago || 80} 
+                  onChange={e => setForm({...form, porcentajePago: e.target.value})} 
+                />
+                <span className={`absolute right-3 top-2.5 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>%</span>
+              </div>
+            </div>
+
+            {/* Resultado binario */}
+            <div>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+                Resultado
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({...form, resultadoBinario: 'win'})}
+                  className={`p-2.5 rounded-xl font-bold text-sm transition-all ${
+                    form.resultadoBinario === 'win'
+                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                      : isDark 
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-green-500' 
+                        : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-green-500'
+                  }`}
+                >
+                  ✓ WIN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({...form, resultadoBinario: 'loss'})}
+                  className={`p-2.5 rounded-xl font-bold text-sm transition-all ${
+                    form.resultadoBinario === 'loss'
+                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      : isDark 
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-red-500' 
+                        : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-red-500'
+                  }`}
+                >
+                  ✗ LOSS
+                </button>
+              </div>
+            </div>
+
+            {/* Preview del P&L calculado */}
+            {form.montoInvertido && (
+              <div className={`p-3 rounded-xl text-center ${
+                form.resultadoBinario === 'win' 
+                  ? 'bg-green-500/10 border border-green-500/30' 
+                  : 'bg-red-500/10 border border-red-500/30'
+              }`}>
+                <p className={`text-xs uppercase font-bold mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  P&L Calculado
+                </p>
+                <p className={`text-2xl font-black ${
+                  form.resultadoBinario === 'win' ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {form.resultadoBinario === 'win' ? '+' : ''}${calcularPLBinario()}
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* --- MODO NORMAL --- */}
+            {/* Lotes y P&L en grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+                  Lotes/Contratos
+                </label>
+                <input 
+                  type="number" 
+                  min="1"
+                  step="1"
+                  placeholder="1" 
+                  className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                  }`}
+                  value={form.lotes} 
+                  onChange={e => setForm({...form, lotes: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+                  P&L ($)
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  placeholder="0.00" 
+                  className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                  }`}
+                  value={form.res} 
+                  onChange={e => setForm({...form, res: e.target.value})} 
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Entrada y Salida (opcional) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+                  Entrada
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  placeholder="Precio" 
+                  className={`w-full p-2.5 border rounded-xl text-sm font-medium outline-none focus:border-blue-500 ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                  }`}
+                  value={form.entrada || ''} 
+                  onChange={e => setForm({...form, entrada: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+                  Salida
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  placeholder="Precio" 
+                  className={`w-full p-2.5 border rounded-xl text-sm font-medium outline-none focus:border-blue-500 ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                  }`}
+                  value={form.salida || ''} 
+                  onChange={e => setForm({...form, salida: e.target.value})} 
+                />
+              </div>
+            </div>
+          </>
+        )}
         
         {/* Checkboxes de autoevaluación */}
         <div className={`p-3 rounded-xl border space-y-2 ${
@@ -421,7 +616,11 @@ export default function TradeForm({ onSubmit, form, setForm }) {
         <button 
           type="submit" 
           disabled={!canSubmit}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg active:scale-[0.98] transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full py-3 text-white rounded-xl font-bold shadow-lg active:scale-[0.98] transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed ${
+            isBinaryOptions 
+              ? 'bg-purple-600 hover:bg-purple-700' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
         >
           <Save size={18} className="mr-2"/> Guardar Trade
         </button>
