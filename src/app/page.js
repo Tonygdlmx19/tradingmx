@@ -26,7 +26,6 @@ import {
 export default function TradingJournalPRO() {
   const { isDark } = useTheme();
   
-  // Estado
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -35,12 +34,9 @@ export default function TradingJournalPRO() {
   const [viewMode, setViewMode] = useState('global');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  
-  // Estado para modal de detalle
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [showTradeDetail, setShowTradeDetail] = useState(false);
   
-  // Form con todos los campos
   const [form, setForm] = useState({
     res: '',
     emo: 'Neutral',
@@ -55,7 +51,6 @@ export default function TradingJournalPRO() {
     imagen: null,
   });
 
-  // Auth listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -64,7 +59,6 @@ export default function TradingJournalPRO() {
     return () => unsubscribe();
   }, []);
 
-  // Load user data
   useEffect(() => {
     if (!user) return;
 
@@ -93,7 +87,6 @@ export default function TradingJournalPRO() {
     return () => { unsubConfig(); unsubTrades(); };
   }, [user]);
 
-  // Handlers
   const handleLogout = useCallback(async () => {
     await signOut(auth);
   }, []);
@@ -106,7 +99,7 @@ export default function TradingJournalPRO() {
   const addTrade = useCallback(async (e) => {
     e.preventDefault();
     if (!form.res || form.res === '') {
-      alert("⛔️ Debes ingresar el resultado del trade.");
+      alert("Debes ingresar el resultado del trade.");
       return;
     }
     
@@ -129,7 +122,6 @@ export default function TradingJournalPRO() {
     
     await addDoc(collection(db, "trades"), tradeData);
     
-    // Reset form pero mantener activo y dirección
     setForm({ 
       ...form, 
       res: '', 
@@ -150,19 +142,16 @@ export default function TradingJournalPRO() {
 
   const updateTrade = useCallback(async (id, updates) => {
     await updateDoc(doc(db, "trades", id), updates);
-    // Actualizar el trade seleccionado si está abierto
     if (selectedTrade && selectedTrade.id === id) {
       setSelectedTrade({ ...selectedTrade, ...updates });
     }
   }, [selectedTrade]);
 
-  // Abrir modal de detalle
   const handleTradeClick = useCallback((trade) => {
     setSelectedTrade(trade);
     setShowTradeDetail(true);
   }, []);
 
-  // Filtered trades
   const filteredTrades = useMemo(() => {
     return trades.filter(t => {
       const [y, m] = t.fecha.split('-').map(Number);
@@ -171,7 +160,6 @@ export default function TradingJournalPRO() {
     });
   }, [trades, viewMode, selectedMonth, selectedYear]);
 
-  // Stats calculation
   const stats = useMemo(() => {
     const tradesPrevios = trades.filter(t => {
       const [y, m] = t.fecha.split('-').map(Number);
@@ -217,7 +205,6 @@ export default function TradingJournalPRO() {
     };
   }, [filteredTrades, trades, config, viewMode, selectedMonth, selectedYear]);
 
-  // Header calculations
   const todayStr = new Date().toISOString().split('T')[0];
   const pnlHoy = trades.filter(t => t.fecha === todayStr).reduce((acc, t) => acc + t.res, 0);
   const progresoMeta = Math.min((pnlHoy / config.metaDiaria) * 100, 100);
@@ -225,7 +212,6 @@ export default function TradingJournalPRO() {
     ? ((config.metaDiaria / config.capitalInicial) * 100).toFixed(1)
     : 0;
 
-  // Loading
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
@@ -237,15 +223,12 @@ export default function TradingJournalPRO() {
     );
   }
 
-  // Login
   if (!user) return <LoginPage />;
 
-  // Main app
   return (
     <div className={`min-h-screen font-sans pb-20 transition-colors duration-300 ${
       isDark ? 'bg-slate-900' : 'bg-slate-100'
     }`}>
-      {/* Modals */}
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
@@ -276,23 +259,15 @@ export default function TradingJournalPRO() {
         onLogout={handleLogout}
       />
 
-      <main className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-          {/* Contenido principal */}
           <div className="lg:col-span-9 space-y-6 lg:space-y-8 order-2 lg:order-1">
-            {/* Stats Cards */}
             <StatsCards stats={stats} />
-            
-            {/* Métricas Avanzadas */}
             <AdvancedStats trades={filteredTrades} />
-            
-            {/* Gráficas */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <EquityChart data={stats.data} startBalance={stats.startBalance} />
               <DrawdownChart data={stats.data} />
             </div>
-            
-            {/* Selector de Vista + Historial */}
             <ViewSelector
               viewMode={viewMode}
               setViewMode={setViewMode}
@@ -307,7 +282,6 @@ export default function TradingJournalPRO() {
             />
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
             <RiskCalculator balance={stats.balance} />
             <TradeForm onSubmit={addTrade} form={form} setForm={setForm} />

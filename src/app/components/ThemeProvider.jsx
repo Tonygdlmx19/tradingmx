@@ -13,40 +13,30 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
     // Leer preferencia guardada
     const saved = localStorage.getItem('trading-dark-mode');
     if (saved !== null) {
-      setIsDark(saved === 'true');
-    } else {
-      // Detectar preferencia del sistema
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDark(prefersDark);
+      return saved === 'true';
     }
-  }, []);
+    // Detectar preferencia del sistema
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
-    if (mounted) {
+    if (typeof window !== 'undefined') {
       localStorage.setItem('trading-dark-mode', isDark.toString());
     }
-  }, [isDark, mounted]);
+  }, [isDark]);
 
-  const toggleTheme = () => {
-    setIsDark(prev => !prev);
-  };
-
-  // Evitar flash de contenido
-  if (!mounted) {
-    return <div className="min-h-screen bg-slate-100" />;
+    const toggleTheme = () => {
+      setIsDark(prev => !prev);
+    };
+  
+    return (
+      <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+        {children}
+      </ThemeContext.Provider>
+    );
   }
-
-  return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}

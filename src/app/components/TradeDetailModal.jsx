@@ -26,7 +26,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       'Ansioso': '😰',
       'Venganza': '😤',
       'Miedo': '😨',
-      'Eufórico': '🤑',
+      'Euforico': '🤑',
       'Frustrado': '😔',
     };
     return emojis[emo] || '😐';
@@ -39,7 +39,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
   };
 
   const handleDelete = () => {
-    if (window.confirm('¿Estás seguro de eliminar este trade?')) {
+    if (window.confirm('Estas seguro de eliminar este trade?')) {
       onDelete(trade.id);
       onClose();
     }
@@ -47,11 +47,14 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`rounded-2xl w-full max-w-lg shadow-2xl border max-h-[90vh] overflow-hidden flex flex-col ${
-        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
-      }`}>
+      <div 
+        className={`rounded-2xl shadow-2xl border max-h-[90vh] overflow-hidden flex flex-col ${
+          isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+        }`}
+        style={{ width: '100%', maxWidth: '500px' }}
+      >
         {/* Header con resultado */}
-        <div className={`p-5 border-b ${
+        <div className={`p-5 border-b relative ${
           isWin 
             ? 'bg-gradient-to-r from-green-500/10 to-green-500/5' 
             : 'bg-gradient-to-r from-red-500/10 to-red-500/5'
@@ -124,10 +127,10 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
             </div>
           )}
 
-          {/* Autoevaluación */}
+          {/* Autoevaluacion */}
           <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
             <p className={`text-[10px] font-bold uppercase mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Autoevaluación
+              Autoevaluacion
             </p>
             <div className="flex gap-4">
               <div className="flex items-center gap-2">
@@ -141,7 +144,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                   )}
                 </div>
                 <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Seguí plan
+                  Segui plan
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -155,7 +158,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                   )}
                 </div>
                 <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Respeté riesgo
+                  Respete riesgo
                 </span>
               </div>
             </div>
@@ -180,13 +183,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
               <p className={`text-[10px] font-bold uppercase mb-2 flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 <Image size={12} /> Captura del Trade
               </p>
-              <img 
-                src={trade.imagen} 
-                alt="Trade screenshot" 
-                className="w-full rounded-xl border cursor-pointer hover:opacity-90 transition-opacity"
-                style={{ maxHeight: '300px', objectFit: 'contain' }}
-                onClick={() => window.open(trade.imagen, '_blank')}
-              />
+              <img src={trade.imagen} alt="Trade screenshot" className="w-full rounded-xl border cursor-pointer hover:opacity-90 transition-opacity" style={{ maxHeight: '300px', objectFit: 'contain' }} onClick={() => window.open(trade.imagen, '_blank')} />
             </div>
           )}
 

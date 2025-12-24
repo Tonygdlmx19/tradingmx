@@ -3,20 +3,19 @@ import { useState } from 'react';
 import { Settings, X, Target, User, MessageSquare, Sparkles } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
-// Frases sugeridas para el usuario
 const frasesSugeridas = [
   "El mercado recompensa la paciencia 📈",
-  "Disciplina sobre emoción 🎯",
+  "Disciplina sobre emocion 🎯",
   "Un trade a la vez 🔥",
   "Protege tu capital primero 🛡️",
-  "El proceso importa más que el resultado 💪",
-  "Menos es más en trading 🧘",
+  "El proceso importa mas que el resultado 💪",
+  "Menos es mas en trading 🧘",
   "Respeta tu stop loss ⛔",
   "La consistencia crea riqueza 💰",
   "Opera tu plan, no tus emociones 🧠",
-  "Hoy es un buen día para ser rentable ✨",
-  "El mercado siempre tiene la razón 📊",
-  "Corta las pérdidas, deja correr las ganancias ✂️",
+  "Hoy es un buen dia para ser rentable ✨",
+  "El mercado siempre tiene la razon 📊",
+  "Corta las perdidas, deja correr las ganancias ✂️",
 ];
 
 export default function SettingsModal({ isOpen, onClose, config, setConfig, onSaveToCloud }) {
@@ -48,11 +47,14 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl border max-h-[90vh] overflow-y-auto ${
-        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
-      }`}>
+      <div 
+        className={`rounded-2xl p-6 shadow-2xl border max-h-[90vh] overflow-y-auto ${
+          isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+        }`}
+        style={{ width: '100%', maxWidth: '450px' }}
+      >
         <div className="flex justify-between items-center mb-6">
-          <h3 className={`text-lg sm:text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             <Settings size={20} className="text-blue-500"/> Ajustes
           </h3>
           <button 
@@ -63,16 +65,12 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
           </button>
         </div>
         
-        <div className="space-y-6">
-          {/* ═══════════════════════════════════════════════════════
-              SECCIÓN: Personalización del Trader
-          ═══════════════════════════════════════════════════════ */}
+        <div className="space-y-5">
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-blue-50 border-blue-100'}`}>
             <label className={`text-xs font-bold uppercase tracking-wider mb-3 block flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              <User size={14}/> Personalización
+              <User size={14}/> Personalizacion
             </label>
             
-            {/* Nombre del Trader */}
             <div className="mb-4">
               <label className={`text-[10px] font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 Tu nombre de trader
@@ -80,7 +78,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               <input 
                 type="text" 
                 placeholder="Ej: Carlos, El Trader, etc."
-                className={`w-full p-3 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors ${
+                className={`w-full p-2.5 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors text-sm ${
                   isDark 
                     ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' 
                     : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -90,7 +88,6 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               />
             </div>
             
-            {/* Frase Motivadora */}
             <div>
               <label className={`text-[10px] font-bold uppercase mb-1 block flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 <MessageSquare size={10}/> Frase motivadora
@@ -99,7 +96,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 <input 
                   type="text" 
                   placeholder="Tu frase para mantenerte enfocado..."
-                  className={`w-full p-3 pr-10 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors ${
+                  className={`w-full p-2.5 pr-10 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors text-sm ${
                     isDark 
                       ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' 
                       : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -117,17 +114,16 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                   }`}
                   title="Ver sugerencias"
                 >
-                  <Sparkles size={18}/>
+                  <Sparkles size={16}/>
                 </button>
               </div>
               
-              {/* Frases sugeridas */}
               {showFrases && (
                 <div className={`mt-2 p-3 rounded-xl border max-h-40 overflow-y-auto ${
                   isDark ? 'bg-slate-600 border-slate-500' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <p className={`text-[10px] font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    ✨ Frases sugeridas (toca para seleccionar):
+                    Frases sugeridas (toca para seleccionar):
                   </p>
                   <div className="space-y-1">
                     {frasesSugeridas.map((frase, i) => (
@@ -150,18 +146,15 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             </div>
           </div>
 
-          {/* ═══════════════════════════════════════════════════════
-              SECCIÓN: Capital
-          ═══════════════════════════════════════════════════════ */}
           <div>
             <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
               Capital Inicial
             </label>
             <div className="relative">
-              <span className={`absolute left-4 top-3.5 font-bold ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>$</span>
+              <span className={`absolute left-3 top-3 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>$</span>
               <input 
                 type="number" 
-                className={`w-full pl-9 p-3 border rounded-xl font-mono text-lg font-bold outline-none focus:border-blue-500 transition-colors ${
+                className={`w-full pl-8 p-2.5 border rounded-xl font-mono font-bold outline-none focus:border-blue-500 transition-colors ${
                   isDark 
                     ? 'bg-slate-700 border-slate-600 text-white' 
                     : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -172,19 +165,16 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             </div>
           </div>
           
-          {/* ═══════════════════════════════════════════════════════
-              SECCIÓN: Meta Diaria
-          ═══════════════════════════════════════════════════════ */}
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-100'}`}>
             <label className={`text-xs font-bold uppercase tracking-wider mb-3 block flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
               <Target size={14} className="text-blue-500"/> Meta Diaria
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="relative">
                 <span className={`absolute left-3 top-2.5 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>$</span>
                 <input 
                   type="number" 
-                  className={`w-full pl-7 p-2.5 border rounded-lg font-bold outline-none focus:border-blue-500 ${
+                  className={`w-full pl-7 p-2 border rounded-lg font-bold outline-none focus:border-blue-500 text-sm ${
                     isDark 
                       ? 'bg-slate-600 border-slate-500 text-white' 
                       : 'bg-white border-slate-200 text-slate-700'
@@ -197,7 +187,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 <input 
                   type="number" 
                   step="0.1" 
-                  className={`w-full pr-7 p-2.5 border rounded-lg font-bold text-blue-500 outline-none focus:border-blue-500 ${
+                  className={`w-full pr-7 p-2 border rounded-lg font-bold text-blue-500 outline-none focus:border-blue-500 text-sm ${
                     isDark 
                       ? 'bg-slate-600 border-slate-500' 
                       : 'bg-white border-slate-200'
@@ -210,12 +200,11 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             </div>
           </div>
           
-          {/* Botón Guardar */}
           <button 
             onClick={handleSave} 
-            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold active:scale-[0.98] transition-all shadow-lg"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold active:scale-[0.98] transition-all shadow-lg"
           >
-            Guardar Configuración
+            Guardar Configuracion
           </button>
         </div>
       </div>

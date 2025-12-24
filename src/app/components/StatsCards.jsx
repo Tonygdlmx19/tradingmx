@@ -7,7 +7,7 @@ export default function StatsCards({ stats }) {
   
   const cards = [
     {
-      icon: <Wallet size={20} className="sm:w-6 sm:h-6" />,
+      icon: <Wallet size={18} />,
       bgColor: 'bg-blue-500/10',
       textColor: 'text-blue-500',
       label: 'Balance Final',
@@ -17,21 +17,21 @@ export default function StatsCards({ stats }) {
         : { text: `${stats.totalPnl.toFixed(0)}$`, color: 'bg-red-500/20 text-red-500' }
     },
     {
-      icon: <TrendingUp size={20} className="sm:w-6 sm:h-6" />,
+      icon: <TrendingUp size={18} />,
       bgColor: 'bg-emerald-500/10',
       textColor: 'text-emerald-500',
       label: 'Profit Factor',
       value: stats.profitFactor.toFixed(2),
     },
     {
-      icon: <Target size={20} className="sm:w-6 sm:h-6" />,
+      icon: <Target size={18} />,
       bgColor: 'bg-indigo-500/10',
       textColor: 'text-indigo-500',
       label: 'Win Rate',
       value: `${stats.winRate.toFixed(0)}%`,
     },
     {
-      icon: <AlertTriangle size={20} className="sm:w-6 sm:h-6" />,
+      icon: <AlertTriangle size={18} />,
       bgColor: 'bg-red-500/10',
       textColor: 'text-red-500',
       label: 'Max Drawdown',
@@ -40,28 +40,28 @@ export default function StatsCards({ stats }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card, i) => (
         <div 
           key={i} 
-          className={`p-4 sm:p-6 rounded-2xl shadow-sm border transition-colors ${
+          className={`p-3 sm:p-4 rounded-xl shadow-sm border transition-colors ${
             isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
           }`}
         >
-          <div className="flex justify-between mb-3 sm:mb-4">
-            <div className={`p-2 sm:p-3 ${card.bgColor} ${card.textColor} rounded-xl`}>
+          <div className="flex justify-between mb-2">
+            <div className={`p-2 ${card.bgColor} ${card.textColor} rounded-lg`}>
               {card.icon}
             </div>
             {card.badge && (
-              <span className={`text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full h-fit ${card.badge.color}`}>
+              <span className={`text-[10px] font-bold px-2 py-1 rounded-full h-fit ${card.badge.color}`}>
                 {card.badge.text}
               </span>
             )}
           </div>
-          <p className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+          <p className={`text-[10px] font-bold uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
             {card.label}
           </p>
-          <h3 className={`text-xl sm:text-3xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <h3 className={`text-lg sm:text-xl font-black mt-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             {card.value}
           </h3>
         </div>
