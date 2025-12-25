@@ -1,58 +1,32 @@
 import { NextResponse } from 'next/server';
 
-// Este webhook recibe notificaciones de PayPal
-// Los emails autorizados se guardan y se verifican desde el cliente
-
 export async function POST(request) {
   try {
     const body = await request.json();
+    console.log('Webhook recibido:', JSON.stringify(body, null, 2));
     
-    console.log('📩 Webhook recibido de PayPal:', JSON.stringify(body, null, 2));
-    
-    // Verificar que es un evento de pago completado
     const eventType = body.event_type;
     
     if (eventType === 'CHECKOUT.ORDER.APPROVED' || 
         eventType === 'PAYMENT.CAPTURE.COMPLETED' ||
         eventType === 'PAYMENT.SALE.COMPLETED') {
       
-      // Extraer email del comprador
-      let email = null;
-      
-      if (body.resource?.payer?.email_address) {
-        email = body.resource.payer.email_address;
-      } else if (body.resource?.purchaser?.email_address) {
-        email = body.resource.purchaser.email_address;
-      }
+      let email = body.resource?.payer?.email_address || 
+                  body.resource?.purchaser?.email_address;
       
       if (email) {
-        console.log('✅ Pago recibido de:', email);
-        
-        // Por ahora solo logueamos - agregaremos a Firestore manualmente
-        // o configuraremos una Cloud Function después
-        
-        return NextResponse.json({ 
-          success: true, 
-          message: `Pago recibido de ${email}`,
-          email: email.toLowerCase()
-        });
+        console.log('Pago recibido de:', email);
+        return NextResponse.json({ success: true, email: email.toLowerCase() });
       }
     }
     
-    return NextResponse.json({ success: true, message: 'Evento recibido' });
-    
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('❌ Error procesando webhook:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    console.error('Error:', error);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ 
-    status: 'ok', 
-    message: 'PayPal webhook endpoint activo' 
-  });
+  return NextResponse.json({ status: 'ok' });
 }
