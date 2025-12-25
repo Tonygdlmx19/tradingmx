@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../firebase';
-import { signOut, onAuthStateChanged } from "firebase/auth";
+import { signOut, onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { 
   collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc, getDoc 
 } from 'firebase/firestore';
@@ -57,33 +57,44 @@ export default function TradingJournalPRO() {
     imagen: null,
   });
 
+  // Capturar resultado de redirect de Google (para móviles)
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          console.log('Login redirect exitoso:', result.user.email);
+        }
+      })
+      .catch((error) => {
+        console.error('Error en redirect:', error);
+      });
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log('Auth state changed:', currentUser?.email);
       setUser(currentUser);
       
       if (currentUser) {
         // Verificar si el usuario está autorizado
         try {
           const email = currentUser.email?.toLowerCase();
+          console.log('Verificando autorización para:', email);
           if (email) {
             const authDocRef = doc(db, "authorized_users", email);
             const authDoc = await getDoc(authDocRef);
             const authorized = authDoc.exists() && authDoc.data()?.status === 'active';
+            console.log('Usuario autorizado:', authorized);
             setIsAuthorized(authorized);
-            // Si no está autorizado, terminar loading aquí
-            if (!authorized) {
-              setLoading(false);
-            }
           } else {
             setIsAuthorized(false);
-            setLoading(false);
           }
         } catch (error) {
           console.error('Error verificando autorización:', error);
           setIsAuthorized(false);
-          setLoading(false);
         }
         setCheckingAuth(false);
+        setLoading(false);
       } else {
         setIsAuthorized(false);
         setCheckingAuth(false);
