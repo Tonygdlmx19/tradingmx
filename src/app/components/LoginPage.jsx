@@ -1,22 +1,47 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { auth, provider } from '../../firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
-  signInWithPopup
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
 } from "firebase/auth";
-import { Lock, Mail, ArrowLeft } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 
 export default function LoginPage({ onBack }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Detectar si es móvil
+  const isMobile = () => {
+    if (typeof window === 'undefined') return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  // Capturar resultado de redirect (para móviles)
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // Login exitoso, el onAuthStateChanged en page.js se encargará
+          console.log('Login redirect exitoso');
+        }
+      })
+      .catch((error) => {
+        console.error('Error en redirect:', error);
+        setError("Error con Google: " + error.message);
+      });
+  }, []);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     try {
       if (isRegistering) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -32,34 +57,40 @@ export default function LoginPage({ onBack }) {
         'auth/invalid-credential': 'Credenciales inválidas.',
       };
       setError(errorMessages[err.code] || 'Error: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    setError('');
+    setIsLoading(true);
     try {
-      await signInWithPopup(auth, provider);
+      if (isMobile()) {
+        // En móvil usar redirect
+        await signInWithRedirect(auth, provider);
+      } else {
+        // En desktop usar popup
+        await signInWithPopup(auth, provider);
+      }
     } catch (error) {
       setError("Error con Google: " + error.message);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 relative">
-      {/* Botón volver */}
-      {onBack && (
-        <button 
-          onClick={onBack}
-          className="absolute top-6 left-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft size={20} />
-          <span>Volver</span>
-        </button>
-      )}
-      
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md text-center shadow-2xl">
-        <div className="h-12 sm:h-14 mx-auto mb-4">
-          <img src="/tradingLogo.svg" alt="Trading Journal PRO" className="h-full w-auto mx-auto object-contain" />
+        {/* Logo */}
+        <div className="flex items-center justify-center mb-4">
+          <img 
+            src="/tradingLogo.svg" 
+            alt="Trading Journal PRO" 
+            className="h-12 sm:h-14 object-contain"
+          />
         </div>
+        
         <p className="text-slate-500 mb-6 text-sm">
           {isRegistering ? 'Crea una cuenta para guardar tus trades.' : 'Inicia sesión para ver tu progreso.'}
         </p>
@@ -81,6 +112,7 @@ export default function LoginPage({ onBack }) {
                 placeholder="ejemplo@correo.com" 
                 value={email} 
                 onChange={e => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -95,14 +127,16 @@ export default function LoginPage({ onBack }) {
                 placeholder="••••••" 
                 value={password} 
                 onChange={e => setPassword(e.target.value)}
+                disabled={isLoading}
               />
             </div>
           </div>
           <button 
             type="submit" 
-            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-200"
+            disabled={isLoading}
+            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isRegistering ? 'Registrarse Gratis' : 'Entrar'}
+            {isLoading ? 'Cargando...' : (isRegistering ? 'Registrarse Gratis' : 'Entrar')}
           </button>
         </form>
 
@@ -117,10 +151,15 @@ export default function LoginPage({ onBack }) {
         
         <button 
           onClick={handleGoogleLogin} 
-          type="button" 
-          className="w-full py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-[0.98] transition-all"
+          type="button"
+          disabled={isLoading}
+          className="w-full py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 flex items-center justify-center gap-2 hover:bg-slate-50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google"/> 
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          ) : (
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google"/>
+          )}
           Google
         </button>
         
@@ -129,10 +168,20 @@ export default function LoginPage({ onBack }) {
           <button 
             onClick={() => setIsRegistering(!isRegistering)} 
             className="text-blue-600 font-bold ml-1 hover:underline"
+            disabled={isLoading}
           >
             {isRegistering ? 'Inicia Sesión' : 'Regístrate aquí'}
           </button>
         </p>
+
+        {onBack && (
+          <button 
+            onClick={onBack}
+            className="mt-4 text-xs text-slate-400 hover:text-slate-600"
+          >
+            ← Volver al inicio
+          </button>
+        )}
       </div>
     </div>
   );
