@@ -68,11 +68,20 @@ export default function TradingJournalPRO() {
           if (email) {
             const authDocRef = doc(db, "authorized_users", email);
             const authDoc = await getDoc(authDocRef);
-            setIsAuthorized(authDoc.exists() && authDoc.data()?.status === 'active');
+            const authorized = authDoc.exists() && authDoc.data()?.status === 'active';
+            setIsAuthorized(authorized);
+            // Si no está autorizado, terminar loading aquí
+            if (!authorized) {
+              setLoading(false);
+            }
+          } else {
+            setIsAuthorized(false);
+            setLoading(false);
           }
         } catch (error) {
           console.error('Error verificando autorización:', error);
           setIsAuthorized(false);
+          setLoading(false);
         }
         setCheckingAuth(false);
       } else {
