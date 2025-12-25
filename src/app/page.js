@@ -285,7 +285,7 @@ export default function TradingJournalPRO() {
           <div className="lg:col-span-9 space-y-6 lg:space-y-8 order-2 lg:order-1">
             <StatsCards stats={stats} />
             <AdvancedStats trades={filteredTrades} capitalInicial={config.capitalInicial} balance={stats.balance} />
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="space-y-6">
               <EquityChart data={stats.data} startBalance={stats.startBalance} />
               <DrawdownChart data={stats.data} />
             </div>

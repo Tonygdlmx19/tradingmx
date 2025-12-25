@@ -13,6 +13,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
         avgLoss: 0,
         bestDay: { date: '-', amount: 0 },
         worstDay: { date: '-', amount: 0 },
+        bestTrade: { date: '-', amount: 0 },
+        worstTrade: { date: '-', amount: 0 },
         maxWinStreak: 0,
         maxLossStreak: 0,
         currentStreak: 0,
@@ -33,23 +35,42 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
       ? losses.reduce((sum, t) => sum + t.res, 0) / losses.length 
       : 0;
 
-    // Agrupar por día
+    // Agrupar por día para estadísticas por día
     const byDay = {};
     trades.forEach(t => {
-      if (!byDay[t.fecha]) byDay[t.fecha] = 0;
-      byDay[t.fecha] += t.res;
+      const fecha = t.fecha;
+      if (!fecha) return;
+      if (!byDay[fecha]) byDay[fecha] = 0;
+      byDay[fecha] += Number(t.res) || 0;
     });
     
     const days = Object.entries(byDay).map(([date, amount]) => ({ date, amount }));
     
-    // Mejor día = mayor ganancia (más positivo)
-    // Peor día = mayor pérdida (más negativo)
+    // Mejor y peor día (solo si hay más de 1 día)
     let bestDay = { date: '-', amount: 0 };
     let worstDay = { date: '-', amount: 0 };
     
-    if (days.length > 0) {
-      bestDay = days.reduce((best, day) => day.amount > best.amount ? day : best, days[0]);
-      worstDay = days.reduce((worst, day) => day.amount < worst.amount ? day : worst, days[0]);
+    if (days.length > 1) {
+      const sortedByAmount = [...days].sort((a, b) => b.amount - a.amount);
+      bestDay = sortedByAmount[0];
+      worstDay = sortedByAmount[sortedByAmount.length - 1];
+    } else if (days.length === 1) {
+      // Si solo hay un día, mostrar ese día como referencia
+      bestDay = days[0];
+      worstDay = { date: '-', amount: 0 };
+    }
+
+    // Mejor y peor TRADE individual
+    let bestTrade = { amount: 0, date: '-' };
+    let worstTrade = { amount: 0, date: '-' };
+    
+    if (trades.length > 0) {
+      const sortedByRes = [...trades].sort((a, b) => b.res - a.res);
+      const best = sortedByRes[0];
+      const worst = sortedByRes[sortedByRes.length - 1];
+      
+      bestTrade = { amount: best.res, date: best.fecha };
+      worstTrade = { amount: worst.res, date: worst.fecha };
     }
 
     // Rachas
@@ -91,6 +112,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
       avgLoss,
       bestDay,
       worstDay,
+      bestTrade,
+      worstTrade,
       maxWinStreak,
       maxLossStreak,
       currentStreak,
@@ -108,10 +131,14 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
   const growthPct = capitalInicial > 0 ? ((balance - capitalInicial) / capitalInicial) * 100 : 0;
 
   const formatDate = (dateStr) => {
-    if (dateStr === '-') return '-';
-    const [y, mo, d] = dateStr.split('-');
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    return `${parseInt(d)} ${months[parseInt(mo) - 1]}`;
+    if (!dateStr || dateStr === '-') return '-';
+    try {
+      const [y, mo, d] = dateStr.split('-');
+      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return `${parseInt(d)} ${months[parseInt(mo) - 1]}`;
+    } catch {
+      return dateStr;
+    }
   };
 
   const winPct = m.totalTrades > 0 ? (m.winningTrades / m.totalTrades) * 100 : 0;
@@ -160,7 +187,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
       </div>
 
       {/* Grid de métricas - Diseño limpio tipo tabla */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-slate-200 dark:bg-slate-600 rounded-xl overflow-hidden">
+      <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px rounded-xl overflow-hidden ${isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
         {/* Promedio Ganancia */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -213,29 +240,29 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
           </p>
         </div>
 
-        {/* Mejor Día */}
+        {/* Mejor Trade */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Mejor Día
+            Mejor Trade
           </p>
-          <p className={`text-lg font-bold ${m.bestDay.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {m.bestDay.amount >= 0 ? '+' : ''}${m.bestDay.amount.toFixed(0)}
+          <p className={`text-lg font-bold ${m.bestTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {m.bestTrade.amount >= 0 ? '+' : ''}${m.bestTrade.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            {formatDate(m.bestDay.date)}
+            {formatDate(m.bestTrade.date)}
           </p>
         </div>
 
-        {/* Peor Día */}
+        {/* Peor Trade */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Peor Día
+            Peor Trade
           </p>
-          <p className={`text-lg font-bold ${m.worstDay.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {m.worstDay.amount >= 0 ? '+' : ''}${m.worstDay.amount.toFixed(0)}
+          <p className={`text-lg font-bold ${m.worstTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {m.worstTrade.amount >= 0 ? '+' : ''}${m.worstTrade.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            {formatDate(m.worstDay.date)}
+            {formatDate(m.worstTrade.date)}
           </p>
         </div>
       </div>

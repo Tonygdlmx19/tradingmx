@@ -7,12 +7,12 @@ export default function EquityChart({ data, startBalance }) {
   const { isDark } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [ChartComponents, setChartComponents] = useState(null);
-  const [containerWidth, setContainerWidth] = useState(500);
 
   useEffect(() => {
     setMounted(true);
     import('recharts').then((mod) => {
       setChartComponents({
+        ResponsiveContainer: mod.ResponsiveContainer,
         AreaChart: mod.AreaChart,
         Area: mod.Area,
         XAxis: mod.XAxis,
@@ -24,29 +24,10 @@ export default function EquityChart({ data, startBalance }) {
     }).catch(err => console.error('Error cargando recharts:', err));
   }, []);
 
-  // Medir el ancho del contenedor
-  useEffect(() => {
-    const updateWidth = () => {
-      const container = document.getElementById('equity-chart-container');
-      if (container) {
-        setContainerWidth(container.offsetWidth - 32); // padding
-      }
-    };
-    
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, [mounted]);
-
-  // Debug
-  useEffect(() => {
-    console.log('📊 EQUITY DATA:', data);
-  }, [data]);
-
   // Mensaje cuando no hay datos
   if (!data || data.length <= 1) {
     return (
-      <div id="equity-chart-container" className={`p-4 sm:p-6 rounded-2xl shadow-sm border transition-colors ${
+      <div className={`p-4 sm:p-6 rounded-2xl shadow-sm border transition-colors ${
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
       }`}>
         <div className="flex justify-between items-center mb-4">
@@ -64,7 +45,7 @@ export default function EquityChart({ data, startBalance }) {
   // Loading
   if (!mounted || !ChartComponents) {
     return (
-      <div id="equity-chart-container" className={`p-4 sm:p-6 rounded-2xl shadow-sm border transition-colors ${
+      <div className={`p-4 sm:p-6 rounded-2xl shadow-sm border transition-colors ${
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
       }`}>
         <div className="flex justify-between items-center mb-4">
@@ -79,7 +60,7 @@ export default function EquityChart({ data, startBalance }) {
     );
   }
 
-  const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } = ChartComponents;
+  const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } = ChartComponents;
 
   // Calcular domain del eje Y
   const balances = data.map(d => d.bal).filter(b => typeof b === 'number' && !isNaN(b));
@@ -89,10 +70,8 @@ export default function EquityChart({ data, startBalance }) {
   const padding = range > 0 ? range * 0.15 : Math.abs(minBal) * 0.1 || 500;
   const yDomain = [Math.floor(minBal - padding), Math.ceil(maxBal + padding)];
 
-  console.log('📊 Equity render - width:', containerWidth, 'domain:', yDomain);
-
   return (
-    <div id="equity-chart-container" className={`p-4 sm:p-6 rounded-2xl shadow-sm border transition-colors ${
+    <div className={`p-4 sm:p-6 rounded-2xl shadow-sm border transition-colors ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
     }`}>
       <div className="flex justify-between items-center mb-4">
@@ -104,66 +83,66 @@ export default function EquityChart({ data, startBalance }) {
         </span>
       </div>
       
-      <div className="overflow-x-auto">
-        <AreaChart 
-          width={Math.max(containerWidth, 300)} 
-          height={280} 
-          data={data} 
-          margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
-        >
-          <defs>
-            <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            vertical={false} 
-            stroke={isDark ? '#334155' : '#e2e8f0'}
-          />
-          <XAxis 
-            dataKey="name" 
-            tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }}
-            tickLine={false}
-            axisLine={{ stroke: isDark ? '#475569' : '#cbd5e1' }}
-          />
-          <YAxis 
-            domain={yDomain}
-            tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} 
-            tickFormatter={(val) => `$${(val/1000).toFixed(1)}k`}
-            tickLine={false}
-            axisLine={{ stroke: isDark ? '#475569' : '#cbd5e1' }}
-            width={55}
-          />
-          <Tooltip 
-            contentStyle={{ 
-              borderRadius: '8px', 
-              border: 'none',
-              backgroundColor: isDark ? '#1e293b' : '#ffffff',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              fontSize: '12px',
-            }}
-            formatter={(val) => [`$${Number(val).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Balance']}
-          />
-          <ReferenceLine 
-            y={startBalance} 
-            stroke={isDark ? '#64748b' : '#94a3b8'} 
-            strokeDasharray="5 5"
-            strokeWidth={1}
-          />
-          <Area 
-            type="monotone" 
-            dataKey="bal" 
-            stroke="#3b82f6" 
-            strokeWidth={2} 
-            fillOpacity={1} 
-            fill="url(#equityGradient)"
-            dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }}
-            activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
-            isAnimationActive={false}
-          />
-        </AreaChart>
+      <div style={{ width: '100%', height: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart 
+            data={data} 
+            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              vertical={false} 
+              stroke={isDark ? '#334155' : '#e2e8f0'}
+            />
+            <XAxis 
+              dataKey="name" 
+              tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
+              tickLine={false}
+              axisLine={{ stroke: isDark ? '#475569' : '#cbd5e1' }}
+            />
+            <YAxis 
+              domain={yDomain}
+              tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }} 
+              tickFormatter={(val) => `$${(val/1000).toFixed(1)}k`}
+              tickLine={false}
+              axisLine={false}
+              width={50}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                borderRadius: '8px', 
+                border: 'none',
+                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                fontSize: '12px',
+              }}
+              formatter={(val) => [`$${Number(val).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Balance']}
+            />
+            <ReferenceLine 
+              y={startBalance} 
+              stroke={isDark ? '#64748b' : '#94a3b8'} 
+              strokeDasharray="5 5"
+              strokeWidth={1}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="bal" 
+              stroke="#3b82f6" 
+              strokeWidth={2} 
+              fillOpacity={1} 
+              fill="url(#equityGradient)"
+              dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
