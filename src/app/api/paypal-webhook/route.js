@@ -1,19 +1,7 @@
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
 
-// Inicializar Firebase Admin (solo una vez)
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-}
-
-const adminDb = getFirestore();
+// Este webhook recibe notificaciones de PayPal
+// Los emails autorizados se guardan y se verifican desde el cliente
 
 export async function POST(request) {
   try {
@@ -30,46 +18,27 @@ export async function POST(request) {
       
       // Extraer email del comprador
       let email = null;
-      let payerName = null;
       
-      // Intentar obtener email de diferentes estructuras de PayPal
       if (body.resource?.payer?.email_address) {
         email = body.resource.payer.email_address;
-        payerName = body.resource.payer.name?.given_name || '';
       } else if (body.resource?.purchaser?.email_address) {
         email = body.resource.purchaser.email_address;
-      } else if (body.resource?.subscriber?.email_address) {
-        email = body.resource.subscriber.email_address;
       }
       
       if (email) {
-        // Agregar a usuarios autorizados
-        await adminDb.collection('authorized_users').doc(email.toLowerCase()).set({
-          email: email.toLowerCase(),
-          name: payerName,
-          authorizedAt: new Date(),
-          paypalTransactionId: body.resource?.id || body.id,
-          eventType: eventType,
-          status: 'active'
-        }, { merge: true });
+        console.log('✅ Pago recibido de:', email);
         
-        console.log('✅ Usuario autorizado:', email);
+        // Por ahora solo logueamos - agregaremos a Firestore manualmente
+        // o configuraremos una Cloud Function después
         
         return NextResponse.json({ 
           success: true, 
-          message: `Usuario ${email} autorizado correctamente` 
+          message: `Pago recibido de ${email}`,
+          email: email.toLowerCase()
         });
-      } else {
-        console.log('⚠️ No se encontró email en el webhook');
-        return NextResponse.json({ 
-          success: false, 
-          message: 'No se encontró email del comprador' 
-        }, { status: 400 });
       }
     }
     
-    // Para otros eventos, solo confirmar recepción
-    console.log('ℹ️ Evento recibido (no requiere acción):', eventType);
     return NextResponse.json({ success: true, message: 'Evento recibido' });
     
   } catch (error) {
@@ -81,7 +50,6 @@ export async function POST(request) {
   }
 }
 
-// Manejar verificación de PayPal (GET request para verificar endpoint)
 export async function GET() {
   return NextResponse.json({ 
     status: 'ok', 
