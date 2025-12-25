@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../firebase';
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { 
-  collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc 
+  collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc, getDoc 
 } from 'firebase/firestore';
 
 import {
@@ -23,12 +23,15 @@ import {
   TradesTable,
   useTheme
 } from './components';
+import UnauthorizedScreen from './components/UnauthorizedScreen';
 
 export default function TradingJournalPRO() {
   const { isDark } = useTheme();
   
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
@@ -55,15 +58,34 @@ export default function TradingJournalPRO() {
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (!currentUser) setLoading(false);
+      
+      if (currentUser) {
+        // Verificar si el usuario está autorizado
+        try {
+          const email = currentUser.email?.toLowerCase();
+          if (email) {
+            const authDocRef = doc(db, "authorized_users", email);
+            const authDoc = await getDoc(authDocRef);
+            setIsAuthorized(authDoc.exists() && authDoc.data()?.status === 'active');
+          }
+        } catch (error) {
+          console.error('Error verificando autorización:', error);
+          setIsAuthorized(false);
+        }
+        setCheckingAuth(false);
+      } else {
+        setIsAuthorized(false);
+        setCheckingAuth(false);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isAuthorized) return;
 
     const unsubConfig = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
       if (docSnap.exists()) {
@@ -88,7 +110,7 @@ export default function TradingJournalPRO() {
     });
 
     return () => { unsubConfig(); unsubTrades(); };
-  }, [user]);
+  }, [user, isAuthorized]);
 
   const handleLogout = useCallback(async () => {
     await signOut(auth);
@@ -228,7 +250,7 @@ export default function TradingJournalPRO() {
     ? ((config.metaDiaria / config.capitalInicial) * 100).toFixed(1)
     : 0;
 
-  if (loading) {
+  if (loading || checkingAuth) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
         <div className="text-center">
@@ -244,6 +266,11 @@ export default function TradingJournalPRO() {
       return <LoginPage onBack={() => setShowLogin(false)} />;
     }
     return <LandingPage onLogin={() => setShowLogin(true)} />;
+  }
+
+  // Usuario logueado pero no autorizado
+  if (!isAuthorized) {
+    return <UnauthorizedScreen user={user} onLogout={handleLogout} />;
   }
 
   return (
