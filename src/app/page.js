@@ -9,6 +9,7 @@ import {
 
 import {
   LoginPage,
+  LandingPage,
   Header,
   SettingsModal,
   TradeDetailModal,
@@ -28,6 +29,7 @@ export default function TradingJournalPRO() {
   
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
@@ -237,7 +239,12 @@ export default function TradingJournalPRO() {
     );
   }
 
-  if (!user) return <LoginPage />;
+  if (!user) {
+    if (showLogin) {
+      return <LoginPage onBack={() => setShowLogin(false)} />;
+    }
+    return <LandingPage onLogin={() => setShowLogin(true)} />;
+  }
 
   return (
     <div className={`min-h-screen font-sans pb-20 transition-colors duration-300 ${

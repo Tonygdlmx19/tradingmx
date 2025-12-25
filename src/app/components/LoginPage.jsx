@@ -6,9 +6,9 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup
 } from "firebase/auth";
-import { Activity, Lock, Mail } from 'lucide-react';
+import { Activity, Lock, Mail, ArrowLeft } from 'lucide-react';
 
-export default function LoginPage() {
+export default function LoginPage({ onBack }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,7 +44,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 relative">
+      {/* Botón volver */}
+      {onBack && (
+        <button 
+          onClick={onBack}
+          className="absolute top-6 left-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span>Volver</span>
+        </button>
+      )}
+      
       <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md text-center shadow-2xl">
         <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <Activity size={32} className="text-blue-600"/>
