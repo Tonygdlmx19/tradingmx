@@ -1,6 +1,5 @@
 "use client";
 import { useState } from 'react';
-import Image from 'next/image';
 import { useTheme } from './ThemeProvider';
 import EconomicCalendar from './EconomicCalendar';
 import { Settings, LogOut, Menu, Sun, Moon, CloudSun, Target, Calendar } from 'lucide-react';
@@ -62,8 +61,8 @@ export default function Header({
       {/* Header principal */}
       <nav className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border-b sticky top-0 z-40 shadow-sm transition-colors duration-300`}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-          <div className="w-[100px] sm:w-[120px] h-[35px] sm:h-[40px] flex items-center">
-            <Image src="/tradingLogo.png" alt="Trading Journal PRO" width={120} height={40} className="max-w-full max-h-full object-contain" priority />
+          <div className="h-[40px] sm:h-[45px] flex items-center">
+            <img src="/tradingLogo.svg" alt="Trading Journal PRO" className="h-full w-auto object-contain" />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">

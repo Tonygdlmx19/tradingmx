@@ -6,7 +6,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup
 } from "firebase/auth";
-import { Activity, Lock, Mail, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage({ onBack }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -57,12 +57,9 @@ export default function LoginPage({ onBack }) {
       )}
       
       <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md text-center shadow-2xl">
-        <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Activity size={32} className="text-blue-600"/>
+        <div className="h-12 sm:h-14 mx-auto mb-4">
+          <img src="/tradingLogo.svg" alt="Trading Journal PRO" className="h-full w-auto mx-auto object-contain" />
         </div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-800 mb-1">
-          Trading Journal <span className="text-blue-600">PRO</span>
-        </h1>
         <p className="text-slate-500 mb-6 text-sm">
           {isRegistering ? 'Crea una cuenta para guardar tus trades.' : 'Inicia sesión para ver tu progreso.'}
         </p>
