@@ -22,8 +22,9 @@ if (typeof window !== 'undefined') {
   setPersistence(auth, browserLocalPersistence).catch(console.error);
 }
 
-// Provider de Google
+// Provider de Google - forzar selección de cuenta cada vez
 export const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: 'select_account' });
 
 // Firestore
 export const db = getFirestore(app);
