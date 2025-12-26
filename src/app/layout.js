@@ -23,6 +23,10 @@ export const viewport = {
 export const metadata = {
   title: "Trading Journal PRO",
   description: "Tu bitácora profesional de trading",
+  icons: {
+    icon: '/iconoapp.png',
+    apple: '/iconoapp.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
