@@ -1,12 +1,10 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { auth, provider } from '../../firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult
+  signInWithPopup
 } from "firebase/auth";
 import { Lock, Mail } from 'lucide-react';
 
@@ -16,27 +14,6 @@ export default function LoginPage({ onBack }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  // Detectar si es móvil
-  const isMobile = () => {
-    if (typeof window === 'undefined') return false;
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  };
-
-  // Capturar resultado de redirect (para móviles)
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          // Login exitoso, el onAuthStateChanged en page.js se encargará
-          console.log('Login redirect exitoso');
-        }
-      })
-      .catch((error) => {
-        console.error('Error en redirect:', error);
-        setError("Error con Google: " + error.message);
-      });
-  }, []);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -66,15 +43,18 @@ export default function LoginPage({ onBack }) {
     setError('');
     setIsLoading(true);
     try {
-      if (isMobile()) {
-        // En móvil usar redirect
-        await signInWithRedirect(auth, provider);
-      } else {
-        // En desktop usar popup
-        await signInWithPopup(auth, provider);
-      }
+      await signInWithPopup(auth, provider);
     } catch (error) {
-      setError("Error con Google: " + error.message);
+      // Si el popup fue bloqueado o cerrado
+      if (error.code === 'auth/popup-blocked') {
+        setError("El popup fue bloqueado. Permite popups para este sitio.");
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        setError("Cerraste la ventana de Google. Intenta de nuevo.");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        // Usuario hizo click múltiples veces, ignorar
+      } else {
+        setError("Error con Google: " + error.message);
+      }
       setIsLoading(false);
     }
   };

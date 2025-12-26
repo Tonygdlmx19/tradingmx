@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../firebase';
-import { signOut, onAuthStateChanged, getRedirectResult } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { 
   collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc, getDoc 
 } from 'firebase/firestore';
@@ -56,19 +56,6 @@ export default function TradingJournalPRO() {
     notas: '',
     imagen: null,
   });
-
-  // Capturar resultado de redirect de Google (para móviles)
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          console.log('Login redirect exitoso:', result.user.email);
-        }
-      })
-      .catch((error) => {
-        console.error('Error en redirect:', error);
-      });
-  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {

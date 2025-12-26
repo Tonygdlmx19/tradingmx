@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -14,20 +14,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Auth con persistencia local
+// Auth
 export const auth = getAuth(app);
-
-// Configurar persistencia para que funcione en móviles
-setPersistence(auth, browserLocalPersistence)
-  .catch((error) => {
-    console.error("Error configurando persistencia:", error);
-  });
 
 // Provider de Google
 export const provider = new GoogleAuthProvider();
-provider.setCustomParameters({
-  prompt: 'select_account'
-});
 
 // Firestore
 export const db = getFirestore(app);
