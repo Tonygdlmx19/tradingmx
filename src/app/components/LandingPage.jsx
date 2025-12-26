@@ -33,6 +33,7 @@ export default function LandingPage({ onLogin }) {
   const [openFaq, setOpenFaq] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [showTerms, setShowTerms] = useState(false);
   const videoRef = useRef(null);
 
   // ⚠️ IMPORTANTE: Reemplaza esta URL con la de tu video en Firebase Storage
@@ -214,8 +215,96 @@ export default function LandingPage({ onLogin }) {
     </button>
   );
 
+  // Modal de Términos y Condiciones
+  const TermsModal = () => (
+    <div
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300 ${showTerms ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      onClick={() => setShowTerms(false)}
+    >
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div
+        className="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+          <h3 className="text-lg font-bold text-white">Términos y Condiciones</h3>
+          <button
+            onClick={() => setShowTerms(false)}
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[60vh] text-sm text-slate-300 space-y-4">
+          <p className="text-slate-400 text-xs">Última actualización: Enero 2025</p>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">1. Aceptación de Términos</h4>
+            <p>Al acceder y utilizar Trading Journal PRO, aceptas estos términos y condiciones en su totalidad. Si no estás de acuerdo con alguna parte, no debes utilizar nuestro servicio.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">2. Descripción del Servicio</h4>
+            <p>Trading Journal PRO es una aplicación web diseñada para ayudar a traders a registrar, analizar y mejorar su operativa mediante el seguimiento de métricas y estadísticas de trading.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">3. Registro y Cuenta</h4>
+            <p>Para acceder al servicio debes crear una cuenta utilizando Google Sign-In. Eres responsable de mantener la confidencialidad de tu cuenta y de todas las actividades que ocurran bajo ella.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">4. Pagos y Reembolsos</h4>
+            <p>El acceso a Trading Journal PRO requiere un pago único. Ofrecemos una garantía de devolución de 7 días desde la fecha de compra. Para solicitar un reembolso, contacta a nuestro soporte.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">5. Uso Aceptable</h4>
+            <p>Te comprometes a utilizar el servicio únicamente para fines legales y de acuerdo con estos términos. No debes intentar acceder a cuentas de otros usuarios ni interferir con el funcionamiento del servicio.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">6. Privacidad de Datos</h4>
+            <p>Tus datos de trading son privados y solo tú puedes acceder a ellos. Utilizamos Firebase con encriptación para proteger tu información. No vendemos ni compartimos tus datos con terceros.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">7. Limitación de Responsabilidad</h4>
+            <p>Trading Journal PRO es una herramienta de registro y análisis. No proporcionamos asesoría financiera ni garantizamos resultados de trading. Las decisiones de inversión son tu responsabilidad exclusiva.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">8. Modificaciones</h4>
+            <p>Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios serán efectivos al publicarse en la aplicación.</p>
+          </section>
+
+          <section>
+            <h4 className="font-bold text-white mb-2">9. Contacto</h4>
+            <p>Para cualquier pregunta sobre estos términos, contáctanos en: <a href="mailto:tmsolucionesdigitales@gmail.com" className="text-emerald-400 hover:underline">tmsolucionesdigitales@gmail.com</a></p>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-700">
+          <button
+            onClick={() => setShowTerms(false)}
+            className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+      {/* Modal de Términos */}
+      {showTerms && <TermsModal />}
+
       {/* Estilos para animaciones */}
       <style jsx global>{`
         @keyframes gradient-shift {
@@ -289,81 +378,6 @@ export default function LandingPage({ onLogin }) {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ==================== VIDEO DEMO - CON FIREBASE STORAGE ==================== */}
-      <section className="py-12 sm:py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-6 sm:mb-10">
-            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
-              Mira cómo <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">funciona</span>
-            </h2>
-            <p className="text-slate-400 text-xs sm:text-base">
-              En 2 minutos te muestro cómo puede transformar tu operativa
-            </p>
-          </div>
-
-          <div className="relative rounded-xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-emerald-500/10 border border-slate-800">
-            {/* Video Container */}
-            <div 
-              className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 relative group cursor-pointer"
-              onClick={handlePlayVideo}
-            >
-              {/* Video Element */}
-              <video
-                ref={videoRef}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
-                src={VIDEO_URL}
-                poster={VIDEO_POSTER}
-                muted={isMuted}
-                playsInline
-                onEnded={() => setIsPlaying(false)}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-              />
-              
-              {/* Play/Pause Overlay - Se oculta cuando reproduce */}
-              <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${isPlaying ? 'opacity-0 hover:opacity-100' : 'opacity-100'}`}>
-                <div className="text-center">
-                  <div className={`w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 group-hover:scale-110 transition-all ${isPlaying ? 'scale-90' : ''}`}>
-                    {isPlaying ? (
-                      <Pause className="w-6 h-6 sm:w-10 sm:h-10 text-white" fill="white" />
-                    ) : (
-                      <Play className="w-6 h-6 sm:w-10 sm:h-10 text-white ml-1" fill="white" />
-                    )}
-                  </div>
-                  {!isPlaying && (
-                    <>
-                      <p className="text-white font-bold text-sm sm:text-lg">Ver Demo</p>
-                      <p className="text-slate-400 text-xs">2 minutos</p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Controles de video (visible cuando reproduce) */}
-              {isPlaying && (
-                <div className="absolute bottom-4 right-4 flex gap-2">
-                  <button
-                    onClick={toggleMute}
-                    className="p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-                  >
-                    {isMuted ? (
-                      <VolumeX className="w-5 h-5 text-white" />
-                    ) : (
-                      <Volume2 className="w-5 h-5 text-white" />
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Texto debajo del video */}
-          <p className="text-center text-slate-500 text-xs mt-4">
-            {isPlaying ? 'Click para pausar' : 'Click para reproducir'} • Sin sonido molesto
-          </p>
         </div>
       </section>
 
@@ -647,8 +661,8 @@ export default function LandingPage({ onLogin }) {
             © 2025 Trading Journal PRO. Todos los derechos reservados.
           </p>
           <div className="flex gap-4 sm:gap-6 text-xs sm:text-sm text-slate-500">
-            <a href="#" className="hover:text-blue-600 transition-colors">Términos</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Privacidad</a>
+            <button onClick={() => setShowTerms(true)} className="hover:text-blue-600 transition-colors">Términos</button>
+            <button onClick={() => setShowTerms(true)} className="hover:text-blue-600 transition-colors">Privacidad</button>
             <a href="mailto:tmsolucionesdigitales@gmail.com" className="hover:text-blue-600 transition-colors">Contacto</a>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
   EquityChart,
   DrawdownChart,
   TradesTable,
+  EconomicCalendar,
   useTheme
 } from './components';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
@@ -34,6 +35,7 @@ export default function TradingJournalPRO() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
   const [viewMode, setViewMode] = useState('global');
@@ -310,7 +312,13 @@ export default function TradingJournalPRO() {
         metaDiariaPct={metaDiariaPct}
         progresoMeta={progresoMeta}
         onSettings={() => setShowSettings(true)}
+        onCalendar={() => setShowCalendar(true)}
         onLogout={handleLogout}
+      />
+
+      <EconomicCalendar
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
       />
 
       <main className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">

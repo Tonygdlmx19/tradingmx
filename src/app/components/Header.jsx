@@ -1,16 +1,17 @@
 "use client";
 import { useTheme } from './ThemeProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target } from 'lucide-react';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar } from 'lucide-react';
 
-export default function Header({ 
-  user, 
+export default function Header({
+  user,
   config,
   pnlHoy,
   metaDiaria,
   metaDiariaPct,
   progresoMeta,
-  onSettings, 
-  onLogout 
+  onSettings,
+  onCalendar,
+  onLogout
 }) {
   const { isDark, toggleTheme } = useTheme();
 
@@ -75,8 +76,16 @@ export default function Header({
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             
-            <button 
-              onClick={onSettings} 
+            <button
+              onClick={onCalendar}
+              className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-blue-400' : 'hover:bg-slate-100 text-blue-500'}`}
+              title="Calendario Económico"
+            >
+              <Calendar size={18}/>
+            </button>
+
+            <button
+              onClick={onSettings}
               className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}
             >
               <Settings size={18}/>
