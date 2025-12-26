@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../firebase';
-import { signOut, onAuthStateChanged, getRedirectResult } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { 
   collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc, getDoc 
 } from 'firebase/firestore';
@@ -57,51 +57,35 @@ export default function TradingJournalPRO() {
     imagen: null,
   });
 
-  // Manejar auth: primero verificar redirect, luego escuchar cambios
+  // Escuchar cambios de autenticación
   useEffect(() => {
-    let unsubscribe = () => {};
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log('[AUTH] Estado:', currentUser?.email || 'sin usuario');
 
-    const initAuth = async () => {
-      console.log('[AUTH] Iniciando...');
+      if (currentUser) {
+        // Verificar autorización ANTES de actualizar el estado del usuario
+        try {
+          const email = currentUser.email?.toLowerCase();
+          const authDocRef = doc(db, "authorized_users", email);
+          const authDoc = await getDoc(authDocRef);
+          const authorized = authDoc.exists() && authDoc.data()?.status === 'active';
+          console.log('[AUTH] Autorizado:', authorized);
 
-      // Verificar si hay un resultado pendiente de redirect (móviles)
-      try {
-        const redirectResult = await getRedirectResult(auth);
-        if (redirectResult?.user) {
-          console.log('[AUTH] Redirect exitoso:', redirectResult.user.email);
-          // El usuario ya está autenticado, onAuthStateChanged lo detectará
-        }
-      } catch (error) {
-        console.error('[AUTH] Error redirect:', error.code);
-      }
-
-      // Escuchar cambios de autenticación
-      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        console.log('[AUTH] Estado:', currentUser?.email || 'sin usuario');
-
-        if (currentUser) {
+          // Actualizar todo junto para evitar flash de pantallas
+          setIsAuthorized(authorized);
           setUser(currentUser);
-          try {
-            const email = currentUser.email?.toLowerCase();
-            const authDocRef = doc(db, "authorized_users", email);
-            const authDoc = await getDoc(authDocRef);
-            const authorized = authDoc.exists() && authDoc.data()?.status === 'active';
-            console.log('[AUTH] Autorizado:', authorized);
-            setIsAuthorized(authorized);
-          } catch (error) {
-            console.error('[AUTH] Error auth:', error);
-            setIsAuthorized(false);
-          }
-        } else {
-          setUser(null);
+        } catch (error) {
+          console.error('[AUTH] Error auth:', error);
           setIsAuthorized(false);
+          setUser(currentUser);
         }
-        setCheckingAuth(false);
-        setLoading(false);
-      });
-    };
-
-    initAuth();
+      } else {
+        setUser(null);
+        setIsAuthorized(false);
+      }
+      setCheckingAuth(false);
+      setLoading(false);
+    });
 
     return () => unsubscribe();
   }, []);

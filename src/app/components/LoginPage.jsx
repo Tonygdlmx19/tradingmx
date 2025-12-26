@@ -1,20 +1,12 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { auth, provider } from '../../firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult
+  signInWithPopup
 } from "firebase/auth";
 import { Lock, Mail } from 'lucide-react';
-
-// Detectar si es dispositivo móvil
-const isMobile = () => {
-  if (typeof window === 'undefined') return false;
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-};
 
 export default function LoginPage({ onBack }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -22,27 +14,6 @@ export default function LoginPage({ onBack }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  // Manejar resultado de redirect (para móviles)
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // Login exitoso, el onAuthStateChanged en el componente padre lo manejará
-          console.log('Login con Google exitoso');
-        }
-      } catch (error) {
-        console.error('Error en redirect:', error);
-        if (error.code === 'auth/account-exists-with-different-credential') {
-          setError('Ya existe una cuenta con este correo usando otro método.');
-        } else if (error.code !== 'auth/popup-closed-by-user') {
-          setError('Error al iniciar sesión con Google.');
-        }
-      }
-    };
-    handleRedirectResult();
-  }, []);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -72,43 +43,48 @@ export default function LoginPage({ onBack }) {
     setError('');
     setIsLoading(true);
     try {
-      // En móviles usar redirect, en desktop usar popup
-      if (isMobile()) {
-        await signInWithRedirect(auth, provider);
-        // No llegará aquí porque redirige
-      } else {
-        await signInWithPopup(auth, provider);
-      }
+      // Usar siempre popup (funciona mejor en iOS Safari que redirect)
+      await signInWithPopup(auth, provider);
     } catch (error) {
-      // Si el popup fue bloqueado o cerrado
-      if (error.code === 'auth/popup-blocked') {
-        // Fallback a redirect si el popup falla
-        try {
-          await signInWithRedirect(auth, provider);
-        } catch (redirectError) {
-          setError("Error al iniciar sesión. Intenta de nuevo.");
-        }
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      console.log('Google login error:', error.code);
+      if (error.code === 'auth/popup-closed-by-user') {
         setError("Cerraste la ventana de Google. Intenta de nuevo.");
       } else if (error.code === 'auth/cancelled-popup-request') {
         // Usuario hizo click múltiples veces, ignorar
+      } else if (error.code === 'auth/popup-blocked') {
+        setError("El navegador bloqueó la ventana. Permite popups para este sitio.");
       } else {
-        setError("Error con Google: " + error.message);
+        setError("Error con Google: " + (error.message || error.code));
       }
       setIsLoading(false);
     }
   };
 
+  // Si está cargando (procesando login), mostrar loader con velas
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="text-center">
+          {/* Velas japonesas animadas */}
+          <div className="flex items-end justify-center gap-1 mb-4 h-12">
+            <div className="w-2 bg-emerald-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '60%', animationDelay: '0ms'}}></div>
+            <div className="w-2 bg-red-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '40%', animationDelay: '100ms'}}></div>
+            <div className="w-2 bg-emerald-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '80%', animationDelay: '200ms'}}></div>
+            <div className="w-2 bg-red-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '50%', animationDelay: '300ms'}}></div>
+            <div className="w-2 bg-emerald-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '70%', animationDelay: '400ms'}}></div>
+          </div>
+          <p className="text-slate-400 text-sm">Iniciando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md text-center shadow-2xl">
         {/* Logo */}
-        <div className="flex items-center justify-center mb-4">
-          <img 
-            src="/tradingLogo.svg" 
-            alt="Trading Journal PRO" 
-            className="h-12 sm:h-14 object-contain"
-          />
+        <div className="w-[150px] sm:w-[160px] h-[50px] flex items-center justify-center mx-auto mb-4">
+          <img src="/tradingLogo.svg" alt="Trading Journal PRO" className="max-w-full max-h-full object-contain" />
         </div>
         
         <p className="text-slate-500 mb-6 text-sm">

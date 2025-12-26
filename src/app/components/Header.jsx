@@ -57,8 +57,8 @@ export default function Header({
       {/* Header principal */}
       <nav className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border-b sticky top-0 z-40 shadow-sm transition-colors duration-300`}>
         <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center" style={{ maxWidth: '1280px' }}>
-          {/* Logo más grande */}
-          <div className="w-[130px] sm:w-[150px] h-[45px] sm:h-[50px] flex items-center">
+          {/* Logo */}
+          <div className="w-[150px] sm:w-[160px] h-[50px] flex items-center">
             <img src="/tradingLogo.svg" alt="Trading Journal PRO" className="max-w-full max-h-full object-contain" />
           </div>
 

@@ -257,13 +257,9 @@ export default function LandingPage({ onLogin }) {
       {/* ==================== NAVBAR ==================== */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md py-3">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
-          {/* Logo grande */}
-          <div className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
-            <img 
-              src="/tradingLogo.svg" 
-              alt="Trading Journal PRO" 
-              className="h-12 sm:h-14 md:h-16 w-auto"
-            />
+          {/* Logo */}
+          <div className="w-[150px] sm:w-[160px] h-[50px] flex items-center hover:opacity-80 transition-opacity cursor-pointer">
+            <img src="/tradingLogo.svg" alt="Trading Journal PRO" className="max-w-full max-h-full object-contain" />
           </div>
           
           {/* Botones */}
@@ -680,12 +676,8 @@ export default function LandingPage({ onLogin }) {
       {/* ==================== FOOTER ==================== */}
       <footer className="py-8 sm:py-10 px-4 bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto flex flex-col items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/tradingLogo.svg" 
-              alt="Trading Journal PRO" 
-              className="h-10 sm:h-12 w-auto"
-            />
+          <div className="w-[150px] sm:w-[160px] h-[50px] flex items-center justify-center">
+            <img src="/tradingLogo.svg" alt="Trading Journal PRO" className="max-w-full max-h-full object-contain" />
           </div>
           <p className="text-slate-500 text-xs sm:text-sm text-center">
             © 2025 Trading Journal PRO. Todos los derechos reservados.
