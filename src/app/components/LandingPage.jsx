@@ -138,7 +138,7 @@ export default function LandingPage({ onLogin }) {
   const faqs = [
     {
       q: "¿Cómo recibo acceso después de pagar?",
-      a: "Inmediatamente después del pago recibirás un email con tus credenciales de acceso. Si no lo ves, revisa tu carpeta de spam."
+      a: "Al pagar con PayPal, usa el mismo correo que usarás para iniciar sesión con Google. Tu acceso se activa automáticamente en 1-2 minutos. Solo haz clic en 'Ingresar' y selecciona Google."
     },
     {
       q: "¿El pago es único o es suscripción?",
@@ -166,59 +166,29 @@ export default function LandingPage({ onLogin }) {
     window.open('https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU', '_blank');
   };
 
-  // Componente de botón de compra - Compacto y horizontal
-  const BuyButton = ({ size = 'normal', className = '' }) => (
+  // Componente de botón de compra
+  const BuyButton = ({ className = '' }) => (
     <div className={`relative group ${className}`}>
       {/* Glow animado exterior */}
       <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
-      
-      <button 
+
+      <button
         onClick={handlePayPal}
-        className={`
-          relative
-          bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439]
-          text-black font-bold rounded-xl
-          transition-all duration-300
-          hover:scale-[1.02] active:scale-[0.98]
-          overflow-hidden
-          border border-yellow-500/50
-          shadow-lg shadow-yellow-500/20
-          px-5 sm:px-6 py-3 sm:py-3.5
-        `}
+        className="relative bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-4 sm:px-6 py-2.5 sm:py-3"
       >
         {/* Efecto de brillo */}
         <div className="absolute inset-0 overflow-hidden rounded-xl">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
         </div>
-        
-        {/* Contenido del botón - Todo en una línea */}
-        <div className="relative flex items-center justify-center gap-3 sm:gap-4">
-          {/* Logo PayPal */}
-          <img 
-            src="/paypal.png" 
-            alt="PayPal" 
-            className="h-6 sm:h-7 w-auto object-contain"
-          />
-          
-          {/* Separador */}
-          <div className="w-px h-6 bg-black/20" />
-          
-          {/* Texto y precios en línea */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-sm sm:text-base font-black">Comprar</span>
-            <span className="text-black/40 line-through text-xs sm:text-sm">$49.99</span>
-            <span className="bg-black text-yellow-400 px-2 py-0.5 rounded-md text-sm sm:text-base font-black">
-              $19.99
-            </span>
-          </div>
-          
-          {/* Badge de descuento */}
-          <div className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
-            -60%
-          </div>
-          
-          {/* Flecha */}
-          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+
+        {/* Contenido del botón */}
+        <div className="relative flex items-center justify-center gap-2 sm:gap-3">
+          <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />
+          <div className="w-px h-5 bg-black/20" />
+          <span className="text-sm sm:text-base font-black">Comprar</span>
+          <span className="text-black/40 line-through text-xs">$49.99</span>
+          <span className="bg-black text-yellow-400 px-1.5 py-0.5 rounded text-xs sm:text-sm font-bold">$19.99</span>
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </button>
     </div>
@@ -315,15 +285,7 @@ export default function LandingPage({ onLogin }) {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none" />
             <div className="bg-gradient-to-b from-emerald-500/20 to-transparent p-0.5 sm:p-1 rounded-2xl">
               <div className="bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-emerald-500/10 border border-slate-800">
-                {/* ⬇️ REEMPLAZA ESTO CON TU SCREENSHOT: <img src="/interfaz.jpg" alt="Trading Journal PRO" className="w-full" /> */}
-                <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-14 h-14 sm:w-20 sm:h-20 bg-emerald-500/20 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3">
-                      <BarChart3 className="w-7 h-7 sm:w-10 sm:h-10 text-emerald-500" />
-                    </div>
-                    <p className="text-slate-400 font-medium text-xs sm:text-base">Screenshot de tu app aquí</p>
-                  </div>
-                </div>
+                <img src="/apptj.png" alt="Trading Journal PRO" className="w-full" />
               </div>
             </div>
           </div>
@@ -573,12 +535,14 @@ export default function LandingPage({ onLogin }) {
               </div>
               
               {/* Precio */}
-              <div className="mb-4 sm:mb-6">
-                <div className="text-slate-500 text-xs line-through mb-1">$49.99 USD</div>
-                <span className="text-4xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300">$19.99</span>
-                <span className="text-slate-400 ml-1 text-sm">USD</span>
-                <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-bold rounded-full">
-                  <Zap className="w-3 h-3" />
+              <div className="mb-6 sm:mb-8">
+                <div className="text-slate-500 text-xs line-through mb-2">$49.99 USD</div>
+                <div className="mb-3">
+                  <span className="text-4xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300">$19.99</span>
+                  <span className="text-slate-400 ml-1 text-sm">USD</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm font-bold rounded-full">
+                  <Zap className="w-3.5 h-3.5" />
                   60% DESCUENTO
                 </div>
               </div>
