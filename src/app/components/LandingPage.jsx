@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   TrendingUp, 
   BarChart3, 
@@ -14,6 +14,7 @@ import {
   ChevronDown,
   LogIn,
   Play,
+  Pause,
   Sparkles,
   Shield,
   Zap,
@@ -23,11 +24,41 @@ import {
   Brain,
   Repeat,
   HelpCircle,
-  BarChart
+  BarChart,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 export default function LandingPage({ onLogin }) {
   const [openFaq, setOpenFaq] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef(null);
+
+  // ⚠️ IMPORTANTE: Reemplaza esta URL con la de tu video en Firebase Storage
+  const VIDEO_URL = "https://firebasestorage.googleapis.com/v0/b/TU-PROYECTO.appspot.com/o/public%2Fdemo.mp4?alt=media";
+  
+  // Opcional: Imagen de preview/poster del video
+  const VIDEO_POSTER = "/video-poster.jpg"; // Guarda una imagen en /public/video-poster.jpg
+
+  const handlePlayVideo = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = (e) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
   const features = [
     {
@@ -283,11 +314,12 @@ export default function LandingPage({ onLogin }) {
             </div>
           </div>
 
-          {/* App Preview */}
+          {/* App Preview - Aquí puedes poner tu screenshot */}
           <div className="relative px-2">
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none" />
             <div className="bg-gradient-to-b from-emerald-500/20 to-transparent p-0.5 sm:p-1 rounded-2xl">
               <div className="bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-emerald-500/10 border border-slate-800">
+                {/* ⬇️ REEMPLAZA ESTO CON TU SCREENSHOT: <img src="/interfaz.jpg" alt="Trading Journal PRO" className="w-full" /> */}
                 <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-14 h-14 sm:w-20 sm:h-20 bg-emerald-500/20 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -302,7 +334,7 @@ export default function LandingPage({ onLogin }) {
         </div>
       </section>
 
-      {/* ==================== VIDEO DEMO ==================== */}
+      {/* ==================== VIDEO DEMO - CON FIREBASE STORAGE ==================== */}
       <section className="py-12 sm:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-6 sm:mb-10">
@@ -315,18 +347,65 @@ export default function LandingPage({ onLogin }) {
           </div>
 
           <div className="relative rounded-xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-emerald-500/10 border border-slate-800">
-            <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 relative group cursor-pointer">
-              <div className="absolute inset-0 flex items-center justify-center">
+            {/* Video Container */}
+            <div 
+              className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 relative group cursor-pointer"
+              onClick={handlePlayVideo}
+            >
+              {/* Video Element */}
+              <video
+                ref={videoRef}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
+                src={VIDEO_URL}
+                poster={VIDEO_POSTER}
+                muted={isMuted}
+                playsInline
+                onEnded={() => setIsPlaying(false)}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+              
+              {/* Play/Pause Overlay - Se oculta cuando reproduce */}
+              <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${isPlaying ? 'opacity-0 hover:opacity-100' : 'opacity-100'}`}>
                 <div className="text-center">
-                  <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 group-hover:scale-110 transition-all">
-                    <Play className="w-6 h-6 sm:w-10 sm:h-10 text-white ml-1" fill="white" />
+                  <div className={`w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 group-hover:scale-110 transition-all ${isPlaying ? 'scale-90' : ''}`}>
+                    {isPlaying ? (
+                      <Pause className="w-6 h-6 sm:w-10 sm:h-10 text-white" fill="white" />
+                    ) : (
+                      <Play className="w-6 h-6 sm:w-10 sm:h-10 text-white ml-1" fill="white" />
+                    )}
                   </div>
-                  <p className="text-white font-bold text-sm sm:text-lg">Ver Demo</p>
-                  <p className="text-slate-400 text-xs">2 minutos</p>
+                  {!isPlaying && (
+                    <>
+                      <p className="text-white font-bold text-sm sm:text-lg">Ver Demo</p>
+                      <p className="text-slate-400 text-xs">2 minutos</p>
+                    </>
+                  )}
                 </div>
               </div>
+
+              {/* Controles de video (visible cuando reproduce) */}
+              {isPlaying && (
+                <div className="absolute bottom-4 right-4 flex gap-2">
+                  <button
+                    onClick={toggleMute}
+                    className="p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5 text-white" />
+                    ) : (
+                      <Volume2 className="w-5 h-5 text-white" />
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
+          
+          {/* Texto debajo del video */}
+          <p className="text-center text-slate-500 text-xs mt-4">
+            {isPlaying ? 'Click para pausar' : 'Click para reproducir'} • Sin sonido molesto
+          </p>
         </div>
       </section>
 
@@ -614,7 +693,7 @@ export default function LandingPage({ onLogin }) {
           <div className="flex gap-4 sm:gap-6 text-xs sm:text-sm text-slate-500">
             <a href="#" className="hover:text-blue-600 transition-colors">Términos</a>
             <a href="#" className="hover:text-blue-600 transition-colors">Privacidad</a>
-            <a href="mailto:tu@email.com" className="hover:text-blue-600 transition-colors">Contacto</a>
+            <a href="mailto:tmsolucionesdigitales@gmail.com" className="hover:text-blue-600 transition-colors">Contacto</a>
           </div>
         </div>
       </footer>
