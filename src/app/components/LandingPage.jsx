@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   TrendingUp, 
   BarChart3, 
@@ -34,7 +34,27 @@ export default function LandingPage({ onLogin }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showTerms, setShowTerms] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ hours: 1, minutes: 0, seconds: 0 });
   const videoRef = useRef(null);
+
+  // Contador de tiempo limitado
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        } else {
+          // Reiniciar el contador cuando llega a 0
+          return { hours: 23, minutes: 59, seconds: 59 };
+        }
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // ⚠️ IMPORTANTE: Reemplaza esta URL con la de tu video en Firebase Storage
   const VIDEO_URL = "https://firebasestorage.googleapis.com/v0/b/TU-PROYECTO.appspot.com/o/public%2Fdemo.mp4?alt=media";
@@ -167,22 +187,17 @@ export default function LandingPage({ onLogin }) {
     window.open('https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU', '_blank');
   };
 
-  // Componente de botón de compra
-  const BuyButton = ({ className = '' }) => (
+  // Botón con precios para Hero y CTA (Comprar)
+  const BuyButtonWithPrice = ({ className = '' }) => (
     <div className={`relative group ${className}`}>
-      {/* Glow animado exterior */}
       <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
-
       <button
         onClick={handlePayPal}
         className="relative bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-4 sm:px-6 py-2.5 sm:py-3"
       >
-        {/* Efecto de brillo */}
         <div className="absolute inset-0 overflow-hidden rounded-xl">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
         </div>
-
-        {/* Contenido del botón */}
         <div className="relative flex items-center justify-center gap-2 sm:gap-3">
           <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />
           <div className="w-px h-5 bg-black/20" />
@@ -195,19 +210,32 @@ export default function LandingPage({ onLogin }) {
     </div>
   );
 
+  // Botón simple para el card de precio
+  const BuyButton = ({ className = '' }) => (
+    <div className={`relative group ${className}`}>
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
+      <button
+        onClick={handlePayPal}
+        className="relative bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-6 sm:px-8 py-2.5 sm:py-3"
+      >
+        <div className="relative flex items-center justify-center gap-2">
+          <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />
+          <span className="text-sm sm:text-base font-black">Comprar</span>
+        </div>
+      </button>
+    </div>
+  );
+
   // Botón secundario para navbar
   const NavBuyButton = () => (
-    <button 
+    <button
       onClick={handlePayPal}
       className="relative group overflow-hidden bg-gradient-to-r from-[#FFC439] to-[#FFD700] text-black font-bold px-3 sm:px-4 py-2 rounded-lg transition-all shadow-md shadow-yellow-500/20 hover:shadow-yellow-500/40 hover:scale-105 active:scale-95 flex items-center gap-2 border border-yellow-500/50"
     >
-      {/* Brillo */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500" />
-      
       <div className="relative flex items-center gap-1.5">
-        <img 
-          src="/paypal.png" 
-          alt="PayPal" 
+        <img
+          src="/paypal.png"
+          alt="PayPal"
           className="h-5 w-auto object-contain"
         />
         <span className="font-bold text-sm">Comprar</span>
@@ -361,7 +389,7 @@ export default function LandingPage({ onLogin }) {
             </p>
             
             <div className="flex flex-col items-center gap-3 sm:gap-4 px-4">
-              <BuyButton />
+              <BuyButtonWithPrice />
               <p className="text-slate-500 text-xs sm:text-sm flex items-center gap-2">
                 <Shield className="w-3.5 h-3.5" />
                 Pago único • Garantía 7 días
@@ -525,6 +553,166 @@ export default function LandingPage({ onLogin }) {
         </div>
       </section>
 
+      {/* ==================== TESTIMONIOS ==================== */}
+      <section className="py-12 sm:py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
+              Lo que dicen nuestros <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">traders</span>
+            </h2>
+            <p className="text-slate-400 text-xs sm:text-base">
+              Resultados reales de personas como tú
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Testimonio 1 - México */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-lg">
+                  RC
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Roberto Castillo</h4>
+                  <p className="text-slate-500 text-xs flex items-center gap-1">
+                    <span>🇲🇽</span> Guadalajara, México
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-400 text-sm">★</span>
+                ))}
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                "Llevaba 2 años operando sin llevar registro. Cuando empecé a usar el journal descubrí que mi win rate real era del 38%, no del 60% que yo creía. <span className="text-emerald-400 font-medium">En 3 meses lo subí a 52%</span> solo siendo consciente de mis errores."
+              </p>
+              <p className="text-slate-500 text-xs">Opera futuros desde 2021</p>
+            </div>
+
+            {/* Testimonio 2 - Argentina */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg">
+                  MF
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Martín Fernández</h4>
+                  <p className="text-slate-500 text-xs flex items-center gap-1">
+                    <span>🇦🇷</span> Buenos Aires, Argentina
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-400 text-sm">★</span>
+                ))}
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                "El calendario económico me salvó varias veces de operar en NFP sin darme cuenta. Pero lo mejor es ver mi curva de equity crecer. <span className="text-emerald-400 font-medium">+18% en mi cuenta en 2 meses.</span>"
+              </p>
+              <p className="text-slate-500 text-xs">Opera forex desde 2020</p>
+            </div>
+
+            {/* Testimonio 3 - Perú */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                  CV
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Carolina Vargas</h4>
+                  <p className="text-slate-500 text-xs flex items-center gap-1">
+                    <span>🇵🇪</span> Lima, Perú
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-400 text-sm">★</span>
+                ))}
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                "Antes operaba por impulso. Ahora registro cada trade y reviso mis emociones. <span className="text-emerald-400 font-medium">Mi drawdown máximo bajó de 25% a 8%.</span> La calculadora de riesgo es mi herramienta favorita."
+              </p>
+              <p className="text-slate-500 text-xs">Opera crypto desde 2022</p>
+            </div>
+
+            {/* Testimonio 4 - Chile */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-lg">
+                  DS
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Diego Soto</h4>
+                  <p className="text-slate-500 text-xs flex items-center gap-1">
+                    <span>🇨🇱</span> Santiago, Chile
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-400 text-sm">★</span>
+                ))}
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                "Simple pero efectivo. No necesitas Excel ni apps complicadas. <span className="text-emerald-400 font-medium">En 1 mes ya tenía claro que los lunes eran mi peor día.</span> Ahora no opero lunes y mi cuenta lo agradece."
+              </p>
+              <p className="text-slate-500 text-xs">Opera índices desde 2023</p>
+            </div>
+
+            {/* Testimonio 5 - México */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-red-500 flex items-center justify-center text-white font-bold text-lg">
+                  AG
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Andrea González</h4>
+                  <p className="text-slate-500 text-xs flex items-center gap-1">
+                    <span>🇲🇽</span> Monterrey, México
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-400 text-sm">★</span>
+                ))}
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                "Lo uso desde mi celular mientras viajo. Registro el trade, pongo mi emoción y listo. <span className="text-emerald-400 font-medium">Mi profit factor pasó de 0.8 a 1.6.</span> Por fin soy rentable después de 1 año."
+              </p>
+              <p className="text-slate-500 text-xs">Opera MNQ desde 2023</p>
+            </div>
+
+            {/* Testimonio 6 - Colombia */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold text-lg">
+                  JR
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Juan Rodríguez</h4>
+                  <p className="text-slate-500 text-xs flex items-center gap-1">
+                    <span>🇨🇴</span> Medellín, Colombia
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-yellow-400 text-sm">★</span>
+                ))}
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                "Probé como 5 journals diferentes. Este es el único que realmente uso porque es rápido. <span className="text-emerald-400 font-medium">Las estadísticas avanzadas valen cada peso.</span> Sé exactamente en qué activos soy mejor."
+              </p>
+              <p className="text-slate-500 text-xs">Opera forex y futuros desde 2019</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ==================== PRECIO - MEJORADO ==================== */}
       <section className="py-12 sm:py-20 px-4">
         <div className="max-w-md mx-auto">
@@ -555,9 +743,43 @@ export default function LandingPage({ onLogin }) {
                   <span className="text-4xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300">$19.99</span>
                   <span className="text-slate-400 ml-1 text-sm">USD</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm font-bold rounded-full">
-                  <Zap className="w-3.5 h-3.5" />
-                  60% DESCUENTO
+
+                {/* Descuento llamativo */}
+                <div className="relative inline-block mb-4">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-full blur opacity-60 animate-pulse" />
+                  <div className="relative inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs sm:text-sm font-black rounded-full shadow-lg">
+                    <Zap className="w-4 h-4" />
+                    60% DESCUENTO
+                  </div>
+                </div>
+
+                {/* Contador de tiempo limitado */}
+                <div className="bg-slate-800/80 border border-red-500/30 rounded-xl p-3 mt-2">
+                  <p className="text-red-400 text-[10px] sm:text-xs font-bold mb-2 flex items-center justify-center gap-1">
+                    <span className="animate-pulse">🔥</span> OFERTA POR TIEMPO LIMITADO
+                  </p>
+                  <div className="flex items-center justify-center gap-2 sm:gap-3">
+                    <div className="text-center">
+                      <div className="bg-slate-900 rounded-lg px-2 sm:px-3 py-1 border border-slate-700">
+                        <span className="text-lg sm:text-2xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+                      </div>
+                      <span className="text-[8px] sm:text-[10px] text-slate-500 mt-1">HORAS</span>
+                    </div>
+                    <span className="text-xl font-bold text-red-400">:</span>
+                    <div className="text-center">
+                      <div className="bg-slate-900 rounded-lg px-2 sm:px-3 py-1 border border-slate-700">
+                        <span className="text-lg sm:text-2xl font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                      </div>
+                      <span className="text-[8px] sm:text-[10px] text-slate-500 mt-1">MIN</span>
+                    </div>
+                    <span className="text-xl font-bold text-red-400">:</span>
+                    <div className="text-center">
+                      <div className="bg-slate-900 rounded-lg px-2 sm:px-3 py-1 border border-slate-700">
+                        <span className="text-lg sm:text-2xl font-black text-red-400">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                      </div>
+                      <span className="text-[8px] sm:text-[10px] text-slate-500 mt-1">SEG</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -646,7 +868,7 @@ export default function LandingPage({ onLogin }) {
             Únete a los traders que ya usan datos para mejorar. Tu futuro yo te lo agradecerá.
           </p>
           <div className="flex justify-center">
-            <BuyButton />
+            <BuyButtonWithPrice />
           </div>
         </div>
       </section>

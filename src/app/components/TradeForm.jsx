@@ -399,23 +399,23 @@ export default function TradeForm({ onSubmit, form, setForm }) {
           <>
             {/* --- MODO NORMAL --- */}
             {/* Lotes y P&L en grid */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 items-end">
               <div>
                 <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
                   Lotes/Contratos
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   min="1"
                   step="1"
-                  placeholder="1" 
+                  placeholder="1"
                   className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
-                    isDark 
-                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                    isDark
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500'
                       : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
                   }`}
-                  value={form.lotes} 
-                  onChange={e => setForm({...form, lotes: e.target.value})} 
+                  value={form.lotes}
+                  onChange={e => setForm({...form, lotes: e.target.value})}
                 />
               </div>
               <div>
@@ -430,8 +430,8 @@ export default function TradeForm({ onSubmit, form, setForm }) {
                     className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all ${
                       form.esGanancia !== false
                         ? 'bg-green-500 text-white shadow-sm'
-                        : isDark 
-                          ? 'text-slate-400 hover:text-white' 
+                        : isDark
+                          ? 'text-slate-400 hover:text-white'
                           : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
@@ -443,30 +443,30 @@ export default function TradeForm({ onSubmit, form, setForm }) {
                     className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all ${
                       form.esGanancia === false
                         ? 'bg-red-500 text-white shadow-sm'
-                        : isDark 
-                          ? 'text-slate-400 hover:text-white' 
+                        : isDark
+                          ? 'text-slate-400 hover:text-white'
                           : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     − LOSS
                   </button>
                 </div>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   min="0"
                   step="0.01"
-                  placeholder="0.00" 
+                  placeholder="0.00"
                   className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none transition-colors ${
                     form.esGanancia !== false
-                      ? isDark 
-                        ? 'bg-green-500/10 border-green-500/50 text-green-400 focus:border-green-500' 
+                      ? isDark
+                        ? 'bg-green-500/10 border-green-500/50 text-green-400 focus:border-green-500'
                         : 'bg-green-50 border-green-200 text-green-600 focus:border-green-500'
-                      : isDark 
-                        ? 'bg-red-500/10 border-red-500/50 text-red-400 focus:border-red-500' 
+                      : isDark
+                        ? 'bg-red-500/10 border-red-500/50 text-red-400 focus:border-red-500'
                         : 'bg-red-50 border-red-200 text-red-600 focus:border-red-500'
                   }`}
-                  value={form.res} 
-                  onChange={e => setForm({...form, res: e.target.value.replace('-', '')})} 
+                  value={form.res}
+                  onChange={e => setForm({...form, res: e.target.value.replace('-', '')})}
                   required
                 />
               </div>
