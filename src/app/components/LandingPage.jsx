@@ -281,7 +281,7 @@ export default function LandingPage({ onLogin }) {
       </nav>
 
       {/* ==================== HERO ==================== */}
-      <section className="pt-44 sm:pt-48 pb-12 sm:pb-20 px-4 relative">
+      <section className="pt-28 sm:pt-32 pb-12 sm:pb-20 px-4 relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl animate-pulse" />

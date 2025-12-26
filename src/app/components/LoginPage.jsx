@@ -1,12 +1,20 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { auth, provider } from '../../firebase';
-import { 
-  createUserWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
 } from "firebase/auth";
 import { Lock, Mail } from 'lucide-react';
+
+// Detectar si es dispositivo móvil
+const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+};
 
 export default function LoginPage({ onBack }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -14,6 +22,27 @@ export default function LoginPage({ onBack }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Manejar resultado de redirect (para móviles)
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // Login exitoso, el onAuthStateChanged en el componente padre lo manejará
+          console.log('Login con Google exitoso');
+        }
+      } catch (error) {
+        console.error('Error en redirect:', error);
+        if (error.code === 'auth/account-exists-with-different-credential') {
+          setError('Ya existe una cuenta con este correo usando otro método.');
+        } else if (error.code !== 'auth/popup-closed-by-user') {
+          setError('Error al iniciar sesión con Google.');
+        }
+      }
+    };
+    handleRedirectResult();
+  }, []);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -43,11 +72,22 @@ export default function LoginPage({ onBack }) {
     setError('');
     setIsLoading(true);
     try {
-      await signInWithPopup(auth, provider);
+      // En móviles usar redirect, en desktop usar popup
+      if (isMobile()) {
+        await signInWithRedirect(auth, provider);
+        // No llegará aquí porque redirige
+      } else {
+        await signInWithPopup(auth, provider);
+      }
     } catch (error) {
       // Si el popup fue bloqueado o cerrado
       if (error.code === 'auth/popup-blocked') {
-        setError("El popup fue bloqueado. Permite popups para este sitio.");
+        // Fallback a redirect si el popup falla
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirectError) {
+          setError("Error al iniciar sesión. Intenta de nuevo.");
+        }
       } else if (error.code === 'auth/popup-closed-by-user') {
         setError("Cerraste la ventana de Google. Intenta de nuevo.");
       } else if (error.code === 'auth/cancelled-popup-request') {
