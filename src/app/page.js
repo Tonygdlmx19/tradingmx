@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../firebase';
-import { signOut, onAuthStateChanged } from "firebase/auth";
+import { signOut, onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { 
   collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc, getDoc 
 } from 'firebase/firestore';
@@ -57,37 +57,52 @@ export default function TradingJournalPRO() {
     imagen: null,
   });
 
+  // Manejar auth: primero verificar redirect, luego escuchar cambios
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log('Auth state changed:', currentUser?.email);
-      setUser(currentUser);
-      
-      if (currentUser) {
-        // Verificar si el usuario está autorizado
-        try {
-          const email = currentUser.email?.toLowerCase();
-          console.log('Verificando autorización para:', email);
-          if (email) {
+    let unsubscribe = () => {};
+
+    const initAuth = async () => {
+      console.log('[AUTH] Iniciando...');
+
+      // Verificar si hay un resultado pendiente de redirect (móviles)
+      try {
+        const redirectResult = await getRedirectResult(auth);
+        if (redirectResult?.user) {
+          console.log('[AUTH] Redirect exitoso:', redirectResult.user.email);
+          // El usuario ya está autenticado, onAuthStateChanged lo detectará
+        }
+      } catch (error) {
+        console.error('[AUTH] Error redirect:', error.code);
+      }
+
+      // Escuchar cambios de autenticación
+      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        console.log('[AUTH] Estado:', currentUser?.email || 'sin usuario');
+
+        if (currentUser) {
+          setUser(currentUser);
+          try {
+            const email = currentUser.email?.toLowerCase();
             const authDocRef = doc(db, "authorized_users", email);
             const authDoc = await getDoc(authDocRef);
             const authorized = authDoc.exists() && authDoc.data()?.status === 'active';
-            console.log('Usuario autorizado:', authorized);
+            console.log('[AUTH] Autorizado:', authorized);
             setIsAuthorized(authorized);
-          } else {
+          } catch (error) {
+            console.error('[AUTH] Error auth:', error);
             setIsAuthorized(false);
           }
-        } catch (error) {
-          console.error('Error verificando autorización:', error);
+        } else {
+          setUser(null);
           setIsAuthorized(false);
         }
         setCheckingAuth(false);
         setLoading(false);
-      } else {
-        setIsAuthorized(false);
-        setCheckingAuth(false);
-        setLoading(false);
-      }
-    });
+      });
+    };
+
+    initAuth();
+
     return () => unsubscribe();
   }, []);
 
