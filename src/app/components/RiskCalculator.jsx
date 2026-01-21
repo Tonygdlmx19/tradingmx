@@ -159,6 +159,8 @@ export default function RiskCalculator({ balance }) {
   const [riesgoUSD, setRiesgoUSD] = useState('');
   const [precioEntrada, setPrecioEntrada] = useState('');
   const [precioSL, setPrecioSL] = useState('');
+  const [precioTP, setPrecioTP] = useState('');
+  const [tpValue, setTpValue] = useState('');
 
   // Calcular stop automáticamente cuando cambian los precios
   const calcularStopDesdePrecios = (entrada, sl) => {
@@ -167,6 +169,16 @@ export default function RiskCalculator({ balance }) {
     if (e > 0 && s > 0) {
       const diferencia = Math.abs(e - s);
       setStopValue(diferencia.toString());
+    }
+  };
+
+  // Calcular TP automáticamente cuando cambian los precios
+  const calcularTPDesdePrecios = (entrada, tp) => {
+    const e = parseFloat(entrada) || 0;
+    const t = parseFloat(tp) || 0;
+    if (e > 0 && t > 0) {
+      const diferencia = Math.abs(t - e);
+      setTpValue(diferencia.toString());
     }
   };
 
@@ -216,6 +228,27 @@ export default function RiskCalculator({ balance }) {
       esTick: mode === 'ticks',
     };
   }, [riesgoUSD, stopValue, activo, mode, valorPorPunto, spread]);
+
+  // Calcular ganancia probable con TP
+  const gananciaProbable = useMemo(() => {
+    const tp = parseFloat(tpValue) || 0;
+    const vpp = parseFloat(valorPorPunto) || 0;
+    const cantidad = resultado.cantidad;
+
+    if (tp <= 0 || vpp <= 0 || cantidad <= 0) return null;
+
+    return (tp * vpp * cantidad).toFixed(2);
+  }, [tpValue, valorPorPunto, resultado.cantidad]);
+
+  // Calcular ratio riesgo/beneficio
+  const ratioRB = useMemo(() => {
+    const tp = parseFloat(tpValue) || 0;
+    const sl = parseFloat(stopValue) || 0;
+
+    if (tp <= 0 || sl <= 0) return null;
+
+    return (tp / sl).toFixed(2);
+  }, [tpValue, stopValue]);
 
   const handleRiesgoPctChange = (value) => {
     setRiesgoPorcentaje(value);
@@ -352,12 +385,12 @@ export default function RiskCalculator({ balance }) {
           />
         </div>
 
-        {/* Precio Entrada y SL */}
+        {/* Precio Entrada, SL y TP */}
         <div className={`p-3 rounded-xl border space-y-3 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-blue-50/50 border-blue-100'}`}>
           <p className={`text-[10px] uppercase font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-            Calcular Stop desde precios
+            Calcular desde precios
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <div>
               <label className={`text-[10px] uppercase font-bold pl-1 mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 Entrada
@@ -372,19 +405,20 @@ export default function RiskCalculator({ balance }) {
                 onChange={e => {
                   setPrecioEntrada(e.target.value);
                   calcularStopDesdePrecios(e.target.value, precioSL);
+                  calcularTPDesdePrecios(e.target.value, precioTP);
                 }}
                 placeholder="118151"
               />
             </div>
             <div>
-              <label className={`text-[10px] uppercase font-bold pl-1 mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                Stop Loss
+              <label className={`text-[10px] uppercase font-bold pl-1 mb-1 block ${isDark ? 'text-red-400' : 'text-red-500'}`}>
+                SL
               </label>
               <input
                 type="number"
                 step="0.01"
-                className={`w-full border rounded-lg p-2 text-sm font-bold outline-none focus:border-blue-500 ${
-                  isDark ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-600' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400'
+                className={`w-full border rounded-lg p-2 text-sm font-bold outline-none focus:border-red-500 ${
+                  isDark ? 'bg-slate-700 border-red-500/30 text-red-400 placeholder:text-slate-600' : 'bg-red-50 border-red-200 text-red-600 placeholder:text-slate-400'
                 }`}
                 value={precioSL}
                 onChange={e => {
@@ -394,24 +428,59 @@ export default function RiskCalculator({ balance }) {
                 placeholder="117800"
               />
             </div>
+            <div>
+              <label className={`text-[10px] uppercase font-bold pl-1 mb-1 block ${isDark ? 'text-green-400' : 'text-green-500'}`}>
+                TP
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                className={`w-full border rounded-lg p-2 text-sm font-bold outline-none focus:border-green-500 ${
+                  isDark ? 'bg-slate-700 border-green-500/30 text-green-400 placeholder:text-slate-600' : 'bg-green-50 border-green-200 text-green-600 placeholder:text-slate-400'
+                }`}
+                value={precioTP}
+                onChange={e => {
+                  setPrecioTP(e.target.value);
+                  calcularTPDesdePrecios(precioEntrada, e.target.value);
+                }}
+                placeholder="118500"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Stop (calculado o manual) */}
-        <div className="space-y-1">
-          <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Stop en puntos {stopValue && precioEntrada && precioSL ? '(calculado)' : '(manual)'}
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
-              isDark ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400'
-            }`}
-            value={stopValue}
-            onChange={e => setStopValue(e.target.value)}
-            placeholder="Ej: 350"
-          />
+        {/* Stop y TP en puntos */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-red-400' : 'text-red-500'}`}>
+              Stop (puntos)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-red-500 ${
+                isDark ? 'bg-slate-800 border-red-500/30 text-red-400 placeholder:text-slate-600' : 'bg-red-50 border-red-200 text-red-600 placeholder:text-slate-400'
+              }`}
+              value={stopValue}
+              onChange={e => setStopValue(e.target.value)}
+              placeholder="350"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-green-400' : 'text-green-500'}`}>
+              TP (puntos)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-green-500 ${
+                isDark ? 'bg-slate-800 border-green-500/30 text-green-400 placeholder:text-slate-600' : 'bg-green-50 border-green-200 text-green-600 placeholder:text-slate-400'
+              }`}
+              value={tpValue}
+              onChange={e => setTpValue(e.target.value)}
+              placeholder="700"
+            />
+          </div>
         </div>
 
         {/* Spread (Forex y Sintéticos Weltrade) */}
@@ -467,19 +536,39 @@ export default function RiskCalculator({ balance }) {
         </div>
 
         {/* Resultado */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 flex justify-between items-center shadow-lg">
-          <div>
-            <p className="text-[10px] text-blue-100 uppercase font-bold mb-1">Posición Sugerida</p>
-            <p className="text-2xl sm:text-3xl font-black text-white leading-none">
-              {resultado.cantidad} <span className="text-sm font-medium opacity-70">{tipoUnidad === 'contratos' ? 'Contratos' : 'Lotes'}</span>
-            </p>
-          </div>
-          {resultado.cantidad > 0 && (
-            <div className="text-right">
-              <p className="text-[9px] text-blue-100 opacity-80 mb-0.5">Optimizar (+1):</p>
-              <p className="text-[10px] font-bold bg-white/20 px-2 py-1 rounded text-white">
-                Stop {resultado.stopIdeal} {resultado.esTick ? 't' : 'pts'}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 shadow-lg">
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <p className="text-[10px] text-blue-100 uppercase font-bold mb-1">Posición Sugerida</p>
+              <p className="text-2xl sm:text-3xl font-black text-white leading-none">
+                {resultado.cantidad} <span className="text-sm font-medium opacity-70">{tipoUnidad === 'contratos' ? 'Contratos' : 'Lotes'}</span>
               </p>
+            </div>
+            {ratioRB && (
+              <div className="text-right">
+                <p className="text-[9px] text-blue-100 opacity-80 mb-0.5">Ratio R:B</p>
+                <p className={`text-lg font-black ${parseFloat(ratioRB) >= 2 ? 'text-green-300' : parseFloat(ratioRB) >= 1 ? 'text-yellow-300' : 'text-red-300'}`}>
+                  1:{ratioRB}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Riesgo vs Ganancia */}
+          {(riesgoUSD || gananciaProbable) && (
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/20">
+              <div className="text-center p-2 rounded-lg bg-red-500/20">
+                <p className="text-[9px] text-red-200 uppercase font-bold">Riesgo</p>
+                <p className="text-lg font-black text-red-300">
+                  -${riesgoUSD || '0'}
+                </p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-green-500/20">
+                <p className="text-[9px] text-green-200 uppercase font-bold">Ganancia</p>
+                <p className="text-lg font-black text-green-300">
+                  +${gananciaProbable || '0'}
+                </p>
+              </div>
             </div>
           )}
         </div>
