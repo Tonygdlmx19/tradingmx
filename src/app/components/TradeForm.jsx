@@ -70,6 +70,56 @@ const ACTIVOS_POR_CATEGORIA = {
     { symbol: 'BNB/USD', name: 'Binance Coin' },
     { symbol: 'ADA/USD', name: 'Cardano' },
   ],
+  'Weltrade - PainX': [
+    { symbol: 'PainX400', name: 'Pain X 400' },
+    { symbol: 'PainX600', name: 'Pain X 600' },
+    { symbol: 'PainX800', name: 'Pain X 800' },
+    { symbol: 'PainX999', name: 'Pain X 999' },
+    { symbol: 'PainX1200', name: 'Pain X 1200' },
+  ],
+  'Weltrade - GainX': [
+    { symbol: 'GainX400', name: 'Gain X 400' },
+    { symbol: 'GainX600', name: 'Gain X 600' },
+    { symbol: 'GainX800', name: 'Gain X 800' },
+    { symbol: 'GainX999', name: 'Gain X 999' },
+    { symbol: 'GainX1200', name: 'Gain X 1200' },
+  ],
+  'Weltrade - FlipX': [
+    { symbol: 'FlipX1', name: 'Flip X 1 (step 1)' },
+    { symbol: 'FlipX2', name: 'Flip X 2 (step 1-2)' },
+    { symbol: 'FlipX3', name: 'Flip X 3 (step 1-3)' },
+    { symbol: 'FlipX4', name: 'Flip X 4 (step 1-4)' },
+    { symbol: 'FlipX5', name: 'Flip X 5 (step 1-5)' },
+  ],
+  'Weltrade - SwitchX': [
+    { symbol: 'SwitchX600', name: 'Switch X 600' },
+    { symbol: 'SwitchX1200', name: 'Switch X 1200' },
+    { symbol: 'SwitchX1800', name: 'Switch X 1800' },
+  ],
+  'Weltrade - BreakX': [
+    { symbol: 'BreakX600', name: 'Break X 600' },
+    { symbol: 'BreakX1200', name: 'Break X 1200' },
+    { symbol: 'BreakX1800', name: 'Break X 1800' },
+  ],
+  'Weltrade - TrendX': [
+    { symbol: 'TrendX600', name: 'Trend X 600' },
+    { symbol: 'TrendX1200', name: 'Trend X 1200' },
+    { symbol: 'TrendX1800', name: 'Trend X 1800' },
+  ],
+  'Weltrade - FX Vol': [
+    { symbol: 'FXVol20', name: 'FX Vol 20' },
+    { symbol: 'FXVol40', name: 'FX Vol 40' },
+    { symbol: 'FXVol60', name: 'FX Vol 60' },
+    { symbol: 'FXVol80', name: 'FX Vol 80' },
+    { symbol: 'FXVol99', name: 'FX Vol 99' },
+  ],
+  'Weltrade - SFX Vol': [
+    { symbol: 'SFXVol20', name: 'SFX Vol 20 (spikes)' },
+    { symbol: 'SFXVol40', name: 'SFX Vol 40 (spikes)' },
+    { symbol: 'SFXVol60', name: 'SFX Vol 60 (spikes)' },
+    { symbol: 'SFXVol80', name: 'SFX Vol 80 (spikes)' },
+    { symbol: 'SFXVol99', name: 'SFX Vol 99 (spikes)' },
+  ],
 };
 
 export default function TradeForm({ onSubmit, form, setForm }) {
