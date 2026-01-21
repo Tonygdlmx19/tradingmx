@@ -72,54 +72,54 @@ const ACTIVOS_TRADING = {
     { symbol: 'SOL/USD', name: 'Solana' },
   ],
   'Weltrade - PainX': [
-    { symbol: 'PainX400', name: 'Pain X 400', spread: 10 },
-    { symbol: 'PainX600', name: 'Pain X 600', spread: 15 },
-    { symbol: 'PainX800', name: 'Pain X 800', spread: 20 },
-    { symbol: 'PainX999', name: 'Pain X 999', spread: 15 },
-    { symbol: 'PainX1200', name: 'Pain X 1200', spread: 25 },
+    { symbol: 'PainX400', name: 'Pain X 400' },
+    { symbol: 'PainX600', name: 'Pain X 600' },
+    { symbol: 'PainX800', name: 'Pain X 800' },
+    { symbol: 'PainX999', name: 'Pain X 999' },
+    { symbol: 'PainX1200', name: 'Pain X 1200' },
   ],
   'Weltrade - GainX': [
-    { symbol: 'GainX400', name: 'Gain X 400', spread: 10 },
-    { symbol: 'GainX600', name: 'Gain X 600', spread: 15 },
-    { symbol: 'GainX800', name: 'Gain X 800', spread: 20 },
-    { symbol: 'GainX999', name: 'Gain X 999', spread: 15 },
-    { symbol: 'GainX1200', name: 'Gain X 1200', spread: 25 },
+    { symbol: 'GainX400', name: 'Gain X 400' },
+    { symbol: 'GainX600', name: 'Gain X 600' },
+    { symbol: 'GainX800', name: 'Gain X 800' },
+    { symbol: 'GainX999', name: 'Gain X 999' },
+    { symbol: 'GainX1200', name: 'Gain X 1200' },
   ],
   'Weltrade - FlipX': [
-    { symbol: 'FlipX1', name: 'Flip X 1 (step 1)', spread: 20 },
-    { symbol: 'FlipX2', name: 'Flip X 2 (step 1-2)', spread: 15 },
-    { symbol: 'FlipX3', name: 'Flip X 3 (step 1-3)', spread: 10 },
-    { symbol: 'FlipX4', name: 'Flip X 4 (step 1-4)', spread: 7 },
-    { symbol: 'FlipX5', name: 'Flip X 5 (step 1-5)', spread: 6 },
+    { symbol: 'FlipX1', name: 'Flip X 1 (step 1)' },
+    { symbol: 'FlipX2', name: 'Flip X 2 (step 1-2)' },
+    { symbol: 'FlipX3', name: 'Flip X 3 (step 1-3)' },
+    { symbol: 'FlipX4', name: 'Flip X 4 (step 1-4)' },
+    { symbol: 'FlipX5', name: 'Flip X 5 (step 1-5)' },
   ],
   'Weltrade - SwitchX': [
-    { symbol: 'SwitchX600', name: 'Switch X 600', spread: 15 },
-    { symbol: 'SwitchX1200', name: 'Switch X 1200', spread: 25 },
-    { symbol: 'SwitchX1800', name: 'Switch X 1800', spread: 40 },
+    { symbol: 'SwitchX600', name: 'Switch X 600' },
+    { symbol: 'SwitchX1200', name: 'Switch X 1200' },
+    { symbol: 'SwitchX1800', name: 'Switch X 1800' },
   ],
   'Weltrade - BreakX': [
-    { symbol: 'BreakX600', name: 'Break X 600', spread: 15 },
-    { symbol: 'BreakX1200', name: 'Break X 1200', spread: 25 },
-    { symbol: 'BreakX1800', name: 'Break X 1800', spread: 40 },
+    { symbol: 'BreakX600', name: 'Break X 600' },
+    { symbol: 'BreakX1200', name: 'Break X 1200' },
+    { symbol: 'BreakX1800', name: 'Break X 1800' },
   ],
   'Weltrade - TrendX': [
-    { symbol: 'TrendX600', name: 'Trend X 600', spread: 15 },
-    { symbol: 'TrendX1200', name: 'Trend X 1200', spread: 25 },
-    { symbol: 'TrendX1800', name: 'Trend X 1800', spread: 40 },
+    { symbol: 'TrendX600', name: 'Trend X 600' },
+    { symbol: 'TrendX1200', name: 'Trend X 1200' },
+    { symbol: 'TrendX1800', name: 'Trend X 1800' },
   ],
   'Weltrade - FX Vol': [
-    { symbol: 'FXVol20', name: 'FX Vol 20', spread: 2 },
-    { symbol: 'FXVol40', name: 'FX Vol 40', spread: 4 },
-    { symbol: 'FXVol60', name: 'FX Vol 60', spread: 6 },
-    { symbol: 'FXVol80', name: 'FX Vol 80', spread: 8 },
-    { symbol: 'FXVol99', name: 'FX Vol 99', spread: 10 },
+    { symbol: 'FXVol20', name: 'FX Vol 20' },
+    { symbol: 'FXVol40', name: 'FX Vol 40' },
+    { symbol: 'FXVol60', name: 'FX Vol 60' },
+    { symbol: 'FXVol80', name: 'FX Vol 80' },
+    { symbol: 'FXVol99', name: 'FX Vol 99' },
   ],
   'Weltrade - SFX Vol': [
-    { symbol: 'SFXVol20', name: 'SFX Vol 20 (spikes)', spread: 3 },
-    { symbol: 'SFXVol40', name: 'SFX Vol 40 (spikes)', spread: 5 },
-    { symbol: 'SFXVol60', name: 'SFX Vol 60 (spikes)', spread: 7 },
-    { symbol: 'SFXVol80', name: 'SFX Vol 80 (spikes)', spread: 9 },
-    { symbol: 'SFXVol99', name: 'SFX Vol 99 (spikes)', spread: 11 },
+    { symbol: 'SFXVol20', name: 'SFX Vol 20 (spikes)' },
+    { symbol: 'SFXVol40', name: 'SFX Vol 40 (spikes)' },
+    { symbol: 'SFXVol60', name: 'SFX Vol 60 (spikes)' },
+    { symbol: 'SFXVol80', name: 'SFX Vol 80 (spikes)' },
+    { symbol: 'SFXVol99', name: 'SFX Vol 99 (spikes)' },
   ],
 };
 
@@ -145,15 +145,6 @@ const isSyntheticWeltrade = (symbol) => {
   return WELTRADE_CATEGORIES.some(cat =>
     ACTIVOS_TRADING[cat]?.some(a => a.symbol === symbol)
   );
-};
-
-// Obtener spread predefinido del sintético
-const getSyntheticSpread = (symbol) => {
-  for (const cat of WELTRADE_CATEGORIES) {
-    const synthetic = ACTIVOS_TRADING[cat]?.find(a => a.symbol === symbol);
-    if (synthetic) return synthetic.spread;
-  }
-  return 10;
 };
 
 export default function RiskCalculator({ balance }) {
@@ -193,8 +184,16 @@ export default function RiskCalculator({ balance }) {
     const costoPorUnidad = stopTotal * vpp;
     if (costoPorUnidad <= 0) return { cantidad: 0, stopIdeal: 0, esTick: mode === 'ticks' };
 
-    const cantidadReal = Math.floor(riesgo / costoPorUnidad);
-    const stopIdealPuntos = riesgo / ((cantidadReal + 1) * vpp);
+    const cantidadExacta = riesgo / costoPorUnidad;
+
+    // Para sintéticos Weltrade usar decimales (0.01), para otros usar enteros
+    const usarDecimales = isSyntheticWeltrade(activo);
+    const cantidadReal = usarDecimales
+      ? Math.floor(cantidadExacta * 100) / 100  // Redondear a 0.01
+      : Math.floor(cantidadExacta);
+
+    const siguienteCantidad = usarDecimales ? cantidadReal + 0.01 : cantidadReal + 1;
+    const stopIdealPuntos = riesgo / (siguienteCantidad * vpp);
     const stopIdealDisplay = mode === 'ticks'
       ? Math.floor(stopIdealPuntos * 4)
       : stopIdealPuntos.toFixed(2);
@@ -279,13 +278,8 @@ export default function RiskCalculator({ balance }) {
             }`}
             value={activo}
             onChange={e => {
-              const newActivo = e.target.value;
-              setActivo(newActivo);
-              if (isSyntheticWeltrade(newActivo)) {
-                setSpread(getSyntheticSpread(newActivo).toString());
-              } else {
-                setSpread('');
-              }
+              setActivo(e.target.value);
+              setSpread('');
             }}
           >
             {Object.entries(ACTIVOS_TRADING).map(([categoria, activos]) => (
