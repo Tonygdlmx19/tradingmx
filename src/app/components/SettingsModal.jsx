@@ -152,15 +152,16 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             </label>
             <div className="relative">
               <span className={`absolute left-3 top-3 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>$</span>
-              <input 
-                type="number" 
+              <input
+                type="number"
+                placeholder="1000"
                 className={`w-full pl-8 p-2.5 border rounded-xl font-mono font-bold outline-none focus:border-blue-500 transition-colors ${
-                  isDark 
-                    ? 'bg-slate-700 border-slate-600 text-white' 
-                    : 'bg-slate-50 border-slate-200 text-slate-700'
+                  isDark
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 placeholder:text-slate-400'
                 }`}
-                value={config.capitalInicial} 
-                onChange={e => setConfig({...config, capitalInicial: Number(e.target.value)})} 
+                value={config.capitalInicial || ''}
+                onChange={e => setConfig({...config, capitalInicial: e.target.value === '' ? 0 : Number(e.target.value)})}
               />
             </div>
           </div>
@@ -172,28 +173,30 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             <div className="grid grid-cols-2 gap-3">
               <div className="relative">
                 <span className={`absolute left-3 top-2.5 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>$</span>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
+                  placeholder="50"
                   className={`w-full pl-7 p-2 border rounded-lg font-bold outline-none focus:border-blue-500 text-sm ${
-                    isDark 
-                      ? 'bg-slate-600 border-slate-500 text-white' 
-                      : 'bg-white border-slate-200 text-slate-700'
+                    isDark
+                      ? 'bg-slate-600 border-slate-500 text-white placeholder:text-slate-500'
+                      : 'bg-white border-slate-200 text-slate-700 placeholder:text-slate-400'
                   }`}
-                  value={config.metaDiaria} 
-                  onChange={e => handleMetaUSD(e.target.value)} 
+                  value={config.metaDiaria || ''}
+                  onChange={e => handleMetaUSD(e.target.value)}
                 />
               </div>
               <div className="relative">
-                <input 
-                  type="number" 
-                  step="0.1" 
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="5"
                   className={`w-full pr-7 p-2 border rounded-lg font-bold text-blue-500 outline-none focus:border-blue-500 text-sm ${
-                    isDark 
-                      ? 'bg-slate-600 border-slate-500' 
-                      : 'bg-white border-slate-200'
+                    isDark
+                      ? 'bg-slate-600 border-slate-500 placeholder:text-slate-500'
+                      : 'bg-white border-slate-200 placeholder:text-slate-400'
                   }`}
-                  value={metaPercentDisplay} 
-                  onChange={e => handleMetaPercent(e.target.value)} 
+                  value={metaPercentDisplay || ''}
+                  onChange={e => handleMetaPercent(e.target.value)}
                 />
                 <span className={`absolute right-3 top-2.5 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>%</span>
               </div>
