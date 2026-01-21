@@ -157,6 +157,18 @@ export default function RiskCalculator({ balance }) {
   const [valorPorPunto, setValorPorPunto] = useState('');
   const [riesgoPorcentaje, setRiesgoPorcentaje] = useState('');
   const [riesgoUSD, setRiesgoUSD] = useState('');
+  const [precioEntrada, setPrecioEntrada] = useState('');
+  const [precioSL, setPrecioSL] = useState('');
+
+  // Calcular stop automáticamente cuando cambian los precios
+  const calcularStopDesdePrecios = (entrada, sl) => {
+    const e = parseFloat(entrada) || 0;
+    const s = parseFloat(sl) || 0;
+    if (e > 0 && s > 0) {
+      const diferencia = Math.abs(e - s);
+      setStopValue(diferencia.toString());
+    }
+  };
 
   // Calcular posición
   const resultado = useMemo(() => {
@@ -340,20 +352,65 @@ export default function RiskCalculator({ balance }) {
           />
         </div>
 
-        {/* Stop */}
+        {/* Precio Entrada y SL */}
+        <div className={`p-3 rounded-xl border space-y-3 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-blue-50/50 border-blue-100'}`}>
+          <p className={`text-[10px] uppercase font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            Calcular Stop desde precios
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={`text-[10px] uppercase font-bold pl-1 mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                Entrada
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                className={`w-full border rounded-lg p-2 text-sm font-bold outline-none focus:border-blue-500 ${
+                  isDark ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-600' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400'
+                }`}
+                value={precioEntrada}
+                onChange={e => {
+                  setPrecioEntrada(e.target.value);
+                  calcularStopDesdePrecios(e.target.value, precioSL);
+                }}
+                placeholder="118151"
+              />
+            </div>
+            <div>
+              <label className={`text-[10px] uppercase font-bold pl-1 mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                Stop Loss
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                className={`w-full border rounded-lg p-2 text-sm font-bold outline-none focus:border-blue-500 ${
+                  isDark ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-600' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400'
+                }`}
+                value={precioSL}
+                onChange={e => {
+                  setPrecioSL(e.target.value);
+                  calcularStopDesdePrecios(precioEntrada, e.target.value);
+                }}
+                placeholder="117800"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Stop (calculado o manual) */}
         <div className="space-y-1">
           <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Stop ({mode === 'ticks' ? 'ticks' : 'puntos'})
+            Stop en puntos {stopValue && precioEntrada && precioSL ? '(calculado)' : '(manual)'}
           </label>
           <input
             type="number"
-            step={mode === 'ticks' ? 1 : 0.25}
+            step="0.01"
             className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
               isDark ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400'
             }`}
             value={stopValue}
             onChange={e => setStopValue(e.target.value)}
-            placeholder={mode === 'ticks' ? 'Ej: 20' : 'Ej: 5'}
+            placeholder="Ej: 350"
           />
         </div>
 
