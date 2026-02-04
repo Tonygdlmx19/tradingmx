@@ -13,6 +13,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDocs,
   serverTimestamp,
 } from 'firebase/firestore';
 import { verificarEstadoChallenge } from '../../utils/fundingCalculations';
@@ -28,23 +29,28 @@ export default function FundingSimulator({ user, onClose }) {
 
   // Cargar challenge activo del usuario
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
 
-    // Consulta simplificada sin orderBy para evitar necesidad de índice compuesto
+    console.log('[FUNDING] Init, uid:', user.uid);
+    let resolved = false;
+
     const q = query(
       collection(db, 'funding_challenges'),
-      where('uid', '==', user.uid),
-      where('estado', '==', 'activo')
+      where('uid', '==', user.uid)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
+    const processSnapshot = (docs) => {
+      resolved = true;
+      const activeDocs = docs.filter(d => d.estado === 'activo');
+      console.log('[FUNDING] Active:', activeDocs.length, 'of', docs.length, 'total');
+      if (activeDocs.length === 0) {
         setChallenge(null);
         setTrades([]);
       } else {
-        // Si hay múltiples, tomar el más reciente por createdAt
-        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        const sorted = docs.sort((a, b) => {
+        const sorted = activeDocs.sort((a, b) => {
           const dateA = a.createdAt?.toDate?.() || new Date(0);
           const dateB = b.createdAt?.toDate?.() || new Date(0);
           return dateB - dateA;
@@ -52,35 +58,50 @@ export default function FundingSimulator({ user, onClose }) {
         setChallenge(sorted[0]);
       }
       setLoading(false);
+    };
+
+    // Timeout: si después de 5s no hay respuesta, algo está mal
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        console.error('[FUNDING] TIMEOUT: Firestore no respondió en 5s. Posible problema de permisos.');
+        setLoading(false);
+      }
+    }, 5000);
+
+    // Listener para cambios en tiempo real
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      clearTimeout(timeout);
+      console.log('[FUNDING] Snapshot:', snapshot.size, 'docs');
+      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      processSnapshot(docs);
     }, (error) => {
-      console.error('Error loading challenge:', error);
-      // Si hay error de permisos, simplemente mostrar pantalla de bienvenida
-      setChallenge(null);
-      setTrades([]);
+      clearTimeout(timeout);
+      console.error('[FUNDING] Error:', error.code, error.message);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, [user?.uid]);
 
   // Cargar trades del challenge activo
   useEffect(() => {
-    if (!challenge?.id) {
+    if (!challenge?.id || !user?.uid) {
       setTrades([]);
       return;
     }
 
-    // Consulta simplificada sin orderBy
     const q = query(
       collection(db, 'funding_trades'),
-      where('challengeId', '==', challenge.id)
+      where('uid', '==', user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const tradesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const tradesData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(t => t.challengeId === challenge.id);
       // Ordenar en el cliente
       tradesData.sort((a, b) => {
         const dateA = a.createdAt?.toDate?.() || new Date(0);
@@ -94,7 +115,7 @@ export default function FundingSimulator({ user, onClose }) {
     });
 
     return () => unsubscribe();
-  }, [challenge?.id]);
+  }, [challenge?.id, user?.uid]);
 
   // Calcular estado del challenge
   const estadoChallenge = useMemo(() => {
@@ -105,8 +126,9 @@ export default function FundingSimulator({ user, onClose }) {
   // Actualizar estado del challenge si cambió
   useEffect(() => {
     if (!challenge?.id || !estadoChallenge) return;
+    // No actualizar si fechaInicio aún no se resolvió (serverTimestamp pendiente)
+    if (!challenge.fechaInicio) return;
     if (challenge.estado !== estadoChallenge.estado) {
-      // Actualizar en Firestore
       const challengeRef = doc(db, 'funding_challenges', challenge.id);
       updateDoc(challengeRef, {
         estado: estadoChallenge.estado,
@@ -114,38 +136,38 @@ export default function FundingSimulator({ user, onClose }) {
         updatedAt: serverTimestamp(),
       }).catch(console.error);
     }
-  }, [challenge?.id, challenge?.estado, estadoChallenge?.estado, estadoChallenge?.motivoFallo]);
+  }, [challenge?.id, challenge?.estado, challenge?.fechaInicio, estadoChallenge?.estado, estadoChallenge?.motivoFallo]);
 
   // Crear nuevo challenge
   const handleCreateChallenge = async (challengeData) => {
-    if (!user?.uid) return;
+    console.log('[FUNDING] handleCreateChallenge called, uid:', user?.uid);
+    if (!user?.uid) throw new Error('Usuario no autenticado');
 
-    try {
-      // Si hay un challenge activo, marcarlo como abandonado
-      if (challenge?.id) {
-        await updateDoc(doc(db, 'funding_challenges', challenge.id), {
-          estado: 'abandonado',
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      // Crear nuevo challenge
-      await addDoc(collection(db, 'funding_challenges'), {
-        uid: user.uid,
-        empresa: challengeData.empresa,
-        nombreChallenge: challengeData.nombreChallenge,
-        reglas: challengeData.reglas,
-        estado: 'activo',
-        fechaInicio: serverTimestamp(),
-        motivoFallo: null,
-        createdAt: serverTimestamp(),
+    // Si hay un challenge activo, marcarlo como abandonado
+    if (challenge?.id) {
+      console.log('[FUNDING] Abandoning current challenge:', challenge.id);
+      await updateDoc(doc(db, 'funding_challenges', challenge.id), {
+        estado: 'abandonado',
         updatedAt: serverTimestamp(),
       });
-
-      setShowSetupModal(false);
-    } catch (error) {
-      console.error('Error creating challenge:', error);
     }
+
+    // Crear nuevo challenge
+    console.log('[FUNDING] Creating new challenge...');
+    const docRef = await addDoc(collection(db, 'funding_challenges'), {
+      uid: user.uid,
+      empresa: challengeData.empresa,
+      nombreChallenge: challengeData.nombreChallenge,
+      reglas: challengeData.reglas,
+      estado: 'activo',
+      fechaInicio: serverTimestamp(),
+      motivoFallo: null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    console.log('[FUNDING] Challenge created with id:', docRef.id);
+
+    setShowSetupModal(false);
   };
 
   // Agregar trade

@@ -138,22 +138,6 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
     ? form.montoInvertido !== '' && form.montoInvertido > 0
     : form.res !== '' && form.res !== null && form.res !== undefined;
 
-  // Manejar checkbox de plan
-  const handlePlanChange = (checked) => {
-    setForm(prev => ({
-      ...prev,
-      seguiPlan: checked
-    }));
-  };
-
-  // Manejar checkbox de gestión
-  const handleGestionChange = (checked) => {
-    setForm(prev => ({
-      ...prev,
-      respetoRiesgo: checked
-    }));
-  };
-
   // Toggle opciones binarias
   const handleBinaryToggle = () => {
     setIsBinaryOptions(!isBinaryOptions);
@@ -638,56 +622,26 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
                 />
               </div>
             </div>
+
+            {/* Diferencia de puntos */}
+            {form.entrada && form.salida && (
+              <div className={`p-2.5 rounded-xl text-center ${
+                parseFloat(form.salida) - parseFloat(form.entrada) >= 0
+                  ? isDark ? 'bg-green-500/10' : 'bg-green-50'
+                  : isDark ? 'bg-red-500/10' : 'bg-red-50'
+              }`}>
+                <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Puntos: </span>
+                <span className={`text-sm font-black ${
+                  parseFloat(form.salida) - parseFloat(form.entrada) >= 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {(parseFloat(form.salida) - parseFloat(form.entrada)) >= 0 ? '+' : ''}
+                  {(parseFloat(form.salida) - parseFloat(form.entrada)).toFixed(2)}
+                </span>
+              </div>
+            )}
           </>
         )}
-        
-        {/* Checkboxes de autoevaluación */}
-        <div className={`p-3 rounded-xl border space-y-2 ${
-          isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-100'
-        }`}>
-          <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            Autoevaluación
-          </p>
-          <div 
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => handlePlanChange(!form.seguiPlan)}
-          >
-            <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
-              form.seguiPlan 
-                ? 'bg-blue-500 border-blue-500' 
-                : isDark ? 'border-slate-500' : 'border-slate-300'
-            }`}>
-              {form.seguiPlan && (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </div>
-            <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              Seguí mi plan
-            </span>
-          </div>
-          <div 
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => handleGestionChange(!form.respetoRiesgo)}
-          >
-            <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
-              form.respetoRiesgo 
-                ? 'bg-blue-500 border-blue-500' 
-                : isDark ? 'border-slate-500' : 'border-slate-300'
-            }`}>
-              {form.respetoRiesgo && (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </div>
-            <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              Respeté el riesgo
-            </span>
-          </div>
-        </div>
-        
+
         {/* Estado emocional */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>

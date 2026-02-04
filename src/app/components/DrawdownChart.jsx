@@ -84,8 +84,8 @@ export default function DrawdownChart({ data }) {
         </span>
       </div>
       
-      <div style={{ width: '100%', height: 160 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ width: '100%', height: 160, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height={160}>
           <AreaChart 
             data={data} 
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}

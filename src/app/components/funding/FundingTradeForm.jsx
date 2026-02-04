@@ -77,27 +77,21 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
   };
 
   const agregarImagen = async (file) => {
-    if (!file) {
-      console.log('No file provided');
-      return;
-    }
-
+    if (!file) return;
     if (imagenes.length >= 3) {
       alert('Máximo 3 imágenes por trade');
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       alert('La imagen es muy grande (max 5MB)');
       return;
     }
-
     try {
       const compressed = await compressImage(file);
       setImagenes(prev => [...prev, { data: compressed, temporalidad: '1H' }]);
     } catch (error) {
       console.error('Error procesando imagen:', error);
-      alert('Error al procesar la imagen. Intenta con otra.');
+      alert('Error al procesar la imagen');
     }
   };
 
@@ -381,12 +375,9 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={async (e) => {
-                  console.log('File input changed:', e.target.files);
                   const file = e.target.files?.[0];
                   if (file) {
-                    console.log('Processing file:', file.name, file.type, file.size);
                     await agregarImagen(file);
                   }
                   e.target.value = '';

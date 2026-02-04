@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Trophy, X, Building2, DollarSign, Target, Clock, TrendingDown, Calendar, Settings2 } from 'lucide-react';
+import { Trophy, X, Building2, DollarSign, Target, Clock, TrendingDown, Calendar, Settings2, Loader2 } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
 import { FUNDING_PRESETS, getEmpresas, presetToReglas, crearReglasPersonalizadas } from '../../constants/fundingPresets';
 
@@ -9,6 +9,8 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
   const [modo, setModo] = useState('preset'); // 'preset' o 'custom'
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState('');
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
 
   // Estado para configuración personalizada
   const [customConfig, setCustomConfig] = useState({
@@ -41,8 +43,8 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
     ? (empresaSeleccionada && cuentaSeleccionada !== '')
     : (customConfig.capital > 0 && customConfig.profitTarget > 0);
 
-  const handleCreate = () => {
-    if (!canCreate || !reglas) return;
+  const handleCreate = async () => {
+    if (!canCreate || !reglas || creating) return;
 
     const challengeData = {
       empresa: modo === 'preset' ? empresaSeleccionada : 'custom',
@@ -52,8 +54,15 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
       reglas,
     };
 
-    onCreateChallenge(challengeData);
-    onClose();
+    setCreating(true);
+    setError('');
+    try {
+      await onCreateChallenge(challengeData);
+    } catch (err) {
+      console.error('Error creating challenge:', err);
+      setError(err.message || 'Error desconocido al crear el challenge');
+      setCreating(false);
+    }
   };
 
   const formatMoney = (value) => {
@@ -332,18 +341,34 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
             </div>
           )}
 
+          {/* Error */}
+          {error && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm font-medium">
+              {error}
+            </div>
+          )}
+
           {/* Boton crear */}
           <button
             onClick={handleCreate}
-            disabled={!canCreate}
+            disabled={!canCreate || creating}
             className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg ${
-              canCreate
+              canCreate && !creating
                 ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-[0.98]'
                 : isDark ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >
-            <Trophy size={18} className="inline mr-2"/>
-            Iniciar Challenge
+            {creating ? (
+              <>
+                <Loader2 size={18} className="inline mr-2 animate-spin"/>
+                Creando...
+              </>
+            ) : (
+              <>
+                <Trophy size={18} className="inline mr-2"/>
+                Iniciar Challenge
+              </>
+            )}
           </button>
         </div>
       </div>

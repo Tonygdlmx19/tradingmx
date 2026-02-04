@@ -83,8 +83,8 @@ export default function EquityChart({ data, startBalance }) {
         </span>
       </div>
       
-      <div style={{ width: '100%', height: 280 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ width: '100%', height: 280, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height={280}>
           <AreaChart 
             data={data} 
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}

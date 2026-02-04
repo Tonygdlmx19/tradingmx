@@ -122,8 +122,8 @@ export function verificarEstadoChallenge(challenge, trades) {
   const ddTotal = calcularDrawdownTotal(balanceActual, picoBalance);
   const diasOperados = contarDiasOperados(trades);
 
-  // Calcular días transcurridos
-  const fechaInicioDate = fechaInicio?.toDate?.() || new Date(fechaInicio);
+  // Calcular días transcurridos (si fechaInicio es null/serverTimestamp pendiente, usar hoy)
+  const fechaInicioDate = fechaInicio?.toDate?.() || (fechaInicio ? new Date(fechaInicio) : new Date());
   const diasTranscurridos = Math.floor(
     (new Date() - fechaInicioDate) / (1000 * 60 * 60 * 24)
   );
