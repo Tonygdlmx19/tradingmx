@@ -92,6 +92,16 @@ export default function TradingJournalPRO() {
     return () => unsubscribe();
   }, []);
 
+  // Actualizar activo por defecto cuando cambien los favoritos
+  useEffect(() => {
+    if (config.activosFavoritos && config.activosFavoritos.length > 0) {
+      // Solo actualizar si el activo actual no está en favoritos
+      if (!config.activosFavoritos.includes(form.activo)) {
+        setForm(prev => ({ ...prev, activo: config.activosFavoritos[0] }));
+      }
+    }
+  }, [config.activosFavoritos]);
+
   useEffect(() => {
     if (!user || !isAuthorized) return;
 
@@ -100,8 +110,8 @@ export default function TradingJournalPRO() {
         const data = docSnap.data();
         if (data.config) setConfig(data.config);
       } else {
-        setDoc(doc(db, "users", user.uid), { 
-          config: { capitalInicial: 10000, metaDiaria: 200 } 
+        setDoc(doc(db, "users", user.uid), {
+          config: { capitalInicial: 10000, metaDiaria: 200 }
         }, { merge: true });
       }
     });
@@ -346,7 +356,7 @@ export default function TradingJournalPRO() {
 
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
             <RiskCalculator balance={stats.balance} />
-            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} />
+            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} activosFavoritos={config.activosFavoritos} />
           </div>
         </div>
       </main>

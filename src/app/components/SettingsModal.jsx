@@ -1,7 +1,58 @@
 "use client";
 import { useState } from 'react';
-import { Settings, X, Target, User, MessageSquare, Sparkles } from 'lucide-react';
+import { Settings, X, Target, User, MessageSquare, Sparkles, TrendingUp, Plus, Trash2 } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+
+// Lista completa de activos disponibles para sugerir
+const ACTIVOS_DISPONIBLES = [
+  // Índices US
+  { symbol: 'MNQ', name: 'Micro Nasdaq' },
+  { symbol: 'MES', name: 'Micro S&P 500' },
+  { symbol: 'NQ', name: 'Nasdaq 100' },
+  { symbol: 'ES', name: 'S&P 500' },
+  { symbol: 'YM', name: 'Dow Jones' },
+  { symbol: 'MYM', name: 'Micro Dow' },
+  { symbol: 'RTY', name: 'Russell 2000' },
+  { symbol: 'M2K', name: 'Micro Russell' },
+  // Índices Globales
+  { symbol: 'DAX', name: 'DAX 40' },
+  { symbol: 'FTSE', name: 'FTSE 100' },
+  { symbol: 'CAC', name: 'CAC 40' },
+  { symbol: 'NIKKEI', name: 'Nikkei 225' },
+  { symbol: 'HSI', name: 'Hang Seng' },
+  // Forex Majors
+  { symbol: 'EUR/USD', name: 'Euro/Dólar' },
+  { symbol: 'GBP/USD', name: 'Libra/Dólar' },
+  { symbol: 'USD/JPY', name: 'Dólar/Yen' },
+  { symbol: 'USD/CHF', name: 'Dólar/Franco' },
+  { symbol: 'AUD/USD', name: 'Aussie/Dólar' },
+  { symbol: 'USD/CAD', name: 'Dólar/Canadá' },
+  { symbol: 'NZD/USD', name: 'Kiwi/Dólar' },
+  // Forex Crosses
+  { symbol: 'EUR/GBP', name: 'Euro/Libra' },
+  { symbol: 'EUR/JPY', name: 'Euro/Yen' },
+  { symbol: 'GBP/JPY', name: 'Libra/Yen' },
+  { symbol: 'AUD/JPY', name: 'Aussie/Yen' },
+  // Forex Exóticos
+  { symbol: 'USD/MXN', name: 'Dólar/Peso MX' },
+  { symbol: 'EUR/MXN', name: 'Euro/Peso MX' },
+  { symbol: 'USD/BRL', name: 'Dólar/Real' },
+  // Metales
+  { symbol: 'XAU/USD', name: 'Oro' },
+  { symbol: 'XAG/USD', name: 'Plata' },
+  { symbol: 'GC', name: 'Oro Futuros' },
+  { symbol: 'MGC', name: 'Micro Oro' },
+  // Energía
+  { symbol: 'WTI', name: 'Petróleo WTI' },
+  { symbol: 'BRENT', name: 'Petróleo Brent' },
+  { symbol: 'CL', name: 'Crudo Futuros' },
+  { symbol: 'NG', name: 'Gas Natural' },
+  // Crypto
+  { symbol: 'BTC/USD', name: 'Bitcoin' },
+  { symbol: 'ETH/USD', name: 'Ethereum' },
+  { symbol: 'SOL/USD', name: 'Solana' },
+  { symbol: 'XRP/USD', name: 'Ripple' },
+];
 
 const frasesSugeridas = [
   "El mercado recompensa la paciencia 📈",
@@ -21,8 +72,42 @@ const frasesSugeridas = [
 export default function SettingsModal({ isOpen, onClose, config, setConfig, onSaveToCloud }) {
   const { isDark } = useTheme();
   const [showFrases, setShowFrases] = useState(false);
-  
+  const [nuevoActivo, setNuevoActivo] = useState('');
+  const [showSugerencias, setShowSugerencias] = useState(false);
+
   if (!isOpen) return null;
+
+  // Filtrar sugerencias basadas en el input
+  const sugerenciasFiltradas = nuevoActivo.length > 0
+    ? ACTIVOS_DISPONIBLES.filter(a =>
+        (a.symbol.toLowerCase().includes(nuevoActivo.toLowerCase()) ||
+        a.name.toLowerCase().includes(nuevoActivo.toLowerCase())) &&
+        !(config.activosFavoritos || []).includes(a.symbol)
+      ).slice(0, 6)
+    : [];
+
+  const agregarActivo = (symbol) => {
+    const actuales = config.activosFavoritos || [];
+    if (!actuales.includes(symbol)) {
+      setConfig({ ...config, activosFavoritos: [...actuales, symbol] });
+    }
+    setNuevoActivo('');
+    setShowSugerencias(false);
+  };
+
+  const agregarActivoManual = () => {
+    const symbol = nuevoActivo.trim().toUpperCase();
+    if (symbol && !(config.activosFavoritos || []).includes(symbol)) {
+      setConfig({ ...config, activosFavoritos: [...(config.activosFavoritos || []), symbol] });
+    }
+    setNuevoActivo('');
+    setShowSugerencias(false);
+  };
+
+  const eliminarActivo = (symbol) => {
+    const actuales = config.activosFavoritos || [];
+    setConfig({ ...config, activosFavoritos: actuales.filter(a => a !== symbol) });
+  };
   
   const handleMetaUSD = (usd) => setConfig({ ...config, metaDiaria: Number(usd) });
   
@@ -202,7 +287,109 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               </div>
             </div>
           </div>
-          
+
+          {/* Mis Activos / Pares */}
+          <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-green-50 border-green-100'}`}>
+            <label className={`text-xs font-bold uppercase tracking-wider mb-3 block flex items-center gap-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+              <TrendingUp size={14}/> Mis Activos
+            </label>
+            <p className={`text-[10px] mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              Agrega los pares o activos que operas frecuentemente
+            </p>
+
+            {/* Input para agregar nuevo activo */}
+            <div className="relative mb-3">
+              <input
+                type="text"
+                placeholder="Escribe o busca un activo..."
+                className={`w-full p-2.5 pr-10 border rounded-xl font-medium outline-none focus:border-green-500 transition-colors text-sm ${
+                  isDark
+                    ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
+                    : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
+                }`}
+                value={nuevoActivo}
+                onChange={e => {
+                  setNuevoActivo(e.target.value);
+                  setShowSugerencias(true);
+                }}
+                onFocus={() => setShowSugerencias(true)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    agregarActivoManual();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={agregarActivoManual}
+                disabled={!nuevoActivo.trim()}
+                className={`absolute right-2 top-2 p-1.5 rounded-lg transition-colors ${
+                  nuevoActivo.trim()
+                    ? isDark ? 'hover:bg-slate-500 text-green-400' : 'hover:bg-green-100 text-green-500'
+                    : 'opacity-30 cursor-not-allowed'
+                } ${isDark ? 'text-slate-400' : 'text-slate-400'}`}
+                title="Agregar activo"
+              >
+                <Plus size={16}/>
+              </button>
+
+              {/* Sugerencias dropdown */}
+              {showSugerencias && sugerenciasFiltradas.length > 0 && (
+                <div className={`absolute z-10 w-full mt-1 rounded-xl border shadow-lg max-h-48 overflow-y-auto ${
+                  isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'
+                }`}>
+                  {sugerenciasFiltradas.map((activo) => (
+                    <button
+                      key={activo.symbol}
+                      type="button"
+                      onClick={() => agregarActivo(activo.symbol)}
+                      className={`w-full text-left px-3 py-2 text-sm transition-colors flex justify-between items-center ${
+                        isDark
+                          ? 'hover:bg-slate-600 text-white'
+                          : 'hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <span className="font-bold">{activo.symbol}</span>
+                      <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{activo.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Lista de activos guardados */}
+            {(config.activosFavoritos || []).length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {(config.activosFavoritos || []).map((symbol) => (
+                  <div
+                    key={symbol}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold ${
+                      isDark
+                        ? 'bg-slate-600 text-white'
+                        : 'bg-white text-slate-700 border border-slate-200'
+                    }`}
+                  >
+                    <span>{symbol}</span>
+                    <button
+                      type="button"
+                      onClick={() => eliminarActivo(symbol)}
+                      className={`p-0.5 rounded transition-colors ${
+                        isDark ? 'hover:bg-red-500/30 text-red-400' : 'hover:bg-red-50 text-red-500'
+                      }`}
+                    >
+                      <Trash2 size={12}/>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={`text-xs text-center py-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                No has agregado activos aun
+              </p>
+            )}
+          </div>
+
           <button 
             onClick={handleSave} 
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold active:scale-[0.98] transition-all shadow-lg"

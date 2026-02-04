@@ -122,11 +122,14 @@ const ACTIVOS_POR_CATEGORIA = {
   ],
 };
 
-export default function TradeForm({ onSubmit, form, setForm }) {
+export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = [] }) {
   const { isDark } = useTheme();
   const fileInputRef = useRef(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isBinaryOptions, setIsBinaryOptions] = useState(false);
+
+  // Usar activos favoritos si existen, sino mostrar lista por defecto
+  const tieneActivosFavoritos = activosFavoritos && activosFavoritos.length > 0;
   
   // Validar que haya un resultado
   const canSubmit = isBinaryOptions 
@@ -289,25 +292,50 @@ export default function TradeForm({ onSubmit, form, setForm }) {
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
             Activo
           </label>
-          <select 
-            className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
-              isDark 
-                ? 'bg-slate-700 border-slate-600 text-white' 
-                : 'bg-slate-50 border-slate-200 text-slate-600'
-            }`}
-            value={form.activo} 
-            onChange={e => setForm({...form, activo: e.target.value})}
-          >
-            {Object.entries(ACTIVOS_POR_CATEGORIA).map(([categoria, activos]) => (
-              <optgroup key={categoria} label={`── ${categoria} ──`}>
-                {activos.map(activo => (
-                  <option key={activo.symbol} value={activo.symbol}>
-                    {activo.symbol} - {activo.name}
-                  </option>
+          {tieneActivosFavoritos ? (
+            // Mostrar solo los activos favoritos del usuario
+            <select
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+                isDark
+                  ? 'bg-slate-700 border-slate-600 text-white'
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}
+              value={form.activo}
+              onChange={e => setForm({...form, activo: e.target.value})}
+            >
+              {activosFavoritos.map(symbol => (
+                <option key={symbol} value={symbol}>
+                  {symbol}
+                </option>
+              ))}
+            </select>
+          ) : (
+            // Mostrar lista completa si no hay favoritos configurados
+            <>
+              <select
+                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+                  isDark
+                    ? 'bg-slate-700 border-slate-600 text-white'
+                    : 'bg-slate-50 border-slate-200 text-slate-600'
+                }`}
+                value={form.activo}
+                onChange={e => setForm({...form, activo: e.target.value})}
+              >
+                {Object.entries(ACTIVOS_POR_CATEGORIA).map(([categoria, activos]) => (
+                  <optgroup key={categoria} label={`── ${categoria} ──`}>
+                    {activos.map(activo => (
+                      <option key={activo.symbol} value={activo.symbol}>
+                        {activo.symbol} - {activo.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
-              </optgroup>
-            ))}
-          </select>
+              </select>
+              <p className={`text-[10px] mt-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                Configura tus activos favoritos en Ajustes
+              </p>
+            </>
+          )}
         </div>
 
         {/* Dirección */}
