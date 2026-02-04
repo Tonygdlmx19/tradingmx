@@ -24,6 +24,7 @@ import {
   useTheme
 } from './components';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
+import { FundingSimulator } from './components/funding';
 
 export default function TradingJournalPRO() {
   const { isDark } = useTheme();
@@ -35,6 +36,7 @@ export default function TradingJournalPRO() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showFundingSimulator, setShowFundingSimulator] = useState(false);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
   const [viewMode, setViewMode] = useState('global');
@@ -290,6 +292,16 @@ export default function TradingJournalPRO() {
     return <UnauthorizedScreen user={user} onLogout={handleLogout} />;
   }
 
+  // Mostrar simulador de fondeo
+  if (showFundingSimulator) {
+    return (
+      <FundingSimulator
+        user={user}
+        onClose={() => setShowFundingSimulator(false)}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen font-sans pb-20 transition-colors duration-300 ${
       isDark ? 'bg-slate-900' : 'bg-slate-100'
@@ -322,6 +334,7 @@ export default function TradingJournalPRO() {
         progresoMeta={progresoMeta}
         onSettings={() => setShowSettings(true)}
         onCalendar={() => setShowCalendar(true)}
+        onFundingSimulator={() => setShowFundingSimulator(true)}
         onLogout={handleLogout}
       />
 

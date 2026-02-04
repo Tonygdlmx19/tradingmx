@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator } from 'lucide-react';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy } from 'lucide-react';
 import CalculatorModal from './CalculatorModal';
 
 export default function Header({
@@ -13,6 +13,7 @@ export default function Header({
   progresoMeta,
   onSettings,
   onCalendar,
+  onFundingSimulator,
   onLogout
 }) {
   const { isDark, toggleTheme } = useTheme();
@@ -85,6 +86,14 @@ export default function Header({
               title="Calculadora"
             >
               <Calculator size={18}/>
+            </button>
+
+            <button
+              onClick={onFundingSimulator}
+              className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-amber-400' : 'hover:bg-slate-100 text-amber-600'}`}
+              title="Simulador de Fondeo"
+            >
+              <Trophy size={18}/>
             </button>
 
             <button
