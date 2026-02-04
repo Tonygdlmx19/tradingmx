@@ -1,9 +1,12 @@
 "use client";
-import { TrendingUp, TrendingDown, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { TrendingUp, TrendingDown, Trash2, Image, X } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
 
 export default function FundingTradesTable({ trades, onDeleteTrade }) {
   const { isDark } = useTheme();
+  const [selectedTrade, setSelectedTrade] = useState(null);
+  const [viewingImage, setViewingImage] = useState(null);
 
   if (!trades || trades.length === 0) {
     return (
@@ -50,6 +53,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
               <th className="text-left p-3">Activo</th>
               <th className="text-center p-3">Dir</th>
               <th className="text-right p-3">P&L</th>
+              <th className="text-center p-3">Img</th>
               <th className="text-center p-3"></th>
             </tr>
           </thead>
@@ -80,6 +84,21 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
                   {formatMoney(trade.res)}
                 </td>
                 <td className="p-3 text-center">
+                  {trade.imagenes && trade.imagenes.length > 0 ? (
+                    <button
+                      onClick={() => setSelectedTrade(trade)}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        isDark ? 'hover:bg-amber-500/20 text-amber-400' : 'hover:bg-amber-50 text-amber-500'
+                      }`}
+                      title={`Ver ${trade.imagenes.length} imagen(es)`}
+                    >
+                      <Image size={14}/>
+                    </button>
+                  ) : (
+                    <span className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>-</span>
+                  )}
+                </td>
+                <td className="p-3 text-center">
                   {onDeleteTrade && (
                     <button
                       onClick={() => onDeleteTrade(trade.id)}
@@ -107,6 +126,76 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
           </span>
         </div>
       </div>
+
+      {/* Modal de imágenes */}
+      {selectedTrade && selectedTrade.imagenes && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`rounded-2xl p-4 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto ${
+            isDark ? 'bg-slate-800' : 'bg-white'
+          }`}>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  {selectedTrade.activo} - {selectedTrade.dir}
+                </h3>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {selectedTrade.fecha} | {formatMoney(selectedTrade.res)}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedTrade(null)}
+                className={`p-2 rounded-full ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+              >
+                <X size={20} className={isDark ? 'text-slate-400' : 'text-slate-500'}/>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {selectedTrade.imagenes.map((img, idx) => (
+                <div key={idx} className="relative">
+                  <span className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-bold ${
+                    isDark ? 'bg-slate-900/80 text-amber-400' : 'bg-white/90 text-amber-600'
+                  }`}>
+                    {img.temporalidad}
+                  </span>
+                  <img
+                    src={img.data}
+                    alt={`${img.temporalidad}`}
+                    className="w-full rounded-xl border border-slate-700 cursor-pointer hover:opacity-90"
+                    onClick={() => setViewingImage(img)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para ver imagen completa */}
+      {viewingImage && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4"
+          onClick={() => setViewingImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button
+              onClick={() => setViewingImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300"
+            >
+              <X size={28} />
+            </button>
+            <div className="bg-black/50 text-white text-center py-2 rounded-t-xl">
+              <span className="font-bold">{viewingImage.temporalidad}</span>
+            </div>
+            <img
+              src={viewingImage.data}
+              alt={`Captura ${viewingImage.temporalidad}`}
+              className="w-full max-h-[80vh] object-contain rounded-b-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

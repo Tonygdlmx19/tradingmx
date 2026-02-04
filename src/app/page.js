@@ -165,15 +165,16 @@ export default function TradingJournalPRO() {
       seguiPlan: form.seguiPlan,
       respetoRiesgo: form.respetoRiesgo,
       notas: form.notas || '',
-      imagen: form.imagen || null,
+      imagenes: form.imagenes || [],
+      checklist: form.checklist || null,
       createdAt: new Date()
     };
     
     await addDoc(collection(db, "trades"), tradeData);
     
-    setForm({ 
-      ...form, 
-      res: '', 
+    setForm({
+      ...form,
+      res: '',
       esGanancia: true,
       lotes: '1',
       entrada: '',
@@ -182,7 +183,8 @@ export default function TradingJournalPRO() {
       seguiPlan: false,
       respetoRiesgo: false,
       notas: '',
-      imagen: null,
+      imagenes: [],
+      checklist: null,
     });
   }, [form, user]);
 
@@ -368,7 +370,7 @@ export default function TradingJournalPRO() {
           </div>
 
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
-            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} activosFavoritos={config.activosFavoritos} />
+            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} activosFavoritos={config.activosFavoritos} reglasSetup={config.reglasSetup || []} />
           </div>
         </div>
       </main>

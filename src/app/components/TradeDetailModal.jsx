@@ -1,12 +1,31 @@
 "use client";
-import { useState } from 'react';
-import { X, Calendar, TrendingUp, TrendingDown, FileText, Camera, Save, Trash2, Image } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+
+const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
 
 export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onDelete }) {
   const { isDark } = useTheme();
   const [notas, setNotas] = useState(trade?.notas || '');
+  const [imagenes, setImagenes] = useState(trade?.imagenes || []);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
+
+  // Reset state when trade changes
+  useEffect(() => {
+    if (trade) {
+      setNotas(trade.notas || '');
+      // Compatibilidad: convertir imagen antigua (singular) a array
+      let imgs = trade.imagenes || [];
+      if (imgs.length === 0 && trade.imagen) {
+        imgs = [{ data: trade.imagen, temporalidad: '1H' }];
+      }
+      setImagenes(imgs);
+      setHasChanges(false);
+    }
+  }, [trade]);
 
   if (!isOpen || !trade) return null;
 
@@ -32,10 +51,86 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
     return emojis[emo] || '😐';
   };
 
-  const handleSaveNotas = async () => {
+  // Comprimir imagen
+  const compressImage = (file, maxWidth = 800) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Error leyendo archivo'));
+      reader.onload = (event) => {
+        const img = document.createElement('img');
+        img.onerror = () => reject(new Error('Error cargando imagen'));
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            if (width > height && width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            } else if (height > maxWidth) {
+              width = (width * maxWidth) / height;
+              height = maxWidth;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const agregarImagen = async (file) => {
+    if (!file) return;
+    if (imagenes.length >= 3) {
+      alert('Máximo 3 imágenes por trade');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen es muy grande (max 5MB)');
+      return;
+    }
+    try {
+      const compressed = await compressImage(file);
+      setImagenes(prev => [...prev, { data: compressed, temporalidad: '1H' }]);
+      setHasChanges(true);
+    } catch (error) {
+      console.error('Error procesando imagen:', error);
+      alert('Error al procesar la imagen');
+    }
+  };
+
+  const handleTemporalidadChange = (index, temporalidad) => {
+    const nuevasImagenes = [...imagenes];
+    nuevasImagenes[index] = { ...nuevasImagenes[index], temporalidad };
+    setImagenes(nuevasImagenes);
+    setHasChanges(true);
+  };
+
+  const removeImage = (index) => {
+    setImagenes(prev => prev.filter((_, i) => i !== index));
+    setHasChanges(true);
+  };
+
+  const handleSaveChanges = async () => {
     setIsSaving(true);
-    await onUpdate(trade.id, { notas });
+    // Guardar imagenes y limpiar el campo antiguo 'imagen'
+    await onUpdate(trade.id, { notas, imagenes, imagen: null });
+    setHasChanges(false);
     setIsSaving(false);
+  };
+
+  const handleNotasChange = (value) => {
+    setNotas(value);
+    if (value !== (trade?.notas || '')) {
+      setHasChanges(true);
+    }
   };
 
   const handleDelete = () => {
@@ -177,43 +272,169 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
             <span className="text-3xl">{getEmojiForEmotion(trade.emo)}</span>
           </div>
 
-          {/* Imagen del trade */}
-          {trade.imagen && (
-            <div>
-              <p className={`text-[10px] font-bold uppercase mb-2 flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <Image size={12} /> Captura del Trade
-              </p>
-              <img src={trade.imagen} alt="Trade screenshot" className="w-full rounded-xl border cursor-pointer hover:opacity-90 transition-opacity" style={{ maxHeight: '300px', objectFit: 'contain' }} onClick={() => window.open(trade.imagen, '_blank')} />
+          {/* Checklist de Setup */}
+          {trade.checklist && trade.checklist.reglas && (
+            <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-[10px] font-bold uppercase flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <ClipboardCheck size={12}/> Checklist de Setup
+                </p>
+                <span className={`text-sm font-black flex items-center gap-1 ${
+                  trade.checklist.porcentaje >= 70 ? 'text-green-500' :
+                  trade.checklist.porcentaje >= 50 ? 'text-amber-500' : 'text-red-500'
+                }`}>
+                  {trade.checklist.porcentaje >= 70 ? <CheckCircle size={14}/> :
+                   trade.checklist.porcentaje >= 50 ? <AlertTriangle size={14}/> : <XCircle size={14}/>}
+                  {trade.checklist.porcentaje}%
+                </span>
+              </div>
+              {/* Barra de progreso */}
+              <div className={`w-full h-2 rounded-full mb-3 ${isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
+                <div
+                  className={`h-full rounded-full ${
+                    trade.checklist.porcentaje >= 70 ? 'bg-green-500' :
+                    trade.checklist.porcentaje >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${trade.checklist.porcentaje}%` }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                {trade.checklist.reglas.map((regla, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
+                      regla.cumplida ? 'bg-green-500' : isDark ? 'bg-slate-600' : 'bg-slate-300'
+                    }`}>
+                      {regla.cumplida && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-xs ${
+                      regla.cumplida
+                        ? isDark ? 'text-green-400' : 'text-green-600'
+                        : isDark ? 'text-slate-500' : 'text-slate-400'
+                    }`}>
+                      {regla.nombre}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Imágenes del trade */}
+          <div>
+            <p className={`text-[10px] font-bold uppercase mb-2 flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <Image size={12} /> Capturas del Trade (max 3)
+            </p>
+
+            {/* Imágenes existentes */}
+            {imagenes.length > 0 && (
+              <div className="space-y-3 mb-3">
+                {imagenes.map((img, index) => (
+                  <div key={index} className={`p-2 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
+                    {/* Imagen grande arriba */}
+                    <div
+                      className="relative w-full h-32 rounded-lg overflow-hidden border border-blue-500 cursor-pointer hover:opacity-90 mb-2"
+                      onClick={() => setViewingImage(img)}
+                    >
+                      <img src={img.data} alt={`Captura ${index + 1}`} className="w-full h-full object-cover"/>
+                    </div>
+
+                    {/* Controles abajo */}
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={img.temporalidad}
+                        onChange={(e) => handleTemporalidadChange(index, e.target.value)}
+                        className={`flex-1 p-2 border rounded-lg text-sm font-bold outline-none focus:border-blue-500 ${
+                          isDark
+                            ? 'bg-slate-600 border-slate-500 text-white'
+                            : 'bg-white border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {TEMPORALIDADES.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+
+                      {/* Botón eliminar */}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="p-2 rounded-lg hover:bg-red-500/20 text-red-500 flex-shrink-0"
+                        title="Eliminar imagen"
+                      >
+                        <X size={18}/>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Botón agregar imagen */}
+            {imagenes.length < 3 && (
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      await agregarImagen(file);
+                    }
+                    e.target.value = '';
+                  }}
+                  className="hidden"
+                  id="trade-detail-add-image"
+                />
+                <label
+                  htmlFor="trade-detail-add-image"
+                  className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                    isDark
+                      ? 'border-slate-600 hover:border-blue-500 text-slate-400 hover:text-blue-400'
+                      : 'border-slate-300 hover:border-blue-500 text-slate-400 hover:text-blue-500'
+                  }`}
+                >
+                  <PlusCircle size={18}/>
+                  <span className="text-sm font-bold">
+                    {imagenes.length === 0 ? 'Agregar captura' : 'Agregar otra captura'}
+                  </span>
+                </label>
+              </div>
+            )}
+          </div>
 
           {/* Notas */}
           <div>
             <p className={`text-[10px] font-bold uppercase mb-2 flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               <FileText size={12} /> Notas y Comentarios
             </p>
-            <textarea 
+            <textarea
               placeholder="Agrega tus observaciones sobre este trade..."
               rows={4}
               className={`w-full p-3 border rounded-xl text-sm outline-none focus:border-blue-500 resize-none ${
-                isDark 
-                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                isDark
+                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500'
                   : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
               }`}
-              value={notas} 
-              onChange={e => setNotas(e.target.value)} 
+              value={notas}
+              onChange={e => handleNotasChange(e.target.value)}
             />
-            {notas !== (trade.notas || '') && (
-              <button
-                onClick={handleSaveNotas}
-                disabled={isSaving}
-                className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg flex items-center gap-2 disabled:opacity-50"
-              >
-                <Save size={14} />
-                {isSaving ? 'Guardando...' : 'Guardar Notas'}
-              </button>
-            )}
           </div>
+
+          {/* Botón guardar cambios */}
+          {hasChanges && (
+            <button
+              onClick={handleSaveChanges}
+              disabled={isSaving}
+              className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+            >
+              <Save size={18} />
+              {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+          )}
         </div>
 
         {/* Footer */}
@@ -228,8 +449,8 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
           <button
             onClick={onClose}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-colors ${
-              isDark 
-                ? 'bg-slate-700 hover:bg-slate-600 text-white' 
+              isDark
+                ? 'bg-slate-700 hover:bg-slate-600 text-white'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
@@ -237,6 +458,32 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
           </button>
         </div>
       </div>
+
+      {/* Modal para ver imagen completa */}
+      {viewingImage && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4"
+          onClick={() => setViewingImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button
+              onClick={() => setViewingImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300"
+            >
+              <X size={28} />
+            </button>
+            <div className="bg-black/50 text-white text-center py-2 rounded-t-xl">
+              <span className="font-bold">{viewingImage.temporalidad}</span>
+            </div>
+            <img
+              src={viewingImage.data}
+              alt={`Captura ${viewingImage.temporalidad}`}
+              className="w-full max-h-[80vh] object-contain rounded-b-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

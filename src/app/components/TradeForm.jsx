@@ -1,8 +1,10 @@
 "use client";
-import { useState, useRef } from 'react';
-import Image from 'next/image';
-import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent } from 'lucide-react';
+import { useState } from 'react';
+import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import TradeChecklist from './TradeChecklist';
+
+const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
 
 // 📊 ACTIVOS ORGANIZADOS POR CATEGORÍA
 const ACTIVOS_POR_CATEGORIA = {
@@ -122,11 +124,11 @@ const ACTIVOS_POR_CATEGORIA = {
   ],
 };
 
-export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = [] }) {
+export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = [], reglasSetup = [] }) {
   const { isDark } = useTheme();
-  const fileInputRef = useRef(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagenes, setImagenes] = useState([]);
   const [isBinaryOptions, setIsBinaryOptions] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
 
   // Usar activos favoritos si existen, sino mostrar lista por defecto
   const tieneActivosFavoritos = activosFavoritos && activosFavoritos.length > 0;
@@ -177,72 +179,101 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
     }
   };
 
-  // Comprimir y convertir imagen a base64
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Comprimir imagen
+  const compressImage = (file, maxWidth = 800) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Error leyendo archivo'));
+      reader.onload = (event) => {
+        const img = document.createElement('img');
+        img.onerror = () => reject(new Error('Error cargando imagen'));
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
 
-    // Validar tamaño (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen es muy grande. Máximo 5MB.');
-      return;
-    }
+            if (width > height && width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            } else if (height > maxWidth) {
+              width = (width * maxWidth) / height;
+              height = maxWidth;
+            }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = document.createElement('img');
-      img.onload = () => {
-        // Comprimir imagen
-        const canvas = document.createElement('canvas');
-        const maxSize = 800;
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > height && width > maxSize) {
-          height = (height * maxSize) / width;
-          width = maxSize;
-        } else if (height > maxSize) {
-          width = (width * maxSize) / height;
-          height = maxSize;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-        setImagePreview(compressedBase64);
-        setForm(prev => ({ ...prev, imagen: compressedBase64 }));
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.src = event.target.result;
       };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
   };
 
-  const removeImage = () => {
-    setImagePreview(null);
-    setForm(prev => ({ ...prev, imagen: null }));
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const agregarImagen = async (file) => {
+    if (!file) return;
+    if (imagenes.length >= 3) {
+      alert('Máximo 3 imágenes por trade');
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen es muy grande (max 5MB)');
+      return;
+    }
+    try {
+      const compressed = await compressImage(file);
+      const nuevasImagenes = [...imagenes, { data: compressed, temporalidad: '1H' }];
+      setImagenes(nuevasImagenes);
+      setForm(prev => ({ ...prev, imagenes: nuevasImagenes }));
+    } catch (error) {
+      console.error('Error procesando imagen:', error);
+      alert('Error al procesar la imagen');
+    }
+  };
+
+  const handleTemporalidadChange = (index, temporalidad) => {
+    const nuevasImagenes = [...imagenes];
+    nuevasImagenes[index] = { ...nuevasImagenes[index], temporalidad };
+    setImagenes(nuevasImagenes);
+    setForm(prev => ({ ...prev, imagenes: nuevasImagenes }));
+  };
+
+  const removeImage = (index) => {
+    const nuevasImagenes = imagenes.filter((_, i) => i !== index);
+    setImagenes(nuevasImagenes);
+    setForm(prev => ({ ...prev, imagenes: nuevasImagenes }));
+  };
+
+  const handleChecklistConfirm = (resultado) => {
+    setForm(prev => ({ ...prev, checklist: resultado }));
+  };
+
+  const getChecklistSemaforo = () => {
+    if (!form.checklist) return null;
+    const pct = form.checklist.porcentaje;
+    if (pct >= 70) return { color: 'green', label: 'Setup valido', icon: CheckCircle };
+    if (pct >= 50) return { color: 'amber', label: 'Precaucion', icon: AlertTriangle };
+    return { color: 'red', label: 'No operar', icon: XCircle };
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Si es opciones binarias, calcular el resultado
     if (isBinaryOptions) {
       const plCalculado = calcularPLBinario();
       setForm(prev => ({ ...prev, res: plCalculado }));
     }
-    
+
     onSubmit(e);
-    // Limpiar imagen después de guardar
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    // Limpiar imágenes y checklist después de guardar
+    setImagenes([]);
   };
   
   return (
@@ -252,6 +283,40 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       <h3 className={`font-bold mb-4 sm:mb-5 flex items-center text-sm uppercase tracking-wide ${isDark ? 'text-white' : 'text-slate-800'}`}>
         <PlusCircle size={18} className="mr-2 text-blue-500"/> Registrar Trade
       </h3>
+
+      {/* Botón Checklist de Setup */}
+      {reglasSetup.length > 0 && (() => {
+        const semaforo = getChecklistSemaforo();
+        return (
+          <button
+            type="button"
+            onClick={() => setShowChecklist(true)}
+            className={`w-full mb-4 p-3 rounded-xl border font-bold text-sm flex items-center justify-between transition-all ${
+              form.checklist
+                ? semaforo?.color === 'green'
+                  ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                  : semaforo?.color === 'amber'
+                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+                    : 'bg-red-500/10 border-red-500/30 text-red-500'
+                : isDark
+                  ? 'bg-slate-700/50 border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-400'
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-amber-500 hover:text-amber-500'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <ClipboardCheck size={18}/>
+              {form.checklist ? semaforo?.label : 'Checklist de Setup'}
+            </div>
+            {form.checklist ? (
+              <span className="text-lg font-black">{form.checklist.porcentaje}%</span>
+            ) : (
+              <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {reglasSetup.length} reglas
+              </span>
+            )}
+          </button>
+        );
+      })()}
 
       {/* Toggle Opciones Binarias */}
       <div 
@@ -665,44 +730,86 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           />
         </div>
 
-        {/* Subir imagen */}
+        {/* Capturas con temporalidad */}
         <div>
-          <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            Captura del Trade (opcional)
+          <label className={`text-[10px] font-bold uppercase ml-1 mb-2 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+            <Camera size={12} className="inline mr-1"/> Capturas (opcional - max 3)
           </label>
-          
-          {!imagePreview ? (
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
-                isDark 
-                  ? 'border-slate-600 hover:border-slate-500 bg-slate-700/30' 
-                  : 'border-slate-200 hover:border-slate-300 bg-slate-50'
-              }`}
-            >
-              <Camera size={24} className={`mx-auto mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Toca para agregar imagen
-              </p>
-              <input 
-                ref={fileInputRef}
-                type="file" 
-                accept="image/*"
-                capture="environment"
-                onChange={handleImageChange}
-                className="hidden"
-              />
+
+          {/* Imágenes agregadas */}
+          {imagenes.length > 0 && (
+            <div className="space-y-3 mb-3">
+              {imagenes.map((img, index) => (
+                <div key={index} className={`p-3 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="flex gap-3 items-start">
+                    {/* Preview de imagen */}
+                    <div className="relative w-20 h-14 rounded-lg overflow-hidden border border-blue-500 flex-shrink-0">
+                      <img src={img.data} alt={`Captura ${index + 1}`} className="w-full h-full object-cover"/>
+                    </div>
+
+                    <div className="flex-1">
+                      {/* Selector de temporalidad */}
+                      <label className={`text-[10px] font-bold uppercase mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Temporalidad
+                      </label>
+                      <select
+                        value={img.temporalidad}
+                        onChange={(e) => handleTemporalidadChange(index, e.target.value)}
+                        className={`w-full p-2 border rounded-lg text-sm font-bold outline-none focus:border-blue-500 ${
+                          isDark
+                            ? 'bg-slate-600 border-slate-500 text-white'
+                            : 'bg-white border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {TEMPORALIDADES.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Botón eliminar */}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="p-2 rounded-lg hover:bg-red-500/20 text-red-500 flex-shrink-0"
+                    >
+                      <X size={16}/>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="relative">
-              <Image src={imagePreview} alt="Preview" width={400} height={128} className="w-full h-32 object-cover rounded-xl" unoptimized />
-              <button
-                type="button"
-                onClick={removeImage}
-                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+          )}
+
+          {/* Botón agregar imagen */}
+          {imagenes.length < 3 && (
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    await agregarImagen(file);
+                  }
+                  e.target.value = '';
+                }}
+                className="hidden"
+                id="trade-add-image"
+              />
+              <label
+                htmlFor="trade-add-image"
+                className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                  isDark
+                    ? 'border-slate-600 hover:border-blue-500 text-slate-400 hover:text-blue-400'
+                    : 'border-slate-300 hover:border-blue-500 text-slate-400 hover:text-blue-500'
+                }`}
               >
-                <X size={14} />
-              </button>
+                <PlusCircle size={18}/>
+                <span className="text-sm font-bold">
+                  {imagenes.length === 0 ? 'Agregar captura' : 'Agregar otra captura'}
+                </span>
+              </label>
             </div>
           )}
         </div>
@@ -720,6 +827,14 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           <Save size={18} className="mr-2"/> Guardar Trade
         </button>
       </form>
+
+      {/* Modal Checklist */}
+      <TradeChecklist
+        reglas={reglasSetup}
+        isOpen={showChecklist}
+        onClose={() => setShowChecklist(false)}
+        onConfirm={handleChecklistConfirm}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Settings, X, Target, User, MessageSquare, Sparkles, TrendingUp, Plus, Trash2 } from 'lucide-react';
+import { Settings, X, Target, User, MessageSquare, Sparkles, TrendingUp, Plus, Trash2, ClipboardCheck } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 // Lista completa de activos disponibles para sugerir
@@ -74,6 +74,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
   const [showFrases, setShowFrases] = useState(false);
   const [nuevoActivo, setNuevoActivo] = useState('');
   const [showSugerencias, setShowSugerencias] = useState(false);
+  const [nuevaRegla, setNuevaRegla] = useState('');
 
   if (!isOpen) return null;
 
@@ -107,6 +108,20 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
   const eliminarActivo = (symbol) => {
     const actuales = config.activosFavoritos || [];
     setConfig({ ...config, activosFavoritos: actuales.filter(a => a !== symbol) });
+  };
+
+  const agregarRegla = () => {
+    const regla = nuevaRegla.trim();
+    if (!regla) return;
+    const actuales = config.reglasSetup || [];
+    if (actuales.includes(regla)) return;
+    setConfig({ ...config, reglasSetup: [...actuales, regla] });
+    setNuevaRegla('');
+  };
+
+  const eliminarRegla = (index) => {
+    const actuales = config.reglasSetup || [];
+    setConfig({ ...config, reglasSetup: actuales.filter((_, i) => i !== index) });
   };
   
   const handleMetaUSD = (usd) => setConfig({ ...config, metaDiaria: Number(usd) });
@@ -390,8 +405,82 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             )}
           </div>
 
-          <button 
-            onClick={handleSave} 
+          {/* Reglas de Setup / Checklist */}
+          <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-amber-50 border-amber-100'}`}>
+            <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+              <ClipboardCheck size={14}/> Reglas de Setup
+            </label>
+            <p className={`text-[10px] mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              Define tus criterios para tomar un trade. Se usaran como checklist antes de operar.
+            </p>
+
+            {/* Input para agregar regla */}
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                placeholder="Ej: Confluencia de soportes..."
+                className={`flex-1 p-2.5 border rounded-xl font-medium outline-none focus:border-amber-500 transition-colors text-sm ${
+                  isDark
+                    ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
+                    : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
+                }`}
+                value={nuevaRegla}
+                onChange={e => setNuevaRegla(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    agregarRegla();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={agregarRegla}
+                disabled={!nuevaRegla.trim()}
+                className={`px-3 rounded-xl font-bold text-sm transition-colors ${
+                  nuevaRegla.trim()
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                    : isDark ? 'bg-slate-600 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                <Plus size={18}/>
+              </button>
+            </div>
+
+            {/* Lista de reglas */}
+            {(config.reglasSetup || []).length > 0 ? (
+              <div className="space-y-2">
+                {(config.reglasSetup || []).map((regla, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm ${
+                      isDark ? 'bg-slate-600' : 'bg-white border border-slate-200'
+                    }`}
+                  >
+                    <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                      {index + 1}. {regla}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => eliminarRegla(index)}
+                      className={`p-1 rounded transition-colors flex-shrink-0 ${
+                        isDark ? 'hover:bg-red-500/30 text-red-400' : 'hover:bg-red-50 text-red-500'
+                      }`}
+                    >
+                      <Trash2 size={14}/>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={`text-xs text-center py-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                No has agregado reglas de setup aun
+              </p>
+            )}
+          </div>
+
+          <button
+            onClick={handleSave}
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold active:scale-[0.98] transition-all shadow-lg"
           >
             Guardar Configuracion
