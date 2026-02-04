@@ -13,7 +13,6 @@ import {
   Header,
   SettingsModal,
   TradeDetailModal,
-  RiskCalculator,
   TradeForm,
   StatsCards,
   AdvancedStats,
@@ -157,7 +156,7 @@ export default function TradingJournalPRO() {
       activo: form.activo,
       dir: form.dir,
       res: resultadoFinal,
-      lotes: form.lotes ? parseInt(form.lotes) : 1,
+      lotes: form.lotes ? parseFloat(form.lotes) : 1,
       entrada: form.entrada ? parseFloat(form.entrada) : null,
       salida: form.salida ? parseFloat(form.salida) : null,
       emo: form.emo,
@@ -346,6 +345,7 @@ export default function TradingJournalPRO() {
               selectedMonth={selectedMonth}
               setSelectedMonth={setSelectedMonth}
               selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
               tradeCount={stats.tradeCount}
             />
             <TradesTable 
@@ -355,7 +355,6 @@ export default function TradingJournalPRO() {
           </div>
 
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
-            <RiskCalculator balance={stats.balance} />
             <TradeForm onSubmit={addTrade} form={form} setForm={setForm} activosFavoritos={config.activosFavoritos} />
           </div>
         </div>

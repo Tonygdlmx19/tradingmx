@@ -4,15 +4,23 @@ import { useTheme } from './ThemeProvider';
 
 const mesesFull = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-export default function ViewSelector({ 
-  viewMode, 
-  setViewMode, 
-  selectedMonth, 
+export default function ViewSelector({
+  viewMode,
+  setViewMode,
+  selectedMonth,
   setSelectedMonth,
   selectedYear,
-  tradeCount 
+  setSelectedYear,
+  tradeCount
 }) {
   const { isDark } = useTheme();
+
+  // Generar lista de años (desde 2020 hasta el año actual)
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let y = currentYear; y >= 2020; y--) {
+    years.push(y);
+  }
 
   return (
     <div className={`p-4 rounded-2xl border mb-4 ${
@@ -46,27 +54,44 @@ export default function ViewSelector({
         </button>
       </div>
 
-      {/* Segunda fila: Selector de mes + Contador */}
-      <div className="flex items-center justify-between mt-4">
-        {/* Selector de mes (solo en modo mensual) o espacio vacío */}
-        {viewMode === 'mensual' ? (
+      {/* Segunda fila: Selectores + Contador */}
+      <div className="flex items-center justify-between mt-4 gap-2">
+        {/* Selectores de año y mes */}
+        <div className="flex items-center gap-2">
+          {/* Selector de año (siempre visible) */}
           <div className="relative">
-            <select 
-              className={`appearance-none border px-4 py-2.5 pr-10 rounded-xl text-sm font-bold outline-none focus:border-blue-500 cursor-pointer transition-colors ${
-                isDark 
-                  ? 'bg-slate-700 border-slate-600 text-white' 
+            <select
+              className={`appearance-none border px-3 py-2.5 pr-8 rounded-xl text-sm font-bold outline-none focus:border-blue-500 cursor-pointer transition-colors ${
+                isDark
+                  ? 'bg-slate-700 border-slate-600 text-white'
                   : 'bg-slate-50 border-slate-200 text-slate-700'
               }`}
-              value={selectedMonth} 
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
             >
-              {mesesFull.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              {years.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
-            <ChevronDown size={16} className={`absolute right-3 top-3 pointer-events-none ${isDark ? 'text-slate-400' : 'text-slate-400'}`}/>
+            <ChevronDown size={16} className={`absolute right-2 top-3 pointer-events-none ${isDark ? 'text-slate-400' : 'text-slate-400'}`}/>
           </div>
-        ) : (
-          <div></div>
-        )}
+
+          {/* Selector de mes (solo en modo mensual) */}
+          {viewMode === 'mensual' && (
+            <div className="relative">
+              <select
+                className={`appearance-none border px-3 py-2.5 pr-8 rounded-xl text-sm font-bold outline-none focus:border-blue-500 cursor-pointer transition-colors ${
+                  isDark
+                    ? 'bg-slate-700 border-slate-600 text-white'
+                    : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              >
+                {mesesFull.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              </select>
+              <ChevronDown size={16} className={`absolute right-2 top-3 pointer-events-none ${isDark ? 'text-slate-400' : 'text-slate-400'}`}/>
+            </div>
+          )}
+        </div>
         
         {/* Contador de operaciones - Siempre a la derecha */}
         <div className={`px-4 py-2.5 rounded-xl border text-sm font-bold ${

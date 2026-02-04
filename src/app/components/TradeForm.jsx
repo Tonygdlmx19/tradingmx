@@ -292,50 +292,36 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
             Activo
           </label>
-          {tieneActivosFavoritos ? (
-            // Mostrar solo los activos favoritos del usuario
-            <select
-              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
-                isDark
-                  ? 'bg-slate-700 border-slate-600 text-white'
-                  : 'bg-slate-50 border-slate-200 text-slate-600'
-              }`}
-              value={form.activo}
-              onChange={e => setForm({...form, activo: e.target.value})}
-            >
-              {activosFavoritos.map(symbol => (
-                <option key={symbol} value={symbol}>
-                  {symbol}
-                </option>
-              ))}
-            </select>
-          ) : (
-            // Mostrar lista completa si no hay favoritos configurados
-            <>
-              <select
-                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
-                  isDark
-                    ? 'bg-slate-700 border-slate-600 text-white'
-                    : 'bg-slate-50 border-slate-200 text-slate-600'
-                }`}
-                value={form.activo}
-                onChange={e => setForm({...form, activo: e.target.value})}
-              >
-                {Object.entries(ACTIVOS_POR_CATEGORIA).map(([categoria, activos]) => (
-                  <optgroup key={categoria} label={`── ${categoria} ──`}>
-                    {activos.map(activo => (
-                      <option key={activo.symbol} value={activo.symbol}>
-                        {activo.symbol} - {activo.name}
-                      </option>
-                    ))}
-                  </optgroup>
+          <select
+            className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+              isDark
+                ? 'bg-slate-700 border-slate-600 text-white'
+                : 'bg-slate-50 border-slate-200 text-slate-600'
+            }`}
+            value={form.activo}
+            onChange={e => setForm({...form, activo: e.target.value})}
+          >
+            {/* Mostrar favoritos primero si existen */}
+            {tieneActivosFavoritos && (
+              <optgroup label="★ Mis Activos ★">
+                {activosFavoritos.map(symbol => (
+                  <option key={`fav-${symbol}`} value={symbol}>
+                    {symbol}
+                  </option>
                 ))}
-              </select>
-              <p className={`text-[10px] mt-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                Configura tus activos favoritos en Ajustes
-              </p>
-            </>
-          )}
+              </optgroup>
+            )}
+            {/* Siempre mostrar lista completa */}
+            {Object.entries(ACTIVOS_POR_CATEGORIA).map(([categoria, activos]) => (
+              <optgroup key={categoria} label={`── ${categoria} ──`}>
+                {activos.map(activo => (
+                  <option key={activo.symbol} value={activo.symbol}>
+                    {activo.symbol} - {activo.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
         </div>
 
         {/* Dirección */}
@@ -484,9 +470,9 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
                 </label>
                 <input
                   type="number"
-                  min="1"
-                  step="1"
-                  placeholder="1"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="0.01"
                   className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
                     isDark
                       ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500'
