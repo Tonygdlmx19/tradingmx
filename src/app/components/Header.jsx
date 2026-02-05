@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy } from 'lucide-react';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck } from 'lucide-react';
 import CalculatorModal from './CalculatorModal';
 
 export default function Header({
@@ -14,6 +14,8 @@ export default function Header({
   onSettings,
   onCalendar,
   onFundingSimulator,
+  isAdmin,
+  onAdmin,
   onLogout
 }) {
   const { isDark, toggleTheme } = useTheme();
@@ -95,6 +97,16 @@ export default function Header({
             >
               <Trophy size={18}/>
             </button>
+
+            {isAdmin && (
+              <button
+                onClick={onAdmin}
+                className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-purple-400' : 'hover:bg-slate-100 text-purple-600'}`}
+                title="Panel de Admin"
+              >
+                <ShieldCheck size={18}/>
+              </button>
+            )}
 
             <button
               onClick={onCalendar}

@@ -1,14 +1,80 @@
 "use client";
-import { LogOut, ShieldX, CheckCircle, ArrowRight, Mail, MessageCircle, HelpCircle } from 'lucide-react';
+import { useState } from 'react';
+import { LogOut, ShieldX, CheckCircle, ArrowRight, Mail, MessageCircle, HelpCircle, Clock, Ticket, Loader2 } from 'lucide-react';
+import { db } from '../../firebase';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
-export default function UnauthorizedScreen({ user, onLogout }) {
+export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [codeLoading, setCodeLoading] = useState(false);
+
+  const isExpired = authStatus === 'expired';
+
+  const handleRedeemCode = async () => {
+    const trimmedCode = code.trim().toUpperCase();
+    if (!trimmedCode || trimmedCode.length < 4) {
+      setCodeError('Ingresa un código válido');
+      return;
+    }
+
+    setCodeError('');
+    setCodeLoading(true);
+
+    try {
+      const codeRef = doc(db, 'trial_codes', trimmedCode);
+      const codeDoc = await getDoc(codeRef);
+
+      if (!codeDoc.exists()) {
+        setCodeError('Código no válido');
+        setCodeLoading(false);
+        return;
+      }
+
+      const codeData = codeDoc.data();
+      if (codeData.used) {
+        setCodeError('Este código ya fue utilizado');
+        setCodeLoading(false);
+        return;
+      }
+
+      // Activate trial: 15 days
+      const email = user.email.toLowerCase();
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
+
+      await setDoc(doc(db, 'authorized_users', email), {
+        email,
+        status: 'active',
+        type: 'trial',
+        trialStart: serverTimestamp(),
+        trialEnd: trialEnd,
+        codeUsed: trimmedCode,
+        authorizedAt: serverTimestamp(),
+      }, { merge: true });
+
+      // Mark code as used
+      await updateDoc(codeRef, {
+        used: true,
+        usedBy: email,
+        usedAt: serverTimestamp(),
+      });
+
+      // Reload to re-trigger auth check
+      window.location.reload();
+    } catch (err) {
+      console.error('Error redeeming code:', err);
+      setCodeError('Error al canjear el código. Intenta de nuevo.');
+      setCodeLoading(false);
+    }
+  };
+
   const handlePayPal = () => {
     window.open('https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU', '_blank');
   };
 
-  // Configura tu información de contacto aquí
-  const contactEmail = "tmsolucionesdigitales@gmail.com"; // Cambia por tu email real
-  const whatsappNumber = "523316145522"; // Cambia por tu número (con código de país, sin +)
+  const contactEmail = "tmsolucionesdigitales@gmail.com";
+  const whatsappNumber = "523316145522";
   const whatsappMessage = encodeURIComponent(`Hola, ya realicé mi pago de Trading Journal PRO pero no tengo acceso. Mi correo de registro es: ${user?.email}`);
 
   const handleEmailContact = () => {
@@ -27,20 +93,58 @@ export default function UnauthorizedScreen({ user, onLogout }) {
         {/* Card principal */}
         <div className="bg-white rounded-3xl p-8 shadow-2xl text-center">
           {/* Icono */}
-          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShieldX size={40} className="text-amber-600" />
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+            isExpired ? 'bg-red-100' : 'bg-amber-100'
+          }`}>
+            {isExpired
+              ? <Clock size={40} className="text-red-500" />
+              : <ShieldX size={40} className="text-amber-600" />
+            }
           </div>
-          
+
           {/* Título */}
           <h1 className="text-2xl font-black text-slate-800 mb-2">
-            Cuenta No Activada
+            {isExpired ? 'Tu Prueba ha Expirado' : 'Cuenta No Activada'}
           </h1>
-          
+
           <p className="text-slate-500 mb-6">
-            Hola <span className="font-semibold text-slate-700">{user?.email}</span>, 
-            tu cuenta aún no tiene acceso a Trading Journal PRO.
+            Hola <span className="font-semibold text-slate-700">{user?.email}</span>,
+            {isExpired
+              ? ' tu periodo de prueba de 15 días ha terminado.'
+              : ' tu cuenta aún no tiene acceso a Trading Journal PRO.'
+            }
           </p>
-          
+
+          {/* Sección de código de prueba */}
+          <div className="bg-blue-50 rounded-2xl p-4 mb-6">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Ticket size={18} className="text-blue-500" />
+              <span className="text-sm font-bold text-blue-700">
+                {isExpired ? '¿Tienes otro código?' : '¿Tienes un código de prueba?'}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={code}
+                onChange={e => setCode(e.target.value.toUpperCase())}
+                placeholder="CÓDIGO"
+                maxLength={8}
+                className="flex-1 px-3 py-2.5 bg-white border border-blue-200 rounded-xl text-center font-mono font-bold text-sm text-slate-700 uppercase tracking-widest placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <button
+                onClick={handleRedeemCode}
+                disabled={codeLoading || !code.trim()}
+                className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98]"
+              >
+                {codeLoading ? <Loader2 size={16} className="animate-spin" /> : 'Canjear'}
+              </button>
+            </div>
+            {codeError && (
+              <p className="text-xs text-red-500 font-bold mt-2">{codeError}</p>
+            )}
+          </div>
+
           {/* Beneficios */}
           <div className="bg-slate-50 rounded-2xl p-4 mb-6 text-left">
             <p className="text-xs font-bold text-slate-500 uppercase mb-3">
@@ -61,7 +165,7 @@ export default function UnauthorizedScreen({ user, onLogout }) {
               ))}
             </div>
           </div>
-          
+
           {/* Precio */}
           <div className="mb-6">
             <div className="flex items-center justify-center gap-2 mb-1">
@@ -73,9 +177,9 @@ export default function UnauthorizedScreen({ user, onLogout }) {
             <div className="text-4xl font-black text-slate-800">
               $19.99 <span className="text-base font-normal text-slate-500">USD</span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Pago único • Acceso de por vida</p>
+            <p className="text-xs text-slate-400 mt-1">Pago único &bull; Acceso de por vida</p>
           </div>
-          
+
           {/* Botón de compra */}
           <button
             onClick={handlePayPal}
@@ -85,10 +189,10 @@ export default function UnauthorizedScreen({ user, onLogout }) {
             <span className="text-lg font-black">Activar Ahora</span>
             <ArrowRight size={20} />
           </button>
-          
+
           {/* Nota */}
           <p className="text-xs text-slate-400 mb-6">
-            💡 Usa el mismo correo de Google al pagar para activación automática
+            Usa el mismo correo al pagar para activación automática
           </p>
 
           {/* Separador */}
@@ -97,7 +201,7 @@ export default function UnauthorizedScreen({ user, onLogout }) {
               <HelpCircle size={16} className="text-slate-400" />
               <span className="text-sm font-semibold text-slate-600">¿Ya pagaste y no tienes acceso?</span>
             </div>
-            
+
             {/* Botones de contacto */}
             <div className="flex gap-3">
               <button
@@ -107,7 +211,7 @@ export default function UnauthorizedScreen({ user, onLogout }) {
                 <Mail size={18} />
                 Email
               </button>
-              
+
               <button
                 onClick={handleWhatsAppContact}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors text-sm font-medium"
@@ -117,7 +221,7 @@ export default function UnauthorizedScreen({ user, onLogout }) {
               </button>
             </div>
           </div>
-          
+
           {/* Cerrar sesión */}
           <div className="border-t border-slate-200 pt-4">
             <button
@@ -129,7 +233,7 @@ export default function UnauthorizedScreen({ user, onLogout }) {
             </button>
           </div>
         </div>
-        
+
         {/* Mensaje inferior */}
         <p className="text-center text-slate-500 text-xs mt-6">
           El acceso se activa automáticamente en 1-2 minutos después del pago.

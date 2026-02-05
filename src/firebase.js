@@ -1,5 +1,13 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  browserLocalPersistence,
+  setPersistence,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -22,9 +30,15 @@ if (typeof window !== 'undefined') {
   setPersistence(auth, browserLocalPersistence).catch(console.error);
 }
 
+// Emails de Firebase en español
+auth.languageCode = 'es';
+
 // Provider de Google - forzar selección de cuenta cada vez
 export const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
+
+// Exports para auth con email/contraseña
+export { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail };
 
 // Firestore
 export const db = getFirestore(app);

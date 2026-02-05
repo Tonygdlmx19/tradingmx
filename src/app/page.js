@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../firebase';
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { 
-  collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc, getDoc 
+import {
+  collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, where, setDoc, updateDoc, getDoc
 } from 'firebase/firestore';
 
 import {
@@ -24,7 +24,10 @@ import {
   useTheme
 } from './components';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
+import AdminPanel from './components/AdminPanel';
 import { FundingSimulator } from './components/funding';
+
+const ADMIN_EMAIL = 'tonytrader19@gmail.com';
 
 export default function TradingJournalPRO() {
   const { isDark } = useTheme();
@@ -37,6 +40,8 @@ export default function TradingJournalPRO() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showFundingSimulator, setShowFundingSimulator] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'active' | 'expired' | 'unauthorized'
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
   const [viewMode, setViewMode] = useState('global');
@@ -71,20 +76,48 @@ export default function TradingJournalPRO() {
           const email = currentUser.email?.toLowerCase();
           const authDocRef = doc(db, "authorized_users", email);
           const authDoc = await getDoc(authDocRef);
-          const authorized = authDoc.exists() && authDoc.data()?.status === 'active';
-          console.log('[AUTH] Autorizado:', authorized);
 
-          // Actualizar todo junto para evitar flash de pantallas
-          setIsAuthorized(authorized);
+          if (authDoc.exists()) {
+            const data = authDoc.data();
+            const userType = data.type || 'paid'; // backwards compat
+
+            if (data.status === 'active') {
+              if (userType === 'trial') {
+                const now = new Date();
+                const trialEnd = data.trialEnd?.toDate?.() || new Date(data.trialEnd);
+                if (now > trialEnd) {
+                  await updateDoc(authDocRef, { status: 'expired' });
+                  setIsAuthorized(false);
+                  setAuthStatus('expired');
+                } else {
+                  setIsAuthorized(true);
+                  setAuthStatus('active');
+                }
+              } else {
+                setIsAuthorized(true);
+                setAuthStatus('active');
+              }
+            } else {
+              setIsAuthorized(false);
+              setAuthStatus(data.status === 'expired' ? 'expired' : 'unauthorized');
+            }
+          } else {
+            setIsAuthorized(false);
+            setAuthStatus('unauthorized');
+          }
+
+          console.log('[AUTH] Autorizado:', authDoc.exists() && authDoc.data()?.status === 'active');
           setUser(currentUser);
         } catch (error) {
           console.error('[AUTH] Error auth:', error);
           setIsAuthorized(false);
+          setAuthStatus('unauthorized');
           setUser(currentUser);
         }
       } else {
         setUser(null);
         setIsAuthorized(false);
+        setAuthStatus('checking');
       }
       setCheckingAuth(false);
       setLoading(false);
@@ -289,9 +322,16 @@ export default function TradingJournalPRO() {
     return <LandingPage onLogin={() => setShowLogin(true)} />;
   }
 
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
+
   // Usuario logueado pero no autorizado
   if (!isAuthorized) {
-    return <UnauthorizedScreen user={user} onLogout={handleLogout} />;
+    return <UnauthorizedScreen user={user} onLogout={handleLogout} authStatus={authStatus} />;
+  }
+
+  // Mostrar panel de admin
+  if (showAdminPanel && isAdmin) {
+    return <AdminPanel user={user} onClose={() => setShowAdminPanel(false)} />;
   }
 
   // Mostrar simulador de fondeo
@@ -337,6 +377,8 @@ export default function TradingJournalPRO() {
         onSettings={() => setShowSettings(true)}
         onCalendar={() => setShowCalendar(true)}
         onFundingSimulator={() => setShowFundingSimulator(true)}
+        isAdmin={isAdmin}
+        onAdmin={() => setShowAdminPanel(true)}
         onLogout={handleLogout}
       />
 

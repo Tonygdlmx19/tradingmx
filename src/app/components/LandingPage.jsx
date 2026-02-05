@@ -26,7 +26,8 @@ import {
   HelpCircle,
   BarChart,
   Volume2,
-  VolumeX
+  VolumeX,
+  Trophy
 } from 'lucide-react';
 
 export default function LandingPage({ onLogin }) {
@@ -507,6 +508,103 @@ export default function LandingPage({ onLogin }) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== SIMULADOR DE FONDEO ==================== */}
+      <section className="py-12 sm:py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-amber-950/5 to-slate-950" />
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+
+        <div className="max-w-4xl mx-auto relative">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 rounded-[2rem] blur-xl opacity-50" />
+
+            <div className="relative bg-slate-900/90 border border-amber-500/20 rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 backdrop-blur-sm">
+              <div className="grid md:grid-cols-2 gap-6 sm:gap-10 items-center">
+                {/* Texto */}
+                <div>
+                  <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
+                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-amber-400 text-xs font-medium">Nuevo</span>
+                  </div>
+
+                  <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4">
+                    Simulador de{' '}
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-400">Prueba de Fondeo</span>
+                  </h2>
+
+                  <p className="text-slate-400 text-sm sm:text-base mb-4 sm:mb-6 leading-relaxed">
+                    Practica con las reglas reales de FTMO, Funded Next, E8 y mas.
+                    Registra tus trades y ve si pasarias el challenge <span className="text-amber-400 font-medium">antes de arriesgar tu dinero.</span>
+                  </p>
+
+                  <div className="space-y-2">
+                    {[
+                      "Reglas reales de empresas de fondeo",
+                      "Tracking de drawdown diario y total",
+                      "Progreso hacia el profit target",
+                      "Crea reglas personalizadas"
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-slate-300 text-xs sm:text-sm">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Visual */}
+                <div className="relative">
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 space-y-4">
+                    {/* Header simulado */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
+                        <Trophy className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-sm">FTMO $100,000</p>
+                        <p className="text-slate-500 text-xs">Challenge Fase 1</p>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div>
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="text-slate-400">Profit Target</span>
+                        <span className="text-emerald-400 font-bold">72%</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" style={{ width: '72%' }} />
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700/50">
+                        <p className="text-slate-500 text-[10px] uppercase">Balance</p>
+                        <p className="text-white font-bold text-sm">$107,200</p>
+                      </div>
+                      <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700/50">
+                        <p className="text-slate-500 text-[10px] uppercase">DD Total</p>
+                        <p className="text-emerald-400 font-bold text-sm">1.8%</p>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
+                      <p className="text-emerald-400 text-xs font-bold">Challenge en progreso - Dia 12 de 30</p>
+                    </div>
+                  </div>
+
+                  {/* Glow decorativo */}
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-amber-500/20 blur-2xl rounded-full" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

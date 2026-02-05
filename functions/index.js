@@ -46,6 +46,9 @@ exports.paypalWebhook = functions.https.onRequest(async (req, res) => {
         await db.collection("authorized_users").doc(emailLower).set({
           email: emailLower,
           status: "active",
+          type: "paid",
+          trialStart: null,
+          trialEnd: null,
           authorizedAt: admin.firestore.FieldValue.serverTimestamp(),
           paypalEvent: eventType,
           paypalTransactionId: body.resource?.id || body.id,
