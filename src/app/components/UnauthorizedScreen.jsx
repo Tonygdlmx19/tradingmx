@@ -190,10 +190,22 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
             <ArrowRight size={20} />
           </button>
 
-          {/* Nota */}
-          <p className="text-xs text-slate-400 mb-6">
-            Usa el mismo correo al pagar para activación automática
-          </p>
+          {/* Nota animada */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-3 mb-6">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-100/60 to-transparent animate-[shimmer_2s_ease-in-out_infinite]" />
+            <div className="relative flex items-center gap-2">
+              <span className="flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <p className="text-xs text-amber-700 font-semibold">
+                {isExpired
+                  ? `Paga con ${user?.email} y tu acceso se activa automáticamente.`
+                  : 'Tu cuenta será activada en breve después del pago.'
+                }
+              </p>
+            </div>
+          </div>
 
           {/* Separador */}
           <div className="border-t border-slate-200 pt-4 mb-4">
