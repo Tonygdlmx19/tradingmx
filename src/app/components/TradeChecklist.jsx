@@ -2,10 +2,36 @@
 import { useState } from 'react';
 import { ClipboardCheck, X, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
   const [marcadas, setMarcadas] = useState(reglas.map(() => false));
+
+  const labels = {
+    es: {
+      title: 'Checklist de Setup',
+      validSetup: 'Setup valido',
+      caution: 'Precaucion',
+      doNotTrade: 'No operar',
+      criteriaOf: 'de',
+      criteriaMet: 'criterios cumplidos',
+      confirmSetup: 'Confirmar Setup',
+      cancel: 'Cancelar',
+    },
+    en: {
+      title: 'Setup Checklist',
+      validSetup: 'Valid setup',
+      caution: 'Caution',
+      doNotTrade: 'Do not trade',
+      criteriaOf: 'of',
+      criteriaMet: 'criteria met',
+      confirmSetup: 'Confirm Setup',
+      cancel: 'Cancel',
+    },
+  };
+  const t = labels[language];
 
   if (!isOpen || !reglas || reglas.length === 0) return null;
 
@@ -22,9 +48,9 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm }) {
 
   // Semáforo
   const getSemaforo = () => {
-    if (porcentaje >= 70) return { color: 'green', label: 'Setup valido', icon: CheckCircle };
-    if (porcentaje >= 50) return { color: 'amber', label: 'Precaucion', icon: AlertTriangle };
-    return { color: 'red', label: 'No operar', icon: XCircle };
+    if (porcentaje >= 70) return { color: 'green', label: t.validSetup, icon: CheckCircle };
+    if (porcentaje >= 50) return { color: 'amber', label: t.caution, icon: AlertTriangle };
+    return { color: 'red', label: t.doNotTrade, icon: XCircle };
   };
 
   const semaforo = getSemaforo();
@@ -78,7 +104,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm }) {
           <div className="flex justify-between items-center">
             <h3 className={`font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
               <ClipboardCheck size={20} className="text-amber-500"/>
-              Checklist de Setup
+              {t.title}
             </h3>
             <button
               onClick={onClose}
@@ -110,7 +136,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm }) {
             />
           </div>
           <p className={`text-xs mt-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {totalMarcadas} de {reglas.length} criterios cumplidos
+            {totalMarcadas} {t.criteriaOf} {reglas.length} {t.criteriaMet}
           </p>
         </div>
 
@@ -161,7 +187,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm }) {
             onClick={handleConfirm}
             className={`w-full py-3 rounded-xl font-bold transition-all active:scale-[0.98] ${colors.bg} text-white shadow-lg`}
           >
-            Confirmar Setup ({porcentaje}%)
+            {t.confirmSetup} ({porcentaje}%)
           </button>
           <button
             onClick={onClose}
@@ -169,7 +195,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm }) {
               isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100'
             }`}
           >
-            Cancelar
+            {t.cancel}
           </button>
         </div>
       </div>
