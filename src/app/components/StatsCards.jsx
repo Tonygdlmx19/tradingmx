@@ -40,7 +40,7 @@ export default function StatsCards({ stats }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div data-tour="stats" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card, i) => (
         <div 
           key={i} 

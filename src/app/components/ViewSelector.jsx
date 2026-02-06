@@ -25,7 +25,7 @@ export default function ViewSelector({
   }
 
   return (
-    <div className={`p-4 rounded-2xl border mb-4 ${
+    <div data-tour="view-selector" className={`p-4 rounded-2xl border mb-4 ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
     }`}>
       {/* Toggle Tabla/Calendario */}

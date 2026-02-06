@@ -92,6 +92,7 @@ export default function Header({
 
             <button
               onClick={onFundingSimulator}
+              data-tour="funding"
               className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-amber-400' : 'hover:bg-slate-100 text-amber-600'}`}
               title="Simulador de Fondeo"
             >
@@ -110,6 +111,7 @@ export default function Header({
 
             <button
               onClick={onCalendar}
+              data-tour="calendar"
               className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-blue-400' : 'hover:bg-slate-100 text-blue-500'}`}
               title="Calendario Económico"
             >
@@ -118,7 +120,9 @@ export default function Header({
 
             <button
               onClick={onSettings}
+              data-tour="settings"
               className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}
+              title="Configuración"
             >
               <Settings size={18}/>
             </button>

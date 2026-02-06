@@ -26,6 +26,8 @@ import {
 } from './components';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
 import AdminPanel from './components/AdminPanel';
+import TrialExpiringAlert from './components/TrialExpiringAlert';
+import OnboardingTour from './components/OnboardingTour';
 import { FundingSimulator } from './components/funding';
 
 const ADMIN_EMAIL = 'tonytrader19@gmail.com';
@@ -43,6 +45,8 @@ export default function TradingJournalPRO() {
   const [showFundingSimulator, setShowFundingSimulator] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'active' | 'expired' | 'unauthorized'
+  const [userTrialEnd, setUserTrialEnd] = useState(null);
+  const [userType, setUserType] = useState(null);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
   const [viewMode, setViewMode] = useState('global');
@@ -81,22 +85,24 @@ export default function TradingJournalPRO() {
 
           if (authDoc.exists()) {
             const data = authDoc.data();
-            const userType = data.type || 'paid'; // backwards compat
+            const currentUserType = data.type || 'paid'; // backwards compat
+            setUserType(currentUserType);
 
             if (data.status === 'active') {
               const now = new Date();
               let isExpired = false;
 
               // Check trial expiration
-              if (userType === 'trial' && data.trialEnd) {
+              if (currentUserType === 'trial' && data.trialEnd) {
                 const trialEnd = data.trialEnd?.toDate?.() || new Date(data.trialEnd);
+                setUserTrialEnd(data.trialEnd);
                 if (now > trialEnd) {
                   isExpired = true;
                 }
               }
 
               // Check subscription expiration
-              if (userType === 'subscription' && data.subscriptionEnd) {
+              if (currentUserType === 'subscription' && data.subscriptionEnd) {
                 const subscriptionEnd = data.subscriptionEnd?.toDate?.() || new Date(data.subscriptionEnd);
                 if (now > subscriptionEnd) {
                   isExpired = true;
@@ -401,12 +407,23 @@ export default function TradingJournalPRO() {
         onClose={() => setShowCalendar(false)}
       />
 
+      {/* Alerta de prueba expirando */}
+      {userType === 'trial' && userTrialEnd && (
+        <TrialExpiringAlert
+          trialEnd={userTrialEnd}
+          userEmail={user?.email}
+        />
+      )}
+
+      {/* Tour de onboarding para nuevos usuarios */}
+      <OnboardingTour userEmail={user?.email} />
+
       <main className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           <div className="lg:col-span-9 space-y-6 lg:space-y-8 order-2 lg:order-1">
             <StatsCards stats={stats} />
             <AdvancedStats trades={filteredTrades} capitalInicial={config.capitalInicial} balance={stats.balance} />
-            <div className="space-y-6">
+            <div data-tour="charts" className="space-y-6">
               <EquityChart data={stats.data} startBalance={stats.startBalance} />
               <DrawdownChart data={stats.data} />
             </div>

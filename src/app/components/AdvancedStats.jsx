@@ -144,7 +144,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
   const winPct = m.totalTrades > 0 ? (m.winningTrades / m.totalTrades) * 100 : 0;
 
   return (
-    <div className={`p-4 sm:p-6 rounded-2xl border transition-colors ${
+    <div data-tour="advanced-stats" className={`p-4 sm:p-6 rounded-2xl border transition-colors ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
     }`}>
       {/* Header */}
