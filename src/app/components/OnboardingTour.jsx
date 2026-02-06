@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
-import { X, ArrowRight, ArrowLeft, Settings, Trophy, BarChart3, Calculator, Calendar, Target, CheckCircle, Sparkles } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, Settings, Trophy, BarChart3, Calendar, Target, CheckCircle, Sparkles } from 'lucide-react';
 
 const TOUR_STEPS = [
   {
@@ -9,15 +9,13 @@ const TOUR_STEPS = [
     title: '¡Bienvenido a Trading Journal PRO!',
     description: 'Te mostraremos las funciones principales para que le saques el máximo provecho a tu journal. ¡Empecemos!',
     icon: Sparkles,
-    position: 'center'
   },
   {
     id: 'settings',
     target: '[data-tour="settings"]',
     title: 'Configuración',
-    description: 'Aquí puedes personalizar tu journal: agrega activos que no estén en la lista, crea tu checklist de setup, define tu capital inicial y tu meta diaria.',
+    description: 'Aquí puedes personalizar tu journal: agrega activos, crea tu checklist de setup, define tu capital inicial y tu meta diaria.',
     icon: Settings,
-    position: 'bottom-left'
   },
   {
     id: 'funding',
@@ -25,7 +23,6 @@ const TOUR_STEPS = [
     title: 'Simulador de Fondeo',
     description: 'Practica con reglas reales de empresas de fondeo como FTMO. Simula tu challenge antes de arriesgar dinero real.',
     icon: Trophy,
-    position: 'bottom-left'
   },
   {
     id: 'calendar',
@@ -33,7 +30,6 @@ const TOUR_STEPS = [
     title: 'Calendario Económico',
     description: 'Consulta los eventos económicos importantes del día. Nunca te pierdas un NFP, FOMC o dato de inflación.',
     icon: Calendar,
-    position: 'bottom-left'
   },
   {
     id: 'stats',
@@ -41,23 +37,20 @@ const TOUR_STEPS = [
     title: 'Estadísticas Principales',
     description: 'Tu balance actual, P&L del periodo, win rate, drawdown máximo y profit factor. Las métricas clave de un vistazo.',
     icon: BarChart3,
-    position: 'bottom'
   },
   {
     id: 'advanced-stats',
     target: '[data-tour="advanced-stats"]',
     title: 'Métricas Avanzadas',
-    description: 'Análisis detallado: mejor/peor trade, promedio de ganancias y pérdidas, racha ganadora, rendimiento por activo y más.',
+    description: 'Análisis detallado: mejor/peor trade, promedio de ganancias y pérdidas, racha ganadora y expectativa.',
     icon: BarChart3,
-    position: 'top'
   },
   {
     id: 'charts',
     target: '[data-tour="charts"]',
     title: 'Gráficas de Rendimiento',
-    description: 'Visualiza tu curva de equity y drawdown. Identifica patrones en tu operativa y cómo evoluciona tu cuenta.',
+    description: 'Visualiza tu curva de equity y drawdown. Identifica patrones en tu operativa.',
     icon: BarChart3,
-    position: 'top'
   },
   {
     id: 'view-selector',
@@ -65,30 +58,27 @@ const TOUR_STEPS = [
     title: 'Vista del Historial',
     description: 'Cambia entre vista de tabla o calendario. Filtra por mes o año para analizar periodos específicos.',
     icon: Calendar,
-    position: 'top'
   },
   {
     id: 'trade-form',
     target: '[data-tour="trade-form"]',
     title: 'Registra tus Trades',
-    description: 'Usa este formulario para registrar cada operación. Incluye el resultado, emoción, si seguiste tu plan y notas importantes.',
+    description: 'Usa este formulario para registrar cada operación con resultado, emoción y notas.',
     icon: Target,
-    position: 'left'
   },
   {
     id: 'complete',
     target: null,
     title: '¡Listo para empezar!',
-    description: 'Ya conoces las funciones principales. Recuerda: la consistencia en el registro es clave para mejorar. ¡Éxito en tu trading!',
+    description: 'Ya conoces las funciones principales. La consistencia en el registro es clave para mejorar. ¡Éxito en tu trading!',
     icon: CheckCircle,
-    position: 'center'
   }
 ];
 
 export default function OnboardingTour({ userEmail, onComplete, forceStart, onForceStartHandled }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [targetRect, setTargetRect] = useState(null);
+  const [highlightedElement, setHighlightedElement] = useState(null);
 
   // Verificar si es primera vez
   useEffect(() => {
@@ -98,7 +88,6 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
     const completed = localStorage.getItem(tourKey);
 
     if (!completed) {
-      // Delay para que la UI se renderice
       setTimeout(() => setIsActive(true), 1000);
     }
   }, [userEmail]);
@@ -112,36 +101,44 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
     }
   }, [forceStart, onForceStartHandled]);
 
-  // Actualizar posición del elemento target
-  const updateTargetPosition = useCallback(() => {
+  // Scroll y highlight del elemento actual
+  const highlightCurrentStep = useCallback(() => {
+    // Limpiar highlight anterior
+    if (highlightedElement) {
+      highlightedElement.classList.remove('tour-highlight');
+    }
+
     const step = TOUR_STEPS[currentStep];
     if (!step.target) {
-      setTargetRect(null);
+      setHighlightedElement(null);
       return;
     }
 
     const element = document.querySelector(step.target);
     if (element) {
-      const rect = element.getBoundingClientRect();
-      setTargetRect({
-        top: rect.top - 8,
-        left: rect.left - 8,
-        width: rect.width + 16,
-        height: rect.height + 16,
-      });
-
-      // Scroll suave al elemento si no está visible
+      // Scroll suave al elemento
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Agregar clase de highlight
+      setTimeout(() => {
+        element.classList.add('tour-highlight');
+        setHighlightedElement(element);
+      }, 300);
     }
-  }, [currentStep]);
+  }, [currentStep, highlightedElement]);
 
   useEffect(() => {
     if (isActive) {
-      updateTargetPosition();
-      window.addEventListener('resize', updateTargetPosition);
-      return () => window.removeEventListener('resize', updateTargetPosition);
+      highlightCurrentStep();
     }
-  }, [isActive, currentStep, updateTargetPosition]);
+
+    return () => {
+      // Limpiar highlight al desmontar
+      if (highlightedElement) {
+        highlightedElement.classList.remove('tour-highlight');
+      }
+    };
+  }, [isActive, currentStep, highlightCurrentStep]);
 
   const handleNext = () => {
     if (currentStep < TOUR_STEPS.length - 1) {
@@ -157,11 +154,12 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
     }
   };
 
-  const handleSkip = () => {
-    handleComplete();
-  };
-
   const handleComplete = () => {
+    // Limpiar highlight
+    if (highlightedElement) {
+      highlightedElement.classList.remove('tour-highlight');
+    }
+
     setIsActive(false);
     if (userEmail) {
       const tourKey = `onboarding_completed_${userEmail}`;
@@ -176,131 +174,42 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
   const Icon = step.icon;
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
-  const isCentered = step.position === 'center';
-
-  // Calcular posición del tooltip
-  const getTooltipStyle = () => {
-    if (isCentered || !targetRect) {
-      return {
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-      };
-    }
-
-    const padding = 16;
-    const tooltipWidth = 340;
-    const tooltipHeight = 200;
-
-    let top, left;
-
-    switch (step.position) {
-      case 'bottom':
-        top = targetRect.top + targetRect.height + padding;
-        left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2);
-        break;
-      case 'bottom-left':
-        top = targetRect.top + targetRect.height + padding;
-        left = targetRect.left;
-        break;
-      case 'bottom-right':
-        top = targetRect.top + targetRect.height + padding;
-        left = targetRect.left + targetRect.width - tooltipWidth;
-        break;
-      case 'top':
-        top = targetRect.top - tooltipHeight - padding;
-        left = targetRect.left + (targetRect.width / 2) - (tooltipWidth / 2);
-        break;
-      case 'left':
-        top = targetRect.top;
-        left = targetRect.left - tooltipWidth - padding;
-        break;
-      case 'right':
-        top = targetRect.top;
-        left = targetRect.left + targetRect.width + padding;
-        break;
-      default:
-        top = targetRect.top + targetRect.height + padding;
-        left = targetRect.left;
-    }
-
-    // Ajustar si se sale de la pantalla
-    if (left < padding) left = padding;
-    if (left + tooltipWidth > window.innerWidth - padding) {
-      left = window.innerWidth - tooltipWidth - padding;
-    }
-    if (top + tooltipHeight > window.innerHeight - padding) {
-      top = targetRect.top - tooltipHeight - padding;
-    }
-    if (top < padding) top = padding;
-
-    return {
-      position: 'fixed',
-      top: `${top}px`,
-      left: `${left}px`,
-    };
-  };
+  const isCentered = !step.target;
 
   return (
-    <div className="fixed inset-0 z-[200]">
-      {/* Overlay oscuro con hueco para el elemento destacado */}
-      <svg className="absolute inset-0 w-full h-full">
-        <defs>
-          <mask id="spotlight-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {targetRect && (
-              <rect
-                x={targetRect.left}
-                y={targetRect.top}
-                width={targetRect.width}
-                height={targetRect.height}
-                rx="12"
-                fill="black"
-              />
-            )}
-          </mask>
-        </defs>
-        <rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          fill="rgba(0, 0, 0, 0.75)"
-          mask="url(#spotlight-mask)"
-        />
-      </svg>
-
-      {/* Borde brillante alrededor del elemento */}
-      {targetRect && (
+    <>
+      {/* Overlay semi-transparente solo para pasos centrados */}
+      {isCentered && (
         <div
-          className="absolute rounded-xl border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.5)] pointer-events-none animate-pulse"
-          style={{
-            top: targetRect.top,
-            left: targetRect.left,
-            width: targetRect.width,
-            height: targetRect.height,
-          }}
+          className="fixed inset-0 bg-black/60 z-[200]"
+          onClick={handleComplete}
         />
       )}
 
-      {/* Tooltip / Card */}
+      {/* Tooltip fijo en la parte inferior */}
       <div
-        className="w-[340px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in"
-        style={getTooltipStyle()}
+        className={`fixed z-[201] w-[90%] max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up ${
+          isCentered ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' : 'bottom-6 left-1/2 -translate-x-1/2'
+        }`}
       >
         {/* Header con icono */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Icon className="text-white" size={24} />
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <Icon className="text-white" size={20} />
             </div>
-            <div>
-              <h3 className="text-white font-bold text-lg">{step.title}</h3>
+            <div className="flex-1">
+              <h3 className="text-white font-bold">{step.title}</h3>
               <p className="text-blue-100 text-xs">
                 Paso {currentStep + 1} de {TOUR_STEPS.length}
               </p>
             </div>
+            <button
+              onClick={handleComplete}
+              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X className="text-white" size={20} />
+            </button>
           </div>
         </div>
 
@@ -312,12 +221,12 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
         </div>
 
         {/* Barra de progreso */}
-        <div className="px-4 pb-2">
+        <div className="px-4 pb-3">
           <div className="flex gap-1">
             {TOUR_STEPS.map((_, i) => (
               <div
                 key={i}
-                className={`h-1 flex-1 rounded-full transition-colors ${
+                className={`h-1.5 flex-1 rounded-full transition-colors ${
                   i <= currentStep ? 'bg-blue-500' : 'bg-slate-200'
                 }`}
               />
@@ -326,12 +235,12 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
         </div>
 
         {/* Botones */}
-        <div className="p-4 pt-2 flex items-center justify-between">
+        <div className="px-4 pb-4 flex items-center justify-between">
           <button
-            onClick={handleSkip}
+            onClick={handleComplete}
             className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors"
           >
-            Omitir tour
+            Omitir
           </button>
 
           <div className="flex gap-2">
@@ -341,7 +250,6 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
                 className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-lg transition-colors flex items-center gap-1"
               >
                 <ArrowLeft size={16} />
-                Atrás
               </button>
             )}
             <button
@@ -351,7 +259,7 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
               {isLastStep ? (
                 <>
                   <CheckCircle size={16} />
-                  ¡Empezar!
+                  Finalizar
                 </>
               ) : (
                 <>
@@ -364,29 +272,42 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
         </div>
       </div>
 
-      {/* Botón X para cerrar */}
-      <button
-        onClick={handleSkip}
-        className="fixed top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-      >
-        <X size={24} />
-      </button>
-
+      {/* Estilos globales para el highlight */}
       <style jsx global>{`
-        @keyframes fade-in {
+        .tour-highlight {
+          position: relative;
+          z-index: 100;
+          outline: 3px solid #3b82f6 !important;
+          outline-offset: 4px;
+          border-radius: 12px;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.3) !important;
+          animation: tour-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes tour-pulse {
+          0%, 100% {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.4);
+          }
+        }
+
+        @keyframes slide-up {
           from {
             opacity: 0;
-            transform: translateY(10px);
+            transform: translate(-50%, 20px);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate(-50%, 0);
           }
         }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
+
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out forwards;
         }
       `}</style>
-    </div>
+    </>
   );
 }

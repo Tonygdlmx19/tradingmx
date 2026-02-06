@@ -429,10 +429,10 @@ export default function TradingJournalPRO() {
           <div className="lg:col-span-9 space-y-6 lg:space-y-8 order-2 lg:order-1">
             <StatsCards stats={stats} />
             <AdvancedStats trades={filteredTrades} capitalInicial={config.capitalInicial} balance={stats.balance} />
-            <div data-tour="charts" className="space-y-6">
+            <div data-tour="charts">
               <EquityChart data={stats.data} startBalance={stats.startBalance} />
-              <DrawdownChart data={stats.data} />
             </div>
+            <DrawdownChart data={stats.data} />
             <ViewSelector
               viewMode={viewMode}
               setViewMode={setViewMode}
