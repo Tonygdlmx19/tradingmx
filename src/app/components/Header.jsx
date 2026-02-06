@@ -1,7 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck } from 'lucide-react';
+import { useLanguage } from './LanguageProvider';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck, Globe } from 'lucide-react';
 import CalculatorModal from './CalculatorModal';
 
 export default function Header({
@@ -19,28 +20,29 @@ export default function Header({
   onLogout
 }) {
   const { isDark, toggleTheme } = useTheme();
+  const { language, toggleLanguage } = useLanguage();
   const [showCalculator, setShowCalculator] = useState(false);
 
   const displayName = config?.nombreTrader || user.displayName || user.email?.split('@')[0];
-  
+
   const getGreetingData = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
-      return { 
-        text: "Buenos días", 
+      return {
+        text: language === 'es' ? "Buenos días" : "Good morning",
         icon: <Sun className="text-yellow-500" size={24} />,
         bgIcon: 'bg-yellow-500/10'
       };
     }
     if (hour >= 12 && hour < 19) {
-      return { 
-        text: "Buenas tardes", 
+      return {
+        text: language === 'es' ? "Buenas tardes" : "Good afternoon",
         icon: <CloudSun className="text-orange-500" size={24} />,
         bgIcon: 'bg-orange-500/10'
       };
     }
-    return { 
-      text: "Buenas noches", 
+    return {
+      text: language === 'es' ? "Buenas noches" : "Good evening",
       icon: <Moon className="text-indigo-400" size={24} />,
       bgIcon: 'bg-indigo-500/10'
     };
@@ -70,11 +72,23 @@ export default function Header({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button 
+            <button
+              onClick={toggleLanguage}
+              className={`px-2 py-1 rounded-full transition-all text-xs font-bold ${
+                isDark
+                  ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+              }`}
+              title={language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+            >
+              {language === 'es' ? 'EN' : 'ES'}
+            </button>
+
+            <button
               onClick={toggleTheme}
               className={`p-2 rounded-full transition-all ${
-                isDark 
-                  ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30' 
+                isDark
+                  ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
               title={isDark ? 'Modo claro' : 'Modo oscuro'}
@@ -163,7 +177,7 @@ export default function Header({
                 </div>
                 <div>
                   <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Target del día ({metaDiariaPct}%)
+                    {language === 'es' ? 'Target del día' : 'Daily Target'} ({metaDiariaPct}%)
                   </p>
                   <p className={`text-lg sm:text-xl font-black ${pnlHoy >= metaDiaria ? 'text-green-500' : isDark ? 'text-white' : 'text-slate-800'}`}>
                     ${pnlHoy.toFixed(2)} <span className={`text-xs font-normal ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>/ ${metaDiaria}</span>
@@ -174,7 +188,7 @@ export default function Header({
               {/* Barra de progreso - ancho completo en móvil */}
               <div className="w-full sm:flex-1 sm:max-w-[200px]">
                 <div className="flex justify-between text-[10px] mb-1">
-                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Progreso</span>
+                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{language === 'es' ? 'Progreso' : 'Progress'}</span>
                   <span className={`font-bold ${pnlHoy >= metaDiaria ? 'text-green-500' : 'text-blue-500'}`}>
                     {Math.min(100, progresoMeta).toFixed(0)}%
                   </span>

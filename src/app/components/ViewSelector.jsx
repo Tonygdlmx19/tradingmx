@@ -1,8 +1,7 @@
 "use client";
 import { LayoutGrid, Calendar, ChevronDown, List, CalendarDays } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
-
-const mesesFull = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+import { useLanguage } from './LanguageProvider';
 
 export default function ViewSelector({
   viewMode,
@@ -16,6 +15,9 @@ export default function ViewSelector({
   onDisplayModeChange
 }) {
   const { isDark } = useTheme();
+  const { language, t } = useLanguage();
+
+  const monthsFull = t.monthsFull;
 
   // Generar lista de años (desde 2020 hasta el año actual)
   const currentYear = new Date().getFullYear();
@@ -23,6 +25,16 @@ export default function ViewSelector({
   for (let y = currentYear; y >= 2020; y--) {
     years.push(y);
   }
+
+  const labels = {
+    table: language === 'es' ? 'Tabla' : 'Table',
+    calendar: language === 'es' ? 'Calendario' : 'Calendar',
+    global: 'Global',
+    monthly: language === 'es' ? 'Mensual' : 'Monthly',
+    operations: tradeCount === 1
+      ? (language === 'es' ? 'operación' : 'trade')
+      : (language === 'es' ? 'operaciones' : 'trades'),
+  };
 
   return (
     <div data-tour="view-selector" className={`p-4 rounded-2xl border mb-4 ${
@@ -42,7 +54,7 @@ export default function ViewSelector({
             }`}
           >
             <List size={16} />
-            Tabla
+            {labels.table}
           </button>
           <button
             onClick={() => onDisplayModeChange('calendario')}
@@ -53,7 +65,7 @@ export default function ViewSelector({
             }`}
           >
             <CalendarDays size={16} />
-            Calendario
+            {labels.calendar}
           </button>
         </div>
       )}
@@ -62,27 +74,27 @@ export default function ViewSelector({
       <div className={`flex p-1 rounded-xl border ${
         isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-100 border-slate-200'
       }`}>
-        <button 
-          onClick={() => setViewMode('global')} 
+        <button
+          onClick={() => setViewMode('global')}
           className={`flex-1 px-4 py-3 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            viewMode === 'global' 
-              ? `${isDark ? 'bg-slate-800' : 'bg-white'} shadow text-blue-500` 
+            viewMode === 'global'
+              ? `${isDark ? 'bg-slate-800' : 'bg-white'} shadow text-blue-500`
               : `${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'}`
           }`}
         >
-          <LayoutGrid size={16}/> 
-          Global {selectedYear}
+          <LayoutGrid size={16}/>
+          {labels.global} {selectedYear}
         </button>
-        <button 
-          onClick={() => setViewMode('mensual')} 
+        <button
+          onClick={() => setViewMode('mensual')}
           className={`flex-1 px-4 py-3 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            viewMode === 'mensual' 
-              ? `${isDark ? 'bg-slate-800' : 'bg-white'} shadow text-blue-500` 
+            viewMode === 'mensual'
+              ? `${isDark ? 'bg-slate-800' : 'bg-white'} shadow text-blue-500`
               : `${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'}`
           }`}
         >
-          <Calendar size={16}/> 
-          Mensual
+          <Calendar size={16}/>
+          {labels.monthly}
         </button>
       </div>
 
@@ -118,20 +130,20 @@ export default function ViewSelector({
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
               >
-                {mesesFull.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                {monthsFull.map((m, i) => <option key={i} value={i}>{m}</option>)}
               </select>
               <ChevronDown size={16} className={`absolute right-2 top-3 pointer-events-none ${isDark ? 'text-slate-400' : 'text-slate-400'}`}/>
             </div>
           )}
         </div>
-        
+
         {/* Contador de operaciones - Siempre a la derecha */}
         <div className={`px-4 py-2.5 rounded-xl border text-sm font-bold ${
-          isDark 
-            ? 'bg-slate-700 border-slate-600 text-slate-300' 
+          isDark
+            ? 'bg-slate-700 border-slate-600 text-slate-300'
             : 'bg-slate-50 border-slate-200 text-slate-600'
         }`}>
-          {tradeCount} {tradeCount === 1 ? 'operación' : 'operaciones'}
+          {tradeCount} {labels.operations}
         </div>
       </div>
     </div>
