@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Settings, X, Target, User, MessageSquare, Sparkles, TrendingUp, Plus, Trash2, ClipboardCheck, HelpCircle } from 'lucide-react';
+import { Settings, X, Target, User, TrendingUp, Plus, Trash2, ClipboardCheck, HelpCircle } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 
@@ -55,25 +55,9 @@ const ACTIVOS_DISPONIBLES = [
   { symbol: 'XRP/USD', name: 'Ripple' },
 ];
 
-const frasesSugeridas = [
-  "El mercado recompensa la paciencia 📈",
-  "Disciplina sobre emocion 🎯",
-  "Un trade a la vez 🔥",
-  "Protege tu capital primero 🛡️",
-  "El proceso importa mas que el resultado 💪",
-  "Menos es mas en trading 🧘",
-  "Respeta tu stop loss ⛔",
-  "La consistencia crea riqueza 💰",
-  "Opera tu plan, no tus emociones 🧠",
-  "Hoy es un buen dia para ser rentable ✨",
-  "El mercado siempre tiene la razon 📊",
-  "Corta las perdidas, deja correr las ganancias ✂️",
-];
-
 export default function SettingsModal({ isOpen, onClose, config, setConfig, onSaveToCloud, onRestartTour }) {
   const { isDark } = useTheme();
   const { language } = useLanguage();
-  const [showFrases, setShowFrases] = useState(false);
   const [nuevoActivo, setNuevoActivo] = useState('');
   const [showSugerencias, setShowSugerencias] = useState(false);
   const [nuevaRegla, setNuevaRegla] = useState('');
@@ -84,9 +68,6 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       personalization: 'Personalizacion',
       traderName: 'Tu nombre de trader',
       traderNamePlaceholder: 'Ej: Carlos, El Trader, etc.',
-      motivationalPhrase: 'Frase motivadora',
-      phrasePlaceholder: 'Tu frase para mantenerte enfocado...',
-      suggestedPhrases: 'Frases sugeridas (toca para seleccionar):',
       initialCapital: 'Capital Inicial',
       dailyGoal: 'Meta Diaria',
       myAssets: 'Mis Activos',
@@ -105,9 +86,6 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       personalization: 'Personalization',
       traderName: 'Your trader name',
       traderNamePlaceholder: 'Ex: Carlos, The Trader, etc.',
-      motivationalPhrase: 'Motivational phrase',
-      phrasePlaceholder: 'Your phrase to stay focused...',
-      suggestedPhrases: 'Suggested phrases (tap to select):',
       initialCapital: 'Initial Capital',
       dailyGoal: 'Daily Goal',
       myAssets: 'My Assets',
@@ -188,11 +166,6 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
     onClose();
   };
 
-  const selectFrase = (frase) => {
-    setConfig({ ...config, fraseMotivadora: frase });
-    setShowFrases(false);
-  };
-
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div 
@@ -234,63 +207,6 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 value={config.nombreTrader || ''} 
                 onChange={e => setConfig({...config, nombreTrader: e.target.value})} 
               />
-            </div>
-            
-            <div>
-              <label className={`text-[10px] font-bold uppercase mb-1 block flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <MessageSquare size={10}/> {t.motivationalPhrase}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder={t.phrasePlaceholder}
-                  className={`w-full p-2.5 pr-10 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors text-sm ${
-                    isDark 
-                      ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' 
-                      : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
-                  }`}
-                  value={config.fraseMotivadora || ''} 
-                  onChange={e => setConfig({...config, fraseMotivadora: e.target.value})} 
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowFrases(!showFrases)}
-                  className={`absolute right-2 top-2 p-1.5 rounded-lg transition-colors ${
-                    isDark 
-                      ? 'hover:bg-slate-500 text-yellow-400' 
-                      : 'hover:bg-slate-100 text-yellow-500'
-                  }`}
-                  title="Ver sugerencias"
-                >
-                  <Sparkles size={16}/>
-                </button>
-              </div>
-              
-              {showFrases && (
-                <div className={`mt-2 p-3 rounded-xl border max-h-40 overflow-y-auto ${
-                  isDark ? 'bg-slate-600 border-slate-500' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <p className={`text-[10px] font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {t.suggestedPhrases}
-                  </p>
-                  <div className="space-y-1">
-                    {frasesSugeridas.map((frase, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => selectFrase(frase)}
-                        className={`w-full text-left text-xs p-2 rounded-lg transition-colors ${
-                          isDark 
-                            ? 'hover:bg-slate-500 text-slate-300' 
-                            : 'hover:bg-white text-slate-600'
-                        }`}
-                      >
-                        {frase}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
