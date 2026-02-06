@@ -51,16 +51,77 @@ export default function Header({
   
   const greetingData = getGreetingData();
   
-  const frasesMotivadoras = [
-    "El mercado recompensa la paciencia",
-    "Disciplina sobre emoción",
-    "Un trade a la vez",
-    "Protege tu capital primero",
-    "El proceso importa más que el resultado",
-    "Opera tu plan, no tus emociones",
-  ];
+  const frasesMotivadoras = {
+    es: [
+      "El mercado recompensa la paciencia",
+      "Disciplina sobre emoción",
+      "Un trade a la vez",
+      "Protege tu capital primero",
+      "El proceso importa más que el resultado",
+      "Opera tu plan, no tus emociones",
+      "La consistencia supera a la intensidad",
+      "Acepta las pérdidas como parte del juego",
+      "Tu peor enemigo en el trading eres tú mismo",
+      "El éxito es la suma de pequeños esfuerzos repetidos",
+      "No busques tener razón, busca ser rentable",
+      "La paciencia es la madre de todas las virtudes",
+      "Cada día es una nueva oportunidad",
+      "El mercado siempre tiene la razón",
+      "Menos es más en el trading",
+      "La gestión del riesgo es la clave del éxito",
+      "Aprende a perder antes de ganar",
+      "Tu mindset determina tu éxito",
+      "El control emocional es tu mayor ventaja",
+      "No persigas al mercado, deja que venga a ti",
+      "La mejor operación es la que no haces",
+      "Confía en tu análisis, no en tu esperanza",
+      "El trading es un maratón, no un sprint",
+      "Cada error es una lección valiosa",
+      "La humildad te mantiene en el juego",
+      "Enfócate en el proceso, no en el dinero",
+      "La preparación precede al éxito",
+      "Sé paciente con las ganancias, rápido con las pérdidas",
+      "Tu diario de trading es tu mejor maestro",
+      "El mercado no te debe nada",
+      "La disciplina es libertad",
+    ],
+    en: [
+      "The market rewards patience",
+      "Discipline over emotion",
+      "One trade at a time",
+      "Protect your capital first",
+      "The process matters more than the result",
+      "Trade your plan, not your emotions",
+      "Consistency beats intensity",
+      "Accept losses as part of the game",
+      "Your worst enemy in trading is yourself",
+      "Success is the sum of small efforts repeated",
+      "Don't seek to be right, seek to be profitable",
+      "Patience is the mother of all virtues",
+      "Every day is a new opportunity",
+      "The market is always right",
+      "Less is more in trading",
+      "Risk management is the key to success",
+      "Learn to lose before you win",
+      "Your mindset determines your success",
+      "Emotional control is your greatest edge",
+      "Don't chase the market, let it come to you",
+      "The best trade is the one you don't take",
+      "Trust your analysis, not your hope",
+      "Trading is a marathon, not a sprint",
+      "Every mistake is a valuable lesson",
+      "Humility keeps you in the game",
+      "Focus on the process, not the money",
+      "Preparation precedes success",
+      "Be patient with profits, quick with losses",
+      "Your trading journal is your best teacher",
+      "The market owes you nothing",
+      "Discipline is freedom",
+    ],
+  };
   const today = new Date().getDate();
-  const fraseDelDia = config?.fraseMotivadora || frasesMotivadoras[today % frasesMotivadoras.length];
+  const frases = frasesMotivadoras[language] || frasesMotivadoras.es;
+  const fraseDelDia = config?.fraseMotivadora || frases[today % frases.length];
 
   return (
     <>
