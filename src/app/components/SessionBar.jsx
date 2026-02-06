@@ -69,11 +69,9 @@ export default function SessionBar() {
   const labels = {
     es: {
       noSession: 'Mercados cerrados',
-      overlap: 'Solapamiento',
     },
     en: {
       noSession: 'Markets closed',
-      overlap: 'Overlap',
     },
   };
   const t = labels[language];
@@ -125,13 +123,6 @@ export default function SessionBar() {
                     </div>
                   );
                 })}
-                {activeSessions.length > 1 && (
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                    isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-600'
-                  }`}>
-                    {t.overlap}
-                  </span>
-                )}
               </div>
             )}
           </div>
