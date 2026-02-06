@@ -2,10 +2,62 @@
 import { useState } from 'react';
 import { Trophy, X, Building2, DollarSign, Target, Clock, TrendingDown, Calendar, Settings2, Loader2 } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
+import { useLanguage } from '../LanguageProvider';
 import { FUNDING_PRESETS, getEmpresas, presetToReglas, crearReglasPersonalizadas } from '../../constants/fundingPresets';
 
 export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const labels = {
+    es: {
+      title: 'Nuevo Challenge de Fondeo',
+      company: 'Empresa',
+      custom: 'Personalizado',
+      fundingCompany: 'Empresa de Fondeo',
+      selectCompany: 'Selecciona una empresa...',
+      accountSize: 'Tamaño de Cuenta',
+      initialCapital: 'Capital Inicial',
+      profitTarget: 'Profit Target',
+      dailyDDMax: 'DD Diario Max',
+      totalDDMax: 'DD Total Max',
+      minDays: 'Días Mínimos',
+      timeLimit: 'Tiempo Límite (0 = sin límite)',
+      days: 'días',
+      challengeSummary: 'Resumen del Challenge',
+      capital: 'Capital:',
+      target: 'Objetivo:',
+      noMinimum: 'Sin mínimo',
+      noLimit: 'Sin límite',
+      creating: 'Creando...',
+      startChallenge: 'Iniciar Challenge',
+      unknownError: 'Error desconocido al crear el challenge',
+    },
+    en: {
+      title: 'New Funding Challenge',
+      company: 'Company',
+      custom: 'Custom',
+      fundingCompany: 'Funding Company',
+      selectCompany: 'Select a company...',
+      accountSize: 'Account Size',
+      initialCapital: 'Initial Capital',
+      profitTarget: 'Profit Target',
+      dailyDDMax: 'Daily DD Max',
+      totalDDMax: 'Total DD Max',
+      minDays: 'Minimum Days',
+      timeLimit: 'Time Limit (0 = no limit)',
+      days: 'days',
+      challengeSummary: 'Challenge Summary',
+      capital: 'Capital:',
+      target: 'Target:',
+      noMinimum: 'No minimum',
+      noLimit: 'No limit',
+      creating: 'Creating...',
+      startChallenge: 'Start Challenge',
+      unknownError: 'Unknown error creating the challenge',
+    },
+  };
+  const t = labels[language] || labels.es;
   const [modo, setModo] = useState('preset'); // 'preset' o 'custom'
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState('');
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState('');
@@ -60,7 +112,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
       await onCreateChallenge(challengeData);
     } catch (err) {
       console.error('Error creating challenge:', err);
-      setError(err.message || 'Error desconocido al crear el challenge');
+      setError(err.message || t.unknownError);
       setCreating(false);
     }
   };
@@ -80,7 +132,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <Trophy size={20} className="text-amber-500"/> Nuevo Challenge de Fondeo
+            <Trophy size={20} className="text-amber-500"/> {t.title}
           </h3>
           <button
             onClick={onClose}
@@ -102,7 +154,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
               }`}
             >
               <Building2 size={16} className="inline mr-2"/>
-              Empresa
+              {t.company}
             </button>
             <button
               onClick={() => setModo('custom')}
@@ -113,7 +165,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
               }`}
             >
               <Settings2 size={16} className="inline mr-2"/>
-              Personalizado
+              {t.custom}
             </button>
           </div>
 
@@ -123,7 +175,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
               {/* Selector de Empresa */}
               <div>
                 <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <Building2 size={14}/> Empresa de Fondeo
+                  <Building2 size={14}/> {t.fundingCompany}
                 </label>
                 <select
                   value={empresaSeleccionada}
@@ -137,7 +189,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                       : 'bg-slate-50 border-slate-200 text-slate-700'
                   }`}
                 >
-                  <option value="">Selecciona una empresa...</option>
+                  <option value="">{t.selectCompany}</option>
                   {empresas.map(emp => (
                     <option key={emp.key} value={emp.key}>{emp.nombre}</option>
                   ))}
@@ -153,7 +205,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
               {empresaSeleccionada && (
                 <div>
                   <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    <DollarSign size={14}/> Tamano de Cuenta
+                    <DollarSign size={14}/> {t.accountSize}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {cuentasEmpresa.map((cuenta, idx) => (
@@ -183,7 +235,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
               {/* Capital */}
               <div>
                 <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <DollarSign size={14}/> Capital Inicial
+                  <DollarSign size={14}/> {t.initialCapital}
                 </label>
                 <div className="relative">
                   <span className={`absolute left-3 top-3 font-bold ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>$</span>
@@ -225,7 +277,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                 {/* Max DD Diario */}
                 <div>
                   <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    <TrendingDown size={12}/> DD Diario Max
+                    <TrendingDown size={12}/> {t.dailyDDMax}
                   </label>
                   <div className="relative">
                     <input
@@ -245,7 +297,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                 {/* Max DD Total */}
                 <div>
                   <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    <TrendingDown size={12}/> DD Total Max
+                    <TrendingDown size={12}/> {t.totalDDMax}
                   </label>
                   <div className="relative">
                     <input
@@ -265,7 +317,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                 {/* Dias Minimos */}
                 <div>
                   <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    <Calendar size={12}/> Dias Minimos
+                    <Calendar size={12}/> {t.minDays}
                   </label>
                   <input
                     type="number"
@@ -282,7 +334,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                 {/* Tiempo Limite */}
                 <div className="col-span-2">
                   <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    <Clock size={12}/> Tiempo Limite (0 = sin limite)
+                    <Clock size={12}/> {t.timeLimit}
                   </label>
                   <div className="relative">
                     <input
@@ -295,7 +347,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                           : 'bg-slate-50 border-slate-200 text-slate-700'
                       }`}
                     />
-                    <span className={`absolute right-3 top-3 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>dias</span>
+                    <span className={`absolute right-3 top-3 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>{t.days}</span>
                   </div>
                 </div>
               </div>
@@ -306,35 +358,35 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
           {reglas && (
             <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-amber-50 border-amber-100'}`}>
               <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-                <Target size={14}/> Resumen del Challenge
+                <Target size={14}/> {t.challengeSummary}
               </h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Capital:</span>
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.capital}</span>
                   <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>{formatMoney(reglas.capitalInicial)}</p>
                 </div>
                 <div>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Objetivo:</span>
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.target}</span>
                   <p className="font-bold text-green-500">{formatMoney(reglas.profitTargetUSD)} ({reglas.profitTarget}%)</p>
                 </div>
                 <div>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>DD Diario Max:</span>
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.dailyDDMax}:</span>
                   <p className="font-bold text-red-500">{formatMoney(reglas.maxDrawdownDiarioUSD)} ({reglas.maxDrawdownDiario}%)</p>
                 </div>
                 <div>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>DD Total Max:</span>
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.totalDDMax}:</span>
                   <p className="font-bold text-red-500">{formatMoney(reglas.maxDrawdownTotalUSD)} ({reglas.maxDrawdownTotal}%)</p>
                 </div>
                 <div>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Dias Minimos:</span>
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.minDays}:</span>
                   <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                    {reglas.diasMinimos > 0 ? `${reglas.diasMinimos} dias` : 'Sin minimo'}
+                    {reglas.diasMinimos > 0 ? `${reglas.diasMinimos} ${t.days}` : t.noMinimum}
                   </p>
                 </div>
                 <div>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Tiempo Limite:</span>
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.timeLimit}:</span>
                   <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                    {reglas.tiempoLimite > 0 ? `${reglas.tiempoLimite} dias` : 'Sin limite'}
+                    {reglas.tiempoLimite > 0 ? `${reglas.tiempoLimite} ${t.days}` : t.noLimit}
                   </p>
                 </div>
               </div>
@@ -361,12 +413,12 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
             {creating ? (
               <>
                 <Loader2 size={18} className="inline mr-2 animate-spin"/>
-                Creando...
+                {t.creating}
               </>
             ) : (
               <>
                 <Trophy size={18} className="inline mr-2"/>
-                Iniciar Challenge
+                {t.startChallenge}
               </>
             )}
           </button>
