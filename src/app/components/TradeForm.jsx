@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 import TradeChecklist from './TradeChecklist';
 
 const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
@@ -126,9 +127,99 @@ const ACTIVOS_POR_CATEGORIA = {
 
 export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = [], reglasSetup = [] }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
   const [imagenes, setImagenes] = useState([]);
   const [isBinaryOptions, setIsBinaryOptions] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
+
+  // Traducciones
+  const labels = {
+    es: {
+      title: 'Registrar Trade',
+      checklist: 'Checklist de Setup',
+      validSetup: 'Setup válido',
+      caution: 'Precaución',
+      dontTrade: 'No operar',
+      rules: 'reglas',
+      binaryOptions: 'Opciones Binarias',
+      asset: 'Activo',
+      myAssets: '★ Mis Activos ★',
+      direction: 'Dirección',
+      prediction: 'Predicción',
+      amountInvested: 'Monto Invertido ($)',
+      payoutPercent: 'Porcentaje de Pago',
+      result: 'Resultado',
+      calculatedPL: 'P&L Calculado',
+      lotsContracts: 'Lotes/Contratos',
+      entry: 'Entrada',
+      exit: 'Salida',
+      price: 'Precio',
+      points: 'Puntos',
+      emotionalState: 'Estado Emocional',
+      emotions: {
+        neutral: '😐 Neutral',
+        calm: '😌 Calmado',
+        anxious: '😰 Ansioso',
+        revenge: '😤 Venganza',
+        fear: '😨 Miedo',
+        euphoric: '🤑 Eufórico',
+        frustrated: '😔 Frustrado',
+      },
+      notes: 'Notas (opcional)',
+      notesPlaceholder: 'Observaciones del trade...',
+      screenshots: 'Capturas (opcional - max 3)',
+      timeframe: 'Temporalidad',
+      addScreenshot: 'Agregar captura',
+      addAnother: 'Agregar otra captura',
+      saveTrade: 'Guardar Trade',
+      maxImages: 'Máximo 3 imágenes por trade',
+      imageTooLarge: 'La imagen es muy grande (max 5MB)',
+      imageError: 'Error al procesar la imagen',
+    },
+    en: {
+      title: 'Record Trade',
+      checklist: 'Setup Checklist',
+      validSetup: 'Valid setup',
+      caution: 'Caution',
+      dontTrade: 'Don\'t trade',
+      rules: 'rules',
+      binaryOptions: 'Binary Options',
+      asset: 'Asset',
+      myAssets: '★ My Assets ★',
+      direction: 'Direction',
+      prediction: 'Prediction',
+      amountInvested: 'Amount Invested ($)',
+      payoutPercent: 'Payout Percentage',
+      result: 'Result',
+      calculatedPL: 'Calculated P&L',
+      lotsContracts: 'Lots/Contracts',
+      entry: 'Entry',
+      exit: 'Exit',
+      price: 'Price',
+      points: 'Points',
+      emotionalState: 'Emotional State',
+      emotions: {
+        neutral: '😐 Neutral',
+        calm: '😌 Calm',
+        anxious: '😰 Anxious',
+        revenge: '😤 Revenge',
+        fear: '😨 Fear',
+        euphoric: '🤑 Euphoric',
+        frustrated: '😔 Frustrated',
+      },
+      notes: 'Notes (optional)',
+      notesPlaceholder: 'Trade observations...',
+      screenshots: 'Screenshots (optional - max 3)',
+      timeframe: 'Timeframe',
+      addScreenshot: 'Add screenshot',
+      addAnother: 'Add another screenshot',
+      saveTrade: 'Save Trade',
+      maxImages: 'Maximum 3 images per trade',
+      imageTooLarge: 'Image is too large (max 5MB)',
+      imageError: 'Error processing image',
+    },
+  };
+  const t = labels[language];
 
   // Usar activos favoritos si existen, sino mostrar lista por defecto
   const tieneActivosFavoritos = activosFavoritos && activosFavoritos.length > 0;
@@ -203,11 +294,11 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
   const agregarImagen = async (file) => {
     if (!file) return;
     if (imagenes.length >= 3) {
-      alert('Máximo 3 imágenes por trade');
+      alert(t.maxImages);
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen es muy grande (max 5MB)');
+      alert(t.imageTooLarge);
       return;
     }
     try {
@@ -217,7 +308,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       setForm(prev => ({ ...prev, imagenes: nuevasImagenes }));
     } catch (error) {
       console.error('Error procesando imagen:', error);
-      alert('Error al procesar la imagen');
+      alert(t.imageError);
     }
   };
 
@@ -241,9 +332,9 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
   const getChecklistSemaforo = () => {
     if (!form.checklist) return null;
     const pct = form.checklist.porcentaje;
-    if (pct >= 70) return { color: 'green', label: 'Setup valido', icon: CheckCircle };
-    if (pct >= 50) return { color: 'amber', label: 'Precaucion', icon: AlertTriangle };
-    return { color: 'red', label: 'No operar', icon: XCircle };
+    if (pct >= 70) return { color: 'green', label: t.validSetup, icon: CheckCircle };
+    if (pct >= 50) return { color: 'amber', label: t.caution, icon: AlertTriangle };
+    return { color: 'red', label: t.dontTrade, icon: XCircle };
   };
 
   const handleSubmit = (e) => {
@@ -265,7 +356,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
     }`}>
       <h3 className={`font-bold mb-4 sm:mb-5 flex items-center text-sm uppercase tracking-wide ${isDark ? 'text-white' : 'text-slate-800'}`}>
-        <PlusCircle size={18} className="mr-2 text-blue-500"/> Registrar Trade
+        <PlusCircle size={18} className="mr-2 text-blue-500"/> {t.title}
       </h3>
 
       {/* Botón Checklist de Setup */}
@@ -289,13 +380,13 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           >
             <div className="flex items-center gap-2">
               <ClipboardCheck size={18}/>
-              {form.checklist ? semaforo?.label : 'Checklist de Setup'}
+              {form.checklist ? semaforo?.label : t.checklist}
             </div>
             {form.checklist ? (
               <span className="text-lg font-black">{form.checklist.porcentaje}%</span>
             ) : (
               <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                {reglasSetup.length} reglas
+                {reglasSetup.length} {t.rules}
               </span>
             )}
           </button>
@@ -319,7 +410,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
               <ToggleLeft size={24} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
             )}
             <span className={`text-sm font-bold ${isBinaryOptions ? 'text-purple-500' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              Opciones Binarias
+              {t.binaryOptions}
             </span>
           </div>
           <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${
@@ -339,7 +430,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
         {/* Activo */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            Activo
+            {t.asset}
           </label>
           <select
             className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
@@ -352,7 +443,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           >
             {/* Mostrar favoritos primero si existen */}
             {tieneActivosFavoritos && (
-              <optgroup label="★ Mis Activos ★">
+              <optgroup label={t.myAssets}>
                 {activosFavoritos.map(symbol => (
                   <option key={`fav-${symbol}`} value={symbol}>
                     {symbol}
@@ -376,7 +467,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
         {/* Dirección */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            {isBinaryOptions ? 'Predicción' : 'Dirección'}
+            {isBinaryOptions ? t.prediction : t.direction}
           </label>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -414,7 +505,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
             {/* Monto invertido */}
             <div>
               <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
-                Monto Invertido ($)
+                {t.amountInvested}
               </label>
               <input 
                 type="number" 
@@ -434,7 +525,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
             {/* Porcentaje de pago */}
             <div>
               <label className={`text-[10px] font-bold uppercase ml-1 mb-1 flex items-center gap-1 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
-                <Percent size={10} /> Porcentaje de Pago
+                <Percent size={10} /> {t.payoutPercent}
               </label>
               <div className="relative">
                 <input 
@@ -458,7 +549,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
             {/* Resultado binario */}
             <div>
               <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-                Resultado
+                {t.result}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -498,7 +589,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
                   : 'bg-red-500/10 border border-red-500/30'
               }`}>
                 <p className={`text-xs uppercase font-bold mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  P&L Calculado
+                  {t.calculatedPL}
                 </p>
                 <p className={`text-2xl font-black ${
                   form.resultadoBinario === 'win' ? 'text-green-500' : 'text-red-500'
@@ -515,7 +606,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
             <div className="grid grid-cols-2 gap-3 items-end">
               <div>
                 <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-                  Lotes/Contratos
+                  {t.lotsContracts}
                 </label>
                 <input
                   type="number"
@@ -589,12 +680,12 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-                  Entrada
+                  {t.entry}
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   step="0.01"
-                  placeholder="Precio" 
+                  placeholder={t.price} 
                   className={`w-full p-2.5 border rounded-xl text-sm font-medium outline-none focus:border-blue-500 ${
                     isDark 
                       ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
@@ -606,12 +697,12 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
               </div>
               <div>
                 <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-                  Salida
+                  {t.exit}
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   step="0.01"
-                  placeholder="Precio" 
+                  placeholder={t.price} 
                   className={`w-full p-2.5 border rounded-xl text-sm font-medium outline-none focus:border-blue-500 ${
                     isDark 
                       ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
@@ -630,7 +721,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
                   ? isDark ? 'bg-green-500/10' : 'bg-green-50'
                   : isDark ? 'bg-red-500/10' : 'bg-red-50'
               }`}>
-                <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Puntos: </span>
+                <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.points}: </span>
                 <span className={`text-sm font-black ${
                   parseFloat(form.salida) - parseFloat(form.entrada) >= 0 ? 'text-green-500' : 'text-red-500'
                 }`}>
@@ -645,34 +736,34 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
         {/* Estado emocional */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            Estado Emocional
+            {t.emotionalState}
           </label>
-          <select 
+          <select
             className={`w-full border rounded-xl p-2.5 text-sm font-medium outline-none focus:border-blue-500 ${
-              isDark 
-                ? 'bg-slate-700 border-slate-600 text-white' 
+              isDark
+                ? 'bg-slate-700 border-slate-600 text-white'
                 : 'bg-slate-50 border-slate-200 text-slate-600'
             }`}
-            value={form.emo} 
+            value={form.emo}
             onChange={e => setForm({...form, emo: e.target.value})}
           >
-            <option value="Neutral">😐 Neutral</option>
-            <option value="Calmado">😌 Calmado</option>
-            <option value="Ansioso">😰 Ansioso</option>
-            <option value="Venganza">😤 Venganza</option>
-            <option value="Miedo">😨 Miedo</option>
-            <option value="Eufórico">🤑 Eufórico</option>
-            <option value="Frustrado">😔 Frustrado</option>
+            <option value="Neutral">{t.emotions.neutral}</option>
+            <option value="Calmado">{t.emotions.calm}</option>
+            <option value="Ansioso">{t.emotions.anxious}</option>
+            <option value="Venganza">{t.emotions.revenge}</option>
+            <option value="Miedo">{t.emotions.fear}</option>
+            <option value="Eufórico">{t.emotions.euphoric}</option>
+            <option value="Frustrado">{t.emotions.frustrated}</option>
           </select>
         </div>
 
         {/* Notas rápidas */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            Notas (opcional)
+            {t.notes}
           </label>
-          <textarea 
-            placeholder="Observaciones del trade..."
+          <textarea
+            placeholder={t.notesPlaceholder}
             rows={2}
             className={`w-full p-2.5 border rounded-xl text-sm outline-none focus:border-blue-500 resize-none ${
               isDark 
@@ -687,7 +778,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
         {/* Capturas con temporalidad */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-2 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-            <Camera size={12} className="inline mr-1"/> Capturas (opcional - max 3)
+            <Camera size={12} className="inline mr-1"/> {t.screenshots}
           </label>
 
           {/* Imágenes agregadas */}
@@ -704,7 +795,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
                     <div className="flex-1">
                       {/* Selector de temporalidad */}
                       <label className={`text-[10px] font-bold uppercase mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Temporalidad
+                        {t.timeframe}
                       </label>
                       <select
                         value={img.temporalidad}
@@ -761,7 +852,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
               >
                 <PlusCircle size={18}/>
                 <span className="text-sm font-bold">
-                  {imagenes.length === 0 ? 'Agregar captura' : 'Agregar otra captura'}
+                  {imagenes.length === 0 ? t.addScreenshot : t.addAnother}
                 </span>
               </label>
             </div>
@@ -778,7 +869,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
               : 'bg-blue-600 hover:bg-blue-700'
           }`}
         >
-          <Save size={18} className="mr-2"/> Guardar Trade
+          <Save size={18} className="mr-2"/> {t.saveTrade}
         </button>
       </form>
 

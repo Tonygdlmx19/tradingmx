@@ -1,9 +1,47 @@
 "use client";
 import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 export default function AdvancedStats({ trades, capitalInicial, balance }) {
   const { isDark } = useTheme();
+  const { language, t: translations } = useLanguage();
+
+  const labels = {
+    es: {
+      title: 'Métricas Avanzadas',
+      accountGrowth: 'Crecimiento de Cuenta',
+      capital: 'Capital',
+      avgWin: 'Prom. Ganancia',
+      avgLoss: 'Prom. Pérdida',
+      bestStreak: 'Mejor Racha',
+      expectancy: 'Expectativa',
+      bestTrade: 'Mejor Trade',
+      worstTrade: 'Peor Trade',
+      perTrade: 'por operación',
+      wins: 'wins',
+      current: 'Actual',
+      losing: 'Perdiendo',
+      distribution: 'Distribución',
+    },
+    en: {
+      title: 'Advanced Metrics',
+      accountGrowth: 'Account Growth',
+      capital: 'Capital',
+      avgWin: 'Avg. Win',
+      avgLoss: 'Avg. Loss',
+      bestStreak: 'Best Streak',
+      expectancy: 'Expectancy',
+      bestTrade: 'Best Trade',
+      worstTrade: 'Worst Trade',
+      perTrade: 'per trade',
+      wins: 'wins',
+      current: 'Current',
+      losing: 'Losing',
+      distribution: 'Distribution',
+    },
+  };
+  const t = labels[language];
   
   // Calcular métricas
   const calculateMetrics = () => {
@@ -134,7 +172,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
     if (!dateStr || dateStr === '-') return '-';
     try {
       const [y, mo, d] = dateStr.split('-');
-      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const months = translations.monthsShort;
       return `${parseInt(d)} ${months[parseInt(mo) - 1]}`;
     } catch {
       return dateStr;
@@ -151,7 +189,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
       <div className="flex items-center gap-2 mb-5">
         <BarChart3 size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
         <h3 className={`font-bold text-sm uppercase tracking-wide ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-          Métricas Avanzadas
+          {t.title}
         </h3>
       </div>
 
@@ -168,7 +206,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
             </div>
             <div>
               <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Crecimiento de Cuenta
+                {t.accountGrowth}
               </p>
               <p className={`text-xl font-black ${growthPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {growthPct >= 0 ? '+' : ''}{growthPct.toFixed(2)}%
@@ -177,7 +215,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
           </div>
           <div className="text-right">
             <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              Capital: ${capitalInicial?.toLocaleString() || 0}
+              {t.capital}: ${capitalInicial?.toLocaleString() || 0}
             </p>
             <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
               {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
@@ -191,7 +229,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
         {/* Promedio Ganancia */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Prom. Ganancia
+            {t.avgWin}
           </p>
           <p className="text-lg font-bold text-green-500">
             +${m.avgWin.toFixed(0)}
@@ -204,7 +242,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
         {/* Promedio Pérdida */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Prom. Pérdida
+            {t.avgLoss}
           </p>
           <p className="text-lg font-bold text-red-500">
             -${Math.abs(m.avgLoss).toFixed(0)}
@@ -217,33 +255,33 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
         {/* Mejor Racha */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Mejor Racha
+            {t.bestStreak}
           </p>
           <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            {m.maxWinStreak} wins
+            {m.maxWinStreak} {t.wins}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            {m.currentStreak > 0 ? `Actual: ${m.currentStreak}` : m.currentStreak < 0 ? `Perdiendo: ${Math.abs(m.currentStreak)}` : '-'}
+            {m.currentStreak > 0 ? `${t.current}: ${m.currentStreak}` : m.currentStreak < 0 ? `${t.losing}: ${Math.abs(m.currentStreak)}` : '-'}
           </p>
         </div>
 
         {/* Expectativa */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Expectativa
+            {t.expectancy}
           </p>
           <p className={`text-lg font-bold ${m.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             ${m.expectancy.toFixed(2)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            por operación
+            {t.perTrade}
           </p>
         </div>
 
         {/* Mejor Trade */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Mejor Trade
+            {t.bestTrade}
           </p>
           <p className={`text-lg font-bold ${m.bestTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {m.bestTrade.amount >= 0 ? '+' : ''}${m.bestTrade.amount.toFixed(0)}
@@ -256,7 +294,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
         {/* Peor Trade */}
         <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            Peor Trade
+            {t.worstTrade}
           </p>
           <p className={`text-lg font-bold ${m.worstTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {m.worstTrade.amount >= 0 ? '+' : ''}${m.worstTrade.amount.toFixed(0)}
@@ -272,7 +310,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
         <div className="mt-5">
           <div className="flex justify-between items-center mb-2">
             <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Distribución
+              {t.distribution}
             </span>
             <span className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               {m.winningTrades}W ({winPct.toFixed(0)}%) / {m.losingTrades}L
