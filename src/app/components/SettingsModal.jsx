@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Settings, X, Target, User, MessageSquare, Sparkles, TrendingUp, Plus, Trash2, ClipboardCheck, HelpCircle } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 // Lista completa de activos disponibles para sugerir
 const ACTIVOS_DISPONIBLES = [
@@ -71,10 +72,57 @@ const frasesSugeridas = [
 
 export default function SettingsModal({ isOpen, onClose, config, setConfig, onSaveToCloud, onRestartTour }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
   const [showFrases, setShowFrases] = useState(false);
   const [nuevoActivo, setNuevoActivo] = useState('');
   const [showSugerencias, setShowSugerencias] = useState(false);
   const [nuevaRegla, setNuevaRegla] = useState('');
+
+  const labels = {
+    es: {
+      title: 'Ajustes',
+      personalization: 'Personalizacion',
+      traderName: 'Tu nombre de trader',
+      traderNamePlaceholder: 'Ej: Carlos, El Trader, etc.',
+      motivationalPhrase: 'Frase motivadora',
+      phrasePlaceholder: 'Tu frase para mantenerte enfocado...',
+      suggestedPhrases: 'Frases sugeridas (toca para seleccionar):',
+      initialCapital: 'Capital Inicial',
+      dailyGoal: 'Meta Diaria',
+      myAssets: 'Mis Activos',
+      assetsDescription: 'Agrega los pares o activos que operas frecuentemente',
+      searchAsset: 'Escribe o busca un activo...',
+      noAssetsYet: 'No has agregado activos aun',
+      setupRules: 'Reglas de Setup',
+      rulesDescription: 'Define tus criterios para tomar un trade. Se usaran como checklist antes de operar.',
+      rulePlaceholder: 'Ej: Confluencia de soportes...',
+      noRulesYet: 'No has agregado reglas de setup aun',
+      viewTour: 'Ver tour de la app',
+      saveConfig: 'Guardar Configuracion',
+    },
+    en: {
+      title: 'Settings',
+      personalization: 'Personalization',
+      traderName: 'Your trader name',
+      traderNamePlaceholder: 'Ex: Carlos, The Trader, etc.',
+      motivationalPhrase: 'Motivational phrase',
+      phrasePlaceholder: 'Your phrase to stay focused...',
+      suggestedPhrases: 'Suggested phrases (tap to select):',
+      initialCapital: 'Initial Capital',
+      dailyGoal: 'Daily Goal',
+      myAssets: 'My Assets',
+      assetsDescription: 'Add the pairs or assets you trade frequently',
+      searchAsset: 'Type or search for an asset...',
+      noAssetsYet: 'You haven\'t added any assets yet',
+      setupRules: 'Setup Rules',
+      rulesDescription: 'Define your criteria to take a trade. They will be used as a checklist before trading.',
+      rulePlaceholder: 'Ex: Support confluence...',
+      noRulesYet: 'You haven\'t added any setup rules yet',
+      viewTour: 'View app tour',
+      saveConfig: 'Save Settings',
+    },
+  };
+  const t = labels[language];
 
   if (!isOpen) return null;
 
@@ -155,7 +203,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       >
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <Settings size={20} className="text-blue-500"/> Ajustes
+            <Settings size={20} className="text-blue-500"/> {t.title}
           </h3>
           <button 
             onClick={onClose} 
@@ -168,16 +216,16 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
         <div className="space-y-5">
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-blue-50 border-blue-100'}`}>
             <label className={`text-xs font-bold uppercase tracking-wider mb-3 block flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              <User size={14}/> Personalizacion
+              <User size={14}/> {t.personalization}
             </label>
-            
+
             <div className="mb-4">
               <label className={`text-[10px] font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Tu nombre de trader
+                {t.traderName}
               </label>
-              <input 
-                type="text" 
-                placeholder="Ej: Carlos, El Trader, etc."
+              <input
+                type="text"
+                placeholder={t.traderNamePlaceholder}
                 className={`w-full p-2.5 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors text-sm ${
                   isDark 
                     ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' 
@@ -190,12 +238,12 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             
             <div>
               <label className={`text-[10px] font-bold uppercase mb-1 block flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <MessageSquare size={10}/> Frase motivadora
+                <MessageSquare size={10}/> {t.motivationalPhrase}
               </label>
               <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Tu frase para mantenerte enfocado..."
+                <input
+                  type="text"
+                  placeholder={t.phrasePlaceholder}
                   className={`w-full p-2.5 pr-10 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors text-sm ${
                     isDark 
                       ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' 
@@ -223,7 +271,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                   isDark ? 'bg-slate-600 border-slate-500' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <p className={`text-[10px] font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Frases sugeridas (toca para seleccionar):
+                    {t.suggestedPhrases}
                   </p>
                   <div className="space-y-1">
                     {frasesSugeridas.map((frase, i) => (
@@ -248,7 +296,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
 
           <div>
             <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-              Capital Inicial
+              {t.initialCapital}
             </label>
             <div className="relative">
               <span className={`absolute left-3 top-3 font-bold text-sm ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>$</span>
@@ -268,7 +316,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
           
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-100'}`}>
             <label className={`text-xs font-bold uppercase tracking-wider mb-3 block flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
-              <Target size={14} className="text-blue-500"/> Meta Diaria
+              <Target size={14} className="text-blue-500"/> {t.dailyGoal}
             </label>
             <div className="grid grid-cols-2 gap-3">
               <div className="relative">
@@ -306,17 +354,17 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
           {/* Mis Activos / Pares */}
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-green-50 border-green-100'}`}>
             <label className={`text-xs font-bold uppercase tracking-wider mb-3 block flex items-center gap-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-              <TrendingUp size={14}/> Mis Activos
+              <TrendingUp size={14}/> {t.myAssets}
             </label>
             <p className={`text-[10px] mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Agrega los pares o activos que operas frecuentemente
+              {t.assetsDescription}
             </p>
 
             {/* Input para agregar nuevo activo */}
             <div className="relative mb-3">
               <input
                 type="text"
-                placeholder="Escribe o busca un activo..."
+                placeholder={t.searchAsset}
                 className={`w-full p-2.5 pr-10 border rounded-xl font-medium outline-none focus:border-green-500 transition-colors text-sm ${
                   isDark
                     ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
@@ -400,7 +448,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               </div>
             ) : (
               <p className={`text-xs text-center py-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                No has agregado activos aun
+                {t.noAssetsYet}
               </p>
             )}
           </div>
@@ -408,17 +456,17 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
           {/* Reglas de Setup / Checklist */}
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-amber-50 border-amber-100'}`}>
             <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-              <ClipboardCheck size={14}/> Reglas de Setup
+              <ClipboardCheck size={14}/> {t.setupRules}
             </label>
             <p className={`text-[10px] mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Define tus criterios para tomar un trade. Se usaran como checklist antes de operar.
+              {t.rulesDescription}
             </p>
 
             {/* Input para agregar regla */}
             <div className="flex gap-2 mb-3">
               <input
                 type="text"
-                placeholder="Ej: Confluencia de soportes..."
+                placeholder={t.rulePlaceholder}
                 className={`flex-1 p-2.5 border rounded-xl font-medium outline-none focus:border-amber-500 transition-colors text-sm ${
                   isDark
                     ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
@@ -474,7 +522,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               </div>
             ) : (
               <p className={`text-xs text-center py-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                No has agregado reglas de setup aun
+                {t.noRulesYet}
               </p>
             )}
           </div>
@@ -493,7 +541,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               }`}
             >
               <HelpCircle size={18} />
-              Ver tour de la app
+              {t.viewTour}
             </button>
           )}
 
@@ -501,7 +549,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             onClick={handleSave}
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold active:scale-[0.98] transition-all shadow-lg"
           >
-            Guardar Configuracion
+            {t.saveConfig}
           </button>
         </div>
       </div>

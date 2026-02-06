@@ -2,9 +2,25 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 export default function EquityChart({ data, startBalance }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const labels = {
+    es: {
+      title: 'Curva de Capital',
+      noData: 'Registra trades para ver la gráfica',
+      balance: 'Balance',
+    },
+    en: {
+      title: 'Equity Curve',
+      noData: 'Record trades to see the chart',
+      balance: 'Balance',
+    },
+  };
+  const t = labels[language];
   const [mounted, setMounted] = useState(false);
   const [ChartComponents, setChartComponents] = useState(null);
 
@@ -32,11 +48,11 @@ export default function EquityChart({ data, startBalance }) {
       }`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingUp size={18} className="text-blue-500"/> Curva de Capital
+            <TrendingUp size={18} className="text-blue-500"/> {t.title}
           </h3>
         </div>
         <div className={`h-[250px] flex items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-          <p className="text-sm italic">Registra trades para ver la gráfica</p>
+          <p className="text-sm italic">{t.noData}</p>
         </div>
       </div>
     );
@@ -50,7 +66,7 @@ export default function EquityChart({ data, startBalance }) {
       }`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingUp size={18} className="text-blue-500"/> Curva de Capital
+            <TrendingUp size={18} className="text-blue-500"/> {t.title}
           </h3>
         </div>
         <div className={`h-[250px] flex items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -76,7 +92,7 @@ export default function EquityChart({ data, startBalance }) {
     }`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          <TrendingUp size={18} className="text-blue-500"/> Curva de Capital
+          <TrendingUp size={18} className="text-blue-500"/> {t.title}
         </h3>
         <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
           {data.length - 1} trades
@@ -122,7 +138,7 @@ export default function EquityChart({ data, startBalance }) {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 fontSize: '12px',
               }}
-              formatter={(val) => [`$${Number(val).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Balance']}
+              formatter={(val) => [`$${Number(val).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, t.balance]}
             />
             <ReferenceLine 
               y={startBalance} 

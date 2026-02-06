@@ -2,9 +2,25 @@
 import { useState, useEffect } from 'react';
 import { TrendingDown } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 export default function DrawdownChart({ data }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const labels = {
+    es: {
+      title: 'Drawdown',
+      noData: 'Registra trades para ver la gráfica',
+      max: 'Max',
+    },
+    en: {
+      title: 'Drawdown',
+      noData: 'Record trades to see the chart',
+      max: 'Max',
+    },
+  };
+  const t = labels[language];
   const [mounted, setMounted] = useState(false);
   const [ChartComponents, setChartComponents] = useState(null);
 
@@ -32,11 +48,11 @@ export default function DrawdownChart({ data }) {
       }`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingDown size={18} className="text-red-500"/> Drawdown
+            <TrendingDown size={18} className="text-red-500"/> {t.title}
           </h3>
         </div>
         <div className={`h-[160px] flex items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-          <p className="text-sm italic">Registra trades para ver la gráfica</p>
+          <p className="text-sm italic">{t.noData}</p>
         </div>
       </div>
     );
@@ -50,7 +66,7 @@ export default function DrawdownChart({ data }) {
       }`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingDown size={18} className="text-red-500"/> Drawdown
+            <TrendingDown size={18} className="text-red-500"/> {t.title}
           </h3>
         </div>
         <div className={`h-[160px] flex items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -77,10 +93,10 @@ export default function DrawdownChart({ data }) {
     }`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          <TrendingDown size={18} className="text-red-500"/> Drawdown
+          <TrendingDown size={18} className="text-red-500"/> {t.title}
         </h3>
         <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-          Max: {Math.abs(minDD).toFixed(1)}%
+          {t.max}: {Math.abs(minDD).toFixed(1)}%
         </span>
       </div>
       

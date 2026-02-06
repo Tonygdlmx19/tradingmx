@@ -1,10 +1,8 @@
 "use client";
 import { useState, useMemo } from 'react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 import { Calendar, ChevronRight, Image, FileText } from 'lucide-react';
-
-const mesesFull = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const getEmojiForEmotion = (emo) => {
   const emojis = {
@@ -21,7 +19,33 @@ const getEmojiForEmotion = (emo) => {
 
 export default function CalendarView({ trades, selectedMonth, selectedYear, onTradeClick }) {
   const { isDark } = useTheme();
+  const { language, t: translations } = useLanguage();
   const [selectedDay, setSelectedDay] = useState(null);
+
+  const labels = {
+    es: {
+      selectDay: 'Selecciona un día',
+      tradesOf: 'Trades del',
+      of: 'de',
+      noTradesThisDay: 'No hay trades este día',
+      noTradesThisMonth: 'No hay trades en este mes.',
+      recordFirst: 'Registra tu primer trade usando el formulario.',
+      lots: 'lotes',
+    },
+    en: {
+      selectDay: 'Select a day',
+      tradesOf: 'Trades on',
+      of: '',
+      noTradesThisDay: 'No trades this day',
+      noTradesThisMonth: 'No trades this month.',
+      recordFirst: 'Record your first trade using the form.',
+      lots: 'lots',
+    },
+  };
+  const t = labels[language];
+
+  const monthsFull = translations.monthsFull;
+  const daysOfWeek = translations.daysShort;
 
   // Agrupar trades por día
   const tradesByDay = useMemo(() => {
@@ -102,10 +126,10 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
       }`}>
         <h3 className={`font-bold flex items-center text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
           <Calendar size={18} className={`mr-2 ${isDark ? 'text-slate-400' : 'text-slate-400'}`}/>
-          {mesesFull[selectedMonth]} {selectedYear}
+          {monthsFull[selectedMonth]} {selectedYear}
         </h3>
         <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
-          Selecciona un día
+          {t.selectDay}
         </span>
       </div>
 
@@ -113,7 +137,7 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
       <div className="p-4">
         {/* Días de la semana */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {diasSemana.map(dia => (
+          {daysOfWeek.map(dia => (
             <div
               key={dia}
               className={`text-center text-[10px] font-bold uppercase py-2 ${
@@ -164,7 +188,7 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
         <div className={`border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
           <div className={`px-4 py-3 ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
             <h4 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
-              Trades del {selectedDay} de {mesesFull[selectedMonth]}
+              {t.tradesOf} {selectedDay} {t.of} {monthsFull[selectedMonth]}
             </h4>
           </div>
 
@@ -193,9 +217,9 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
                         {t.imagen && <Image size={12} className="text-blue-400" />}
                         {t.notas && <FileText size={12} className="text-purple-400" />}
                       </div>
-                      {t.lotes && (
+                      {trade.lotes && (
                         <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                          {t.lotes} lotes
+                          {trade.lotes} {t.lots}
                         </span>
                       )}
                     </div>
@@ -211,7 +235,7 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
             </div>
           ) : (
             <div className={`p-6 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              <p className="text-sm italic">No hay trades este día</p>
+              <p className="text-sm italic">{t.noTradesThisDay}</p>
             </div>
           )}
         </div>
@@ -220,8 +244,8 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
       {/* Mensaje cuando no hay trades en el mes */}
       {trades.length === 0 && (
         <div className={`p-8 sm:p-12 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-          <p className="italic">No hay trades en este mes.</p>
-          <p className="text-xs mt-2">Registra tu primer trade usando el formulario.</p>
+          <p className="italic">{t.noTradesThisMonth}</p>
+          <p className="text-xs mt-2">{t.recordFirst}</p>
         </div>
       )}
     </div>

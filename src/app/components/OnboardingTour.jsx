@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
 import { X, ArrowRight, ArrowLeft, Settings, Trophy, BarChart3, Calendar, Target, CheckCircle, Sparkles } from 'lucide-react';
+import { useLanguage } from './LanguageProvider';
 
-const TOUR_STEPS = [
+const TOUR_STEPS_ES = [
   {
     id: 'welcome',
     target: null,
@@ -75,10 +76,104 @@ const TOUR_STEPS = [
   }
 ];
 
+const TOUR_STEPS_EN = [
+  {
+    id: 'welcome',
+    target: null,
+    title: 'Welcome to Trading Journal PRO!',
+    description: 'We\'ll show you the main features so you can get the most out of your journal. Let\'s get started!',
+    icon: Sparkles,
+  },
+  {
+    id: 'settings',
+    target: '[data-tour="settings"]',
+    title: 'Settings',
+    description: 'Here you can customize your journal: add assets, create your setup checklist, set your initial capital and daily goal.',
+    icon: Settings,
+  },
+  {
+    id: 'funding',
+    target: '[data-tour="funding"]',
+    title: 'Funding Simulator',
+    description: 'Practice with real rules from prop firms like FTMO. Simulate your challenge before risking real money.',
+    icon: Trophy,
+  },
+  {
+    id: 'calendar',
+    target: '[data-tour="calendar"]',
+    title: 'Economic Calendar',
+    description: 'Check important economic events of the day. Never miss an NFP, FOMC or inflation data.',
+    icon: Calendar,
+  },
+  {
+    id: 'stats',
+    target: '[data-tour="stats"]',
+    title: 'Main Statistics',
+    description: 'Your current balance, period P&L, win rate, max drawdown and profit factor. Key metrics at a glance.',
+    icon: BarChart3,
+  },
+  {
+    id: 'advanced-stats',
+    target: '[data-tour="advanced-stats"]',
+    title: 'Advanced Metrics',
+    description: 'Detailed analysis: best/worst trade, average wins and losses, winning streak and expectancy.',
+    icon: BarChart3,
+  },
+  {
+    id: 'charts',
+    target: '[data-tour="charts"]',
+    title: 'Performance Charts',
+    description: 'Visualize your equity curve and drawdown. Identify patterns in your trading.',
+    icon: BarChart3,
+  },
+  {
+    id: 'view-selector',
+    target: '[data-tour="view-selector"]',
+    title: 'History View',
+    description: 'Switch between table or calendar view. Filter by month or year to analyze specific periods.',
+    icon: Calendar,
+  },
+  {
+    id: 'trade-form',
+    target: '[data-tour="trade-form"]',
+    title: 'Record your Trades',
+    description: 'Use this form to record each trade with result, emotion and notes.',
+    icon: Target,
+  },
+  {
+    id: 'complete',
+    target: null,
+    title: 'Ready to start!',
+    description: 'You now know the main features. Consistency in recording is key to improvement. Good luck with your trading!',
+    icon: CheckCircle,
+  }
+];
+
 export default function OnboardingTour({ userEmail, onComplete, forceStart, onForceStartHandled }) {
+  const { language } = useLanguage();
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [highlightedElement, setHighlightedElement] = useState(null);
+
+  const TOUR_STEPS = language === 'en' ? TOUR_STEPS_EN : TOUR_STEPS_ES;
+
+  const labels = {
+    es: {
+      step: 'Paso',
+      of: 'de',
+      skip: 'Omitir',
+      next: 'Siguiente',
+      finish: 'Finalizar',
+    },
+    en: {
+      step: 'Step',
+      of: 'of',
+      skip: 'Skip',
+      next: 'Next',
+      finish: 'Finish',
+    },
+  };
+  const t = labels[language];
 
   // Verificar si es primera vez
   useEffect(() => {
@@ -201,7 +296,7 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
             <div className="flex-1">
               <h3 className="text-white font-bold">{step.title}</h3>
               <p className="text-blue-100 text-xs">
-                Paso {currentStep + 1} de {TOUR_STEPS.length}
+                {t.step} {currentStep + 1} {t.of} {TOUR_STEPS.length}
               </p>
             </div>
             <button
@@ -240,7 +335,7 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
             onClick={handleComplete}
             className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors"
           >
-            Omitir
+            {t.skip}
           </button>
 
           <div className="flex gap-2">
@@ -259,11 +354,11 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
               {isLastStep ? (
                 <>
                   <CheckCircle size={16} />
-                  Finalizar
+                  {t.finish}
                 </>
               ) : (
                 <>
-                  Siguiente
+                  {t.next}
                   <ArrowRight size={16} />
                 </>
               )}
