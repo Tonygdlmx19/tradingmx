@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Trophy, Plus, Loader2 } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
+import { useLanguage } from '../LanguageProvider';
 import { db } from '../../../firebase';
 import {
   collection,
@@ -22,7 +23,36 @@ import FundingDashboard from './FundingDashboard';
 
 export default function FundingSimulator({ user, onClose }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
+
+  const labels = {
+    es: {
+      title: 'Simulador de Fondeo',
+      backToJournal: 'Volver al Journal',
+      practiceTitle: 'Practica para tu Challenge',
+      practiceDesc: 'Simula un challenge de fondeo con reglas reales. Registra tus trades y ve si lo pasarías antes de arriesgar tu dinero.',
+      createChallenge: 'Crear Challenge',
+      availableCompanies: 'Empresas disponibles:',
+      custom: '+ Personalizado',
+      loading: 'Cargando...',
+      confirmReset: '¿Estás seguro de reiniciar el challenge? Se creará uno nuevo con las mismas reglas.',
+      confirmAbandon: '¿Estás seguro de abandonar este challenge? Podrás crear uno nuevo con diferentes reglas.',
+    },
+    en: {
+      title: 'Funding Simulator',
+      backToJournal: 'Back to Journal',
+      practiceTitle: 'Practice for your Challenge',
+      practiceDesc: 'Simulate a funding challenge with real rules. Record your trades and see if you would pass before risking your money.',
+      createChallenge: 'Create Challenge',
+      availableCompanies: 'Available companies:',
+      custom: '+ Custom',
+      loading: 'Loading...',
+      confirmReset: 'Are you sure you want to reset the challenge? A new one will be created with the same rules.',
+      confirmAbandon: 'Are you sure you want to abandon this challenge? You can create a new one with different rules.',
+    },
+  };
+  const t = labels[language] || labels.es;
   const [challenge, setChallenge] = useState(null);
   const [trades, setTrades] = useState([]);
   const [showSetupModal, setShowSetupModal] = useState(false);
@@ -204,9 +234,7 @@ export default function FundingSimulator({ user, onClose }) {
       return;
     }
 
-    const confirmReset = window.confirm(
-      '¿Estás seguro de reiniciar el challenge? Se creará uno nuevo con las mismas reglas.'
-    );
+    const confirmReset = window.confirm(t.confirmReset);
 
     if (!confirmReset) return;
 
@@ -222,9 +250,7 @@ export default function FundingSimulator({ user, onClose }) {
   const handleAbandonChallenge = async () => {
     if (!challenge?.id) return;
 
-    const confirmAbandon = window.confirm(
-      '¿Estás seguro de abandonar este challenge? Podrás crear uno nuevo con diferentes reglas.'
-    );
+    const confirmAbandon = window.confirm(t.confirmAbandon);
 
     if (!confirmAbandon) return;
 
@@ -246,7 +272,7 @@ export default function FundingSimulator({ user, onClose }) {
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <div className="text-center">
           <Loader2 size={32} className="animate-spin text-amber-500 mx-auto mb-3"/>
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Cargando simulador...</p>
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.loading}</p>
         </div>
       </div>
     );
@@ -262,7 +288,7 @@ export default function FundingSimulator({ user, onClose }) {
             <div className="flex items-center gap-3">
               <Trophy size={24} className="text-amber-500"/>
               <h1 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                Simulador de Fondeo
+                {t.title}
               </h1>
             </div>
             <button
@@ -271,7 +297,7 @@ export default function FundingSimulator({ user, onClose }) {
                 isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              Volver al Journal
+              {t.backToJournal}
             </button>
           </div>
         </div>
@@ -285,10 +311,10 @@ export default function FundingSimulator({ user, onClose }) {
           </div>
 
           <h2 className={`text-2xl font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            Practica para tu Challenge
+            {t.practiceTitle}
           </h2>
           <p className={`mb-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Simula un challenge de fondeo con reglas reales. Registra tus trades y ve si lo pasarias antes de arriesgar tu dinero.
+            {t.practiceDesc}
           </p>
 
           <button
@@ -296,12 +322,12 @@ export default function FundingSimulator({ user, onClose }) {
             className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98]"
           >
             <Plus size={18} className="inline mr-2"/>
-            Crear Challenge
+            {t.createChallenge}
           </button>
 
           <div className={`mt-8 p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
             <h3 className={`text-sm font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-700'}`}>
-              Empresas disponibles:
+              {t.availableCompanies}
             </h3>
             <div className="flex flex-wrap gap-2 justify-center">
               {['FTMO', 'MyForexFunds', 'Funded Next', 'E8', 'TFF'].map(emp => (
@@ -317,7 +343,7 @@ export default function FundingSimulator({ user, onClose }) {
               <span className={`text-xs px-3 py-1 rounded-full ${
                 isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
               }`}>
-                + Personalizado
+                {t.custom}
               </span>
             </div>
           </div>
