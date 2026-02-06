@@ -48,7 +48,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm }) {
 
   // Semáforo
   const getSemaforo = () => {
-    if (porcentaje >= 70) return { color: 'green', label: t.validSetup, icon: CheckCircle };
+    if (porcentaje >= 65) return { color: 'green', label: t.validSetup, icon: CheckCircle };
     if (porcentaje >= 50) return { color: 'amber', label: t.caution, icon: AlertTriangle };
     return { color: 'red', label: t.doNotTrade, icon: XCircle };
   };

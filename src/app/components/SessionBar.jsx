@@ -84,7 +84,7 @@ export default function SessionBar() {
         {/* Language Toggle */}
         <button
           onClick={toggleLanguage}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-xs font-bold ${
+          className={`ml-2 sm:ml-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-xs font-bold ${
             isDark
               ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
