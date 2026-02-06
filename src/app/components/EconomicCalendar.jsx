@@ -2,10 +2,14 @@
 import { useEffect, useRef } from 'react';
 import { Calendar, X } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 export default function EconomicCalendar({ isOpen, onClose }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
   const containerRef = useRef(null);
+
+  const title = language === 'en' ? 'Economic Calendar' : 'Calendario Económico';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -39,7 +43,7 @@ export default function EconomicCalendar({ isOpen, onClose }) {
       "isTransparent": true,
       "width": "100%",
       "height": "100%",
-      "locale": "es",
+      "locale": language === 'en' ? "en" : "es",
       "importanceFilter": "-1,0,1",
       "countryFilter": "us,eu,de,gb,jp,cn,mx,ca,au,ch"
     });
@@ -51,7 +55,7 @@ export default function EconomicCalendar({ isOpen, onClose }) {
         container.innerHTML = '';
       }
     };
-  }, [isDark, isOpen]);
+  }, [isDark, isOpen, language]);
 
   if (!isOpen) return null;
 
@@ -69,7 +73,7 @@ export default function EconomicCalendar({ isOpen, onClose }) {
           <div className="flex items-center gap-2">
             <Calendar size={18} className="text-blue-500" />
             <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              Calendario Económico
+              {title}
             </h3>
           </div>
           <button 
