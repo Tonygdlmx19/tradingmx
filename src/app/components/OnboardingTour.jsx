@@ -283,9 +283,12 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
 
       {/* Tooltip fijo en la parte inferior */}
       <div
-        className={`fixed z-[201] w-[90%] max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up ${
-          isCentered ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' : 'bottom-6 left-1/2 -translate-x-1/2'
+        className={`fixed z-[201] w-[90%] max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden ${
+          isCentered
+            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-fade-in'
+            : 'bottom-20 left-1/2 -translate-x-1/2 animate-slide-up'
         }`}
+        style={{ maxHeight: 'calc(100vh - 160px)' }}
       >
         {/* Header con icono */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4">
@@ -391,16 +394,31 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
         @keyframes slide-up {
           from {
             opacity: 0;
-            transform: translate(-50%, 20px);
+            transform: translateX(-50%) translateY(20px);
           }
           to {
             opacity: 1;
-            transform: translate(-50%, 0);
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
           }
         }
 
         .animate-slide-up {
           animation: slide-up 0.3s ease-out forwards;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out forwards;
         }
       `}</style>
     </>
