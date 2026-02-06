@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { Activity, Percent, DollarSign, RefreshCw } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 // 📊 ACTIVOS DE TRADING - Organizados por categoría
 const ACTIVOS_TRADING = {
@@ -149,7 +150,50 @@ const isSyntheticWeltrade = (symbol) => {
 
 export default function RiskCalculator({ balance }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
   const [activo, setActivo] = useState('MNQ');
+
+  const labels = {
+    es: {
+      asset: 'Activo',
+      positionType: 'Tipo de posición',
+      contracts: 'Contratos',
+      lots: 'Lotes',
+      valuePerPoint: 'Valor por punto ($)',
+      calculateFromPrices: 'Calcular desde precios',
+      entry: 'Entrada',
+      stopPoints: 'Stop (puntos)',
+      tpPoints: 'TP (puntos)',
+      spreadPips: 'Spread (pips)',
+      spreadPoints: 'Spread (puntos)',
+      riskPercent: 'Riesgo %',
+      riskUSD: 'Riesgo USD',
+      suggestedPosition: 'Posición Sugerida',
+      ratioRB: 'Ratio R:B',
+      risk: 'Riesgo',
+      profit: 'Ganancia',
+    },
+    en: {
+      asset: 'Asset',
+      positionType: 'Position type',
+      contracts: 'Contracts',
+      lots: 'Lots',
+      valuePerPoint: 'Value per point ($)',
+      calculateFromPrices: 'Calculate from prices',
+      entry: 'Entry',
+      stopPoints: 'Stop (points)',
+      tpPoints: 'TP (points)',
+      spreadPips: 'Spread (pips)',
+      spreadPoints: 'Spread (points)',
+      riskPercent: 'Risk %',
+      riskUSD: 'Risk USD',
+      suggestedPosition: 'Suggested Position',
+      ratioRB: 'R:R Ratio',
+      risk: 'Risk',
+      profit: 'Profit',
+    },
+  };
+  const t = labels[language];
   const [tipoUnidad, setTipoUnidad] = useState('contratos'); // contratos o lotes
   const [mode, setMode] = useState('ticks'); // ticks o points
   const [stopValue, setStopValue] = useState('');
@@ -315,7 +359,7 @@ export default function RiskCalculator({ balance }) {
         {/* Activo */}
         <div className="space-y-1">
           <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Activo
+            {t.asset}
           </label>
           <select
             className={`w-full border rounded-xl p-2.5 text-sm font-medium outline-none focus:border-blue-500 ${
@@ -342,28 +386,28 @@ export default function RiskCalculator({ balance }) {
         {/* Tipo de unidad: Contratos vs Lotes */}
         <div className="space-y-1">
           <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Tipo de posición
+            {t.positionType}
           </label>
           <div className={`flex rounded-xl p-1 border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
             <button
               onClick={() => setTipoUnidad('contratos')}
               className={`flex-1 text-xs py-2 rounded-lg font-bold transition-all ${
-                tipoUnidad === 'contratos' 
-                  ? 'bg-blue-600 text-white' 
+                tipoUnidad === 'contratos'
+                  ? 'bg-blue-600 text-white'
                   : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Contratos
+              {t.contracts}
             </button>
             <button
               onClick={() => setTipoUnidad('lotes')}
               className={`flex-1 text-xs py-2 rounded-lg font-bold transition-all ${
-                tipoUnidad === 'lotes' 
-                  ? 'bg-blue-600 text-white' 
+                tipoUnidad === 'lotes'
+                  ? 'bg-blue-600 text-white'
                   : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Lotes
+              {t.lots}
             </button>
           </div>
         </div>
@@ -371,7 +415,7 @@ export default function RiskCalculator({ balance }) {
         {/* Valor por punto (editable) */}
         <div className="space-y-1">
           <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Valor por punto ($)
+            {t.valuePerPoint}
           </label>
           <input
             type="number"
@@ -388,12 +432,12 @@ export default function RiskCalculator({ balance }) {
         {/* Precio Entrada, SL y TP */}
         <div className={`p-3 rounded-xl border space-y-3 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-blue-50/50 border-blue-100'}`}>
           <p className={`text-[10px] uppercase font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-            Calcular desde precios
+            {t.calculateFromPrices}
           </p>
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className={`text-[10px] uppercase font-bold pl-1 mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                Entrada
+                {t.entry}
               </label>
               <input
                 type="number"
@@ -453,7 +497,7 @@ export default function RiskCalculator({ balance }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-red-400' : 'text-red-500'}`}>
-              Stop (puntos)
+              {t.stopPoints}
             </label>
             <input
               type="number"
@@ -468,7 +512,7 @@ export default function RiskCalculator({ balance }) {
           </div>
           <div className="space-y-1">
             <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-green-400' : 'text-green-500'}`}>
-              TP (puntos)
+              {t.tpPoints}
             </label>
             <input
               type="number"
@@ -487,7 +531,7 @@ export default function RiskCalculator({ balance }) {
         {(isForex(activo) || isSyntheticWeltrade(activo)) && (
           <div className="space-y-1">
             <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-              Spread {isSyntheticWeltrade(activo) ? '(puntos)' : '(pips)'}
+              {isSyntheticWeltrade(activo) ? t.spreadPoints : t.spreadPips}
             </label>
             <input
               type="number"
@@ -506,7 +550,7 @@ export default function RiskCalculator({ balance }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className={`text-[10px] uppercase font-bold pl-1 flex items-center ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-              <Percent size={10} className="mr-1"/> Riesgo %
+              <Percent size={10} className="mr-1"/> {t.riskPercent}
             </label>
             <input
               type="number"
@@ -521,7 +565,7 @@ export default function RiskCalculator({ balance }) {
           </div>
           <div className="space-y-1">
             <label className={`text-[10px] uppercase font-bold pl-1 flex items-center ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-              <DollarSign size={10} className="mr-1"/> Riesgo USD
+              <DollarSign size={10} className="mr-1"/> {t.riskUSD}
             </label>
             <input
               type="number"
@@ -539,14 +583,14 @@ export default function RiskCalculator({ balance }) {
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 shadow-lg">
           <div className="flex justify-between items-center mb-3">
             <div>
-              <p className="text-[10px] text-blue-100 uppercase font-bold mb-1">Posición Sugerida</p>
+              <p className="text-[10px] text-blue-100 uppercase font-bold mb-1">{t.suggestedPosition}</p>
               <p className="text-2xl sm:text-3xl font-black text-white leading-none">
-                {resultado.cantidad} <span className="text-sm font-medium opacity-70">{tipoUnidad === 'contratos' ? 'Contratos' : 'Lotes'}</span>
+                {resultado.cantidad} <span className="text-sm font-medium opacity-70">{tipoUnidad === 'contratos' ? t.contracts : t.lots}</span>
               </p>
             </div>
             {ratioRB && (
               <div className="text-right">
-                <p className="text-[9px] text-blue-100 opacity-80 mb-0.5">Ratio R:B</p>
+                <p className="text-[9px] text-blue-100 opacity-80 mb-0.5">{t.ratioRB}</p>
                 <p className={`text-lg font-black ${parseFloat(ratioRB) >= 2 ? 'text-green-300' : parseFloat(ratioRB) >= 1 ? 'text-yellow-300' : 'text-red-300'}`}>
                   1:{ratioRB}
                 </p>
@@ -558,13 +602,13 @@ export default function RiskCalculator({ balance }) {
           {(riesgoUSD || gananciaProbable) && (
             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/20">
               <div className="text-center p-2 rounded-lg bg-red-500/20">
-                <p className="text-[9px] text-red-200 uppercase font-bold">Riesgo</p>
+                <p className="text-[9px] text-red-200 uppercase font-bold">{t.risk}</p>
                 <p className="text-lg font-black text-red-300">
                   -${riesgoUSD || '0'}
                 </p>
               </div>
               <div className="text-center p-2 rounded-lg bg-green-500/20">
-                <p className="text-[9px] text-green-200 uppercase font-bold">Ganancia</p>
+                <p className="text-[9px] text-green-200 uppercase font-bold">{t.profit}</p>
                 <p className="text-lg font-black text-green-300">
                   +${gananciaProbable || '0'}
                 </p>

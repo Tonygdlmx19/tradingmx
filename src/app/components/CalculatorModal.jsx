@@ -2,9 +2,13 @@
 import { useState } from 'react';
 import { X, Calculator, Delete } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { useLanguage } from './LanguageProvider';
 
 export default function CalculatorModal({ isOpen, onClose }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const title = language === 'en' ? 'Calculator' : 'Calculadora';
   const [display, setDisplay] = useState('0');
   const [previousValue, setPreviousValue] = useState(null);
   const [operation, setOperation] = useState(null);
@@ -137,7 +141,7 @@ export default function CalculatorModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-slate-700/50">
           <h3 className={`font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <Calculator size={20} className="text-blue-500" /> Calculadora
+            <Calculator size={20} className="text-blue-500" /> {title}
           </h3>
           <button
             onClick={onClose}
