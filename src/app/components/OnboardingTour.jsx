@@ -85,7 +85,7 @@ const TOUR_STEPS = [
   }
 ];
 
-export default function OnboardingTour({ userEmail, onComplete }) {
+export default function OnboardingTour({ userEmail, onComplete, forceStart, onForceStartHandled }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
@@ -102,6 +102,15 @@ export default function OnboardingTour({ userEmail, onComplete }) {
       setTimeout(() => setIsActive(true), 1000);
     }
   }, [userEmail]);
+
+  // Manejar inicio forzado desde fuera
+  useEffect(() => {
+    if (forceStart) {
+      setCurrentStep(0);
+      setIsActive(true);
+      if (onForceStartHandled) onForceStartHandled();
+    }
+  }, [forceStart, onForceStartHandled]);
 
   // Actualizar posición del elemento target
   const updateTargetPosition = useCallback(() => {

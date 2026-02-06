@@ -55,7 +55,8 @@ export default function TradingJournalPRO() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [showTradeDetail, setShowTradeDetail] = useState(false);
-  
+  const [forceTourStart, setForceTourStart] = useState(false);
+
   const [form, setForm] = useState({
     res: '',
     esGanancia: true,
@@ -374,6 +375,7 @@ export default function TradingJournalPRO() {
         config={config}
         setConfig={setConfig}
         onSaveToCloud={saveSettingsToCloud}
+        onRestartTour={() => setForceTourStart(true)}
       />
       
       <TradeDetailModal
@@ -416,7 +418,11 @@ export default function TradingJournalPRO() {
       )}
 
       {/* Tour de onboarding para nuevos usuarios */}
-      <OnboardingTour userEmail={user?.email} />
+      <OnboardingTour
+        userEmail={user?.email}
+        forceStart={forceTourStart}
+        onForceStartHandled={() => setForceTourStart(false)}
+      />
 
       <main className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">

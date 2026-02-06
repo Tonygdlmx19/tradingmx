@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Settings, X, Target, User, MessageSquare, Sparkles, TrendingUp, Plus, Trash2, ClipboardCheck } from 'lucide-react';
+import { Settings, X, Target, User, MessageSquare, Sparkles, TrendingUp, Plus, Trash2, ClipboardCheck, HelpCircle } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 // Lista completa de activos disponibles para sugerir
@@ -69,7 +69,7 @@ const frasesSugeridas = [
   "Corta las perdidas, deja correr las ganancias ✂️",
 ];
 
-export default function SettingsModal({ isOpen, onClose, config, setConfig, onSaveToCloud }) {
+export default function SettingsModal({ isOpen, onClose, config, setConfig, onSaveToCloud, onRestartTour }) {
   const { isDark } = useTheme();
   const [showFrases, setShowFrases] = useState(false);
   const [nuevoActivo, setNuevoActivo] = useState('');
@@ -478,6 +478,24 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               </p>
             )}
           </div>
+
+          {/* Botón para ver tour */}
+          {onRestartTour && (
+            <button
+              onClick={() => {
+                onRestartTour();
+                onClose();
+              }}
+              className={`w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
+                isDark
+                  ? 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+              }`}
+            >
+              <HelpCircle size={18} />
+              Ver tour de la app
+            </button>
+          )}
 
           <button
             onClick={handleSave}
