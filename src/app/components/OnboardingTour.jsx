@@ -49,16 +49,16 @@ const TOUR_STEPS_ES = [
   {
     id: 'charts',
     target: '[data-tour="charts"]',
-    title: 'Gráficas de Rendimiento',
-    description: 'Visualiza tu curva de equity y drawdown. Identifica patrones en tu operativa.',
+    title: 'Curva de Capital',
+    description: 'Visualiza cómo ha crecido tu cuenta trade por trade. Una curva ascendente indica consistencia en tu operativa.',
     icon: BarChart3,
   },
   {
-    id: 'view-selector',
-    target: '[data-tour="view-selector"]',
-    title: 'Vista del Historial',
-    description: 'Cambia entre vista de tabla o calendario. Filtra por mes o año para analizar periodos específicos.',
-    icon: Calendar,
+    id: 'drawdown',
+    target: '[data-tour="drawdown"]',
+    title: 'Gráfica de Drawdown',
+    description: 'Mide cuánto ha caído tu cuenta desde su punto máximo. Un drawdown bajo indica buen control de riesgo. Las empresas de fondeo suelen tener límites de 5-10%.',
+    icon: BarChart3,
   },
   {
     id: 'trade-form',
@@ -122,16 +122,16 @@ const TOUR_STEPS_EN = [
   {
     id: 'charts',
     target: '[data-tour="charts"]',
-    title: 'Performance Charts',
-    description: 'Visualize your equity curve and drawdown. Identify patterns in your trading.',
+    title: 'Equity Curve',
+    description: 'Visualize how your account has grown trade by trade. An ascending curve indicates consistency in your trading.',
     icon: BarChart3,
   },
   {
-    id: 'view-selector',
-    target: '[data-tour="view-selector"]',
-    title: 'History View',
-    description: 'Switch between table or calendar view. Filter by month or year to analyze specific periods.',
-    icon: Calendar,
+    id: 'drawdown',
+    target: '[data-tour="drawdown"]',
+    title: 'Drawdown Chart',
+    description: 'Measures how much your account has dropped from its peak. Low drawdown indicates good risk control. Prop firms usually have 5-10% limits.',
+    icon: BarChart3,
   },
   {
     id: 'trade-form',
@@ -375,19 +375,19 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
         .tour-highlight {
           position: relative;
           z-index: 100;
-          outline: 3px solid #3b82f6 !important;
+          outline: 4px solid #f59e0b !important;
           outline-offset: 4px;
           border-radius: 12px;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.3) !important;
-          animation: tour-pulse 2s ease-in-out infinite;
+          box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3), 0 0 30px rgba(245, 158, 11, 0.4) !important;
+          animation: tour-pulse 1.5s ease-in-out infinite;
         }
 
         @keyframes tour-pulse {
           0%, 100% {
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.3), 0 0 30px rgba(245, 158, 11, 0.4);
           }
           50% {
-            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.4), 0 0 50px rgba(245, 158, 11, 0.5);
           }
         }
 

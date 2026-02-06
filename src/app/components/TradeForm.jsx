@@ -514,14 +514,14 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
         </div>
 
         {/* Fechas de entrada y salida */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">
             <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
               {t.entryDate}
             </label>
             <input
               type="date"
-              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+              className={`w-full max-w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 appearance-none ${
                 isDark
                   ? 'bg-slate-700 border-slate-600 text-white'
                   : 'bg-slate-50 border-slate-200 text-slate-600'
@@ -530,13 +530,13 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
               onChange={e => setForm({...form, fechaEntrada: e.target.value})}
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
               {t.exitDate}
             </label>
             <input
               type="date"
-              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+              className={`w-full max-w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 appearance-none ${
                 isDark
                   ? 'bg-slate-700 border-slate-600 text-white'
                   : 'bg-slate-50 border-slate-200 text-slate-600'
@@ -554,7 +554,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           </label>
           <input
             type="time"
-            className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+            className={`w-full max-w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 appearance-none ${
               isDark
                 ? 'bg-slate-700 border-slate-600 text-white'
                 : 'bg-slate-50 border-slate-200 text-slate-600'

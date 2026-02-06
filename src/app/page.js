@@ -483,7 +483,9 @@ export default function TradingJournalPRO() {
             <div data-tour="charts">
               <EquityChart data={stats.data} startBalance={stats.startBalance} />
             </div>
-            <DrawdownChart data={stats.data} />
+            <div data-tour="drawdown">
+              <DrawdownChart data={stats.data} />
+            </div>
             <CalendarView
               trades={filteredTrades}
               selectedMonth={selectedMonth}
