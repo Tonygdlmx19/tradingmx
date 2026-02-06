@@ -4,6 +4,7 @@ import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck } from 'lucide-react';
 import CalculatorModal from './CalculatorModal';
+import SessionBar from './SessionBar';
 
 export default function Header({
   user,
@@ -139,6 +140,9 @@ export default function Header({
           </div>
         </div>
       </nav>
+
+      {/* Barra de sesión con reloj e idioma */}
+      <SessionBar />
 
       {/* Sección de bienvenida + Target */}
       <div className={`px-4 sm:px-6 lg:px-8 py-5 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>

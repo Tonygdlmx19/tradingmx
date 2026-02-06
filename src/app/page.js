@@ -24,7 +24,6 @@ import {
   CalendarView,
   useTheme
 } from './components';
-import SessionBar from './components/SessionBar';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
 import AdminPanel from './components/AdminPanel';
 import TrialExpiringAlert from './components/TrialExpiringAlert';
@@ -404,8 +403,6 @@ export default function TradingJournalPRO() {
         onAdmin={() => setShowAdminPanel(true)}
         onLogout={handleLogout}
       />
-
-      <SessionBar />
 
       <EconomicCalendar
         isOpen={showCalendar}
