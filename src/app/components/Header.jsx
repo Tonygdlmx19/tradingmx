@@ -121,7 +121,7 @@ export default function Header({
   };
   const today = new Date().getDate();
   const frases = frasesMotivadoras[language] || frasesMotivadoras.es;
-  const fraseDelDia = config?.fraseMotivadora || frases[today % frases.length];
+  const fraseDelDia = frases[today % frases.length];
 
   return (
     <>
