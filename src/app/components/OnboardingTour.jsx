@@ -283,10 +283,10 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
 
       {/* Tooltip fijo en la parte inferior */}
       <div
-        className={`fixed z-[201] w-[90%] max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden ${
+        className={`fixed z-[201] left-4 right-4 mx-auto max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden ${
           isCentered
-            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-fade-in'
-            : 'bottom-20 left-1/2 -translate-x-1/2 animate-slide-up'
+            ? 'top-1/2 -translate-y-1/2 animate-fade-in'
+            : 'bottom-20 animate-slide-up-simple'
         }`}
         style={{ maxHeight: 'calc(100vh - 160px)' }}
       >
@@ -391,30 +391,30 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
           }
         }
 
-        @keyframes slide-up {
+        @keyframes slide-up-simple {
           from {
             opacity: 0;
-            transform: translateX(-50%) translateY(20px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
           }
         }
 
         @keyframes fade-in {
           from {
             opacity: 0;
-            transform: translate(-50%, -50%) scale(0.95);
+            transform: translateY(-50%) scale(0.95);
           }
           to {
             opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
+            transform: translateY(-50%) scale(1);
           }
         }
 
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out forwards;
+        .animate-slide-up-simple {
+          animation: slide-up-simple 0.3s ease-out forwards;
         }
 
         .animate-fade-in {
