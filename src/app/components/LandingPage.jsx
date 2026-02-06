@@ -1,10 +1,10 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  BarChart3, 
-  Target, 
-  CheckCircle2, 
+import {
+  TrendingUp,
+  BarChart3,
+  Target,
+  CheckCircle2,
   ArrowRight,
   Calendar,
   PieChart,
@@ -27,8 +27,51 @@ import {
   BarChart,
   Volume2,
   VolumeX,
-  Trophy
+  Trophy,
+  Star,
+  Crown,
+  Infinity
 } from 'lucide-react';
+
+const PLANS = [
+  {
+    id: '1month',
+    name: '1 Mes',
+    price: 10,
+    duration: '1 mes',
+    icon: Zap,
+    color: 'blue',
+    paypalLink: 'https://www.paypal.com/ncp/payment/1MONTH_LINK'
+  },
+  {
+    id: '3months',
+    name: '3 Meses',
+    price: 20,
+    duration: '3 meses',
+    icon: Star,
+    color: 'purple',
+    popular: true,
+    paypalLink: 'https://www.paypal.com/ncp/payment/3MONTHS_LINK'
+  },
+  {
+    id: '1year',
+    name: '1 Año',
+    price: 50,
+    duration: '12 meses',
+    icon: Crown,
+    color: 'amber',
+    paypalLink: 'https://www.paypal.com/ncp/payment/1YEAR_LINK'
+  },
+  {
+    id: 'lifetime',
+    name: 'De por vida',
+    price: 100,
+    duration: 'Para siempre',
+    icon: Infinity,
+    color: 'green',
+    paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU'
+  },
+];
 
 export default function LandingPage({ onLogin }) {
   const [openFaq, setOpenFaq] = useState(null);
@@ -36,6 +79,7 @@ export default function LandingPage({ onLogin }) {
   const [isMuted, setIsMuted] = useState(true);
   const [showTerms, setShowTerms] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ hours: 1, minutes: 0, seconds: 0 });
+  const [selectedPlan, setSelectedPlan] = useState('3months');
   const videoRef = useRef(null);
 
   // Contador de tiempo limitado
@@ -163,8 +207,8 @@ export default function LandingPage({ onLogin }) {
       a: "Al pagar con PayPal, usa el mismo correo que usarás para iniciar sesión con Google. Tu acceso se activa automáticamente en 1-2 minutos. Solo haz clic en 'Ingresar' y selecciona Google."
     },
     {
-      q: "¿El pago es único o es suscripción?",
-      a: "Es un pago único de $19.99 USD. Acceso de por vida, sin mensualidades ni cargos ocultos."
+      q: "¿Cuáles son los planes disponibles?",
+      a: "Tenemos 4 planes: 1 Mes ($10), 3 Meses ($20), 1 Año ($50) y De por vida ($100). Todos incluyen acceso completo a todas las funciones."
     },
     {
       q: "¿Funciona para Forex, Futuros, Crypto?",
@@ -185,15 +229,20 @@ export default function LandingPage({ onLogin }) {
   ];
 
   const handlePayPal = () => {
-    window.open('https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU', '_blank');
+    const plan = PLANS.find(p => p.id === selectedPlan);
+    if (plan) {
+      window.open(plan.paypalLink, '_blank');
+    }
   };
+
+  const selectedPlanData = PLANS.find(p => p.id === selectedPlan);
 
   // Botón con precios para Hero y CTA (Comprar)
   const BuyButtonWithPrice = ({ className = '' }) => (
     <div className={`relative group ${className}`}>
       <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
       <button
-        onClick={handlePayPal}
+        onClick={() => document.getElementById('planes-section')?.scrollIntoView({ behavior: 'smooth' })}
         className="relative bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-4 sm:px-6 py-2.5 sm:py-3"
       >
         <div className="absolute inset-0 overflow-hidden rounded-xl">
@@ -202,9 +251,8 @@ export default function LandingPage({ onLogin }) {
         <div className="relative flex items-center justify-center gap-2 sm:gap-3">
           <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />
           <div className="w-px h-5 bg-black/20" />
-          <span className="text-sm sm:text-base font-black">Comprar</span>
-          <span className="text-black/40 line-through text-xs">$49.99</span>
-          <span className="bg-black text-yellow-400 px-1.5 py-0.5 rounded text-xs sm:text-sm font-bold">$19.99</span>
+          <span className="text-sm sm:text-base font-black">Ver Planes</span>
+          <span className="bg-black text-yellow-400 px-1.5 py-0.5 rounded text-xs sm:text-sm font-bold">Desde $10</span>
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </button>
@@ -230,7 +278,7 @@ export default function LandingPage({ onLogin }) {
   // Botón secundario para navbar
   const NavBuyButton = () => (
     <button
-      onClick={handlePayPal}
+      onClick={() => document.getElementById('planes-section')?.scrollIntoView({ behavior: 'smooth' })}
       className="relative group overflow-hidden bg-gradient-to-r from-[#FFC439] to-[#FFD700] text-black font-bold px-3 sm:px-4 py-2 rounded-lg transition-all shadow-md shadow-yellow-500/20 hover:shadow-yellow-500/40 hover:scale-105 active:scale-95 flex items-center gap-2 border border-yellow-500/50"
     >
       <div className="relative flex items-center gap-1.5">
@@ -239,7 +287,7 @@ export default function LandingPage({ onLogin }) {
           alt="PayPal"
           className="h-5 w-auto object-contain"
         />
-        <span className="font-bold text-sm">Comprar</span>
+        <span className="font-bold text-sm">Planes</span>
       </div>
     </button>
   );
@@ -811,76 +859,84 @@ export default function LandingPage({ onLogin }) {
         </div>
       </section>
 
-      {/* ==================== PRECIO - MEJORADO ==================== */}
-      <section className="py-12 sm:py-20 px-4">
-        <div className="max-w-md mx-auto">
+      {/* ==================== PRECIO - CON PLANES ==================== */}
+      <section id="planes-section" className="py-12 sm:py-20 px-4">
+        <div className="max-w-lg mx-auto">
           <div className="text-center mb-6 sm:mb-10">
             <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
               Invierte en tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">éxito</span>
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm">
-              Menos de lo que pierdes en un mal trade
+              Elige el plan que mejor se adapte a ti
             </p>
           </div>
-          
+
           <div className="relative">
             {/* Glow animado */}
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 rounded-[1.5rem] sm:rounded-[2rem] blur-xl opacity-30 animate-pulse" />
-            
+
             <div className="relative bg-gradient-to-b from-slate-800/95 to-slate-900/95 border border-emerald-500/30 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-center backdrop-blur-sm">
               {/* Badge */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 text-xs font-bold rounded-full mb-4 sm:mb-6 border border-emerald-500/20">
                 <Sparkles className="w-3.5 h-3.5" />
-                ACCESO DE POR VIDA
+                ELIGE TU PLAN
               </div>
-              
-              {/* Precio */}
-              <div className="mb-6 sm:mb-8">
-                <div className="text-slate-500 text-xs line-through mb-2">$49.99 USD</div>
-                <div className="mb-3">
-                  <span className="text-4xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300">$19.99</span>
-                  <span className="text-slate-400 ml-1 text-sm">USD</span>
-                </div>
 
-                {/* Descuento llamativo */}
-                <div className="relative inline-block mb-4">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-full blur opacity-60 animate-pulse" />
-                  <div className="relative inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs sm:text-sm font-black rounded-full shadow-lg">
-                    <Zap className="w-4 h-4" />
-                    60% DESCUENTO
-                  </div>
-                </div>
+              {/* Selector de Planes - Cards */}
+              <div className="space-y-2 sm:space-y-3 mb-6">
+                {PLANS.map((plan) => {
+                  const isSelected = selectedPlan === plan.id;
 
-                {/* Contador de tiempo limitado */}
-                <div className="bg-slate-800/80 border border-red-500/30 rounded-xl p-3 mt-2">
-                  <p className="text-red-400 text-[10px] sm:text-xs font-bold mb-2 flex items-center justify-center gap-1">
-                    <span className="animate-pulse">🔥</span> OFERTA POR TIEMPO LIMITADO
-                  </p>
-                  <div className="flex items-center justify-center gap-2 sm:gap-3">
-                    <div className="text-center">
-                      <div className="bg-slate-900 rounded-lg px-2 sm:px-3 py-1 border border-slate-700">
-                        <span className="text-lg sm:text-2xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+                  return (
+                    <button
+                      key={plan.id}
+                      onClick={() => setSelectedPlan(plan.id)}
+                      className={`relative w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-emerald-500/20 border-emerald-500'
+                          : 'bg-slate-800/50 border-slate-700 hover:border-slate-600 hover:bg-slate-800'
+                      }`}
+                    >
+                      {/* Radio button visual */}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-slate-500'
+                        }`}>
+                          {isSelected && (
+                            <div className="w-2 h-2 bg-white rounded-full" />
+                          )}
+                        </div>
+                        <div className="text-left">
+                          <div className={`font-bold text-sm sm:text-base ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                            {plan.name}
+                          </div>
+                          <div className={`text-xs ${isSelected ? 'text-emerald-300' : 'text-slate-500'}`}>
+                            {plan.duration}
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-[8px] sm:text-[10px] text-slate-500 mt-1">HORAS</span>
-                    </div>
-                    <span className="text-xl font-bold text-red-400">:</span>
-                    <div className="text-center">
-                      <div className="bg-slate-900 rounded-lg px-2 sm:px-3 py-1 border border-slate-700">
-                        <span className="text-lg sm:text-2xl font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
+
+                      {/* Precio y badge */}
+                      <div className="flex items-center gap-2">
+                        {plan.popular && (
+                          <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                            POPULAR
+                          </span>
+                        )}
+                        <div className={`px-3 py-1.5 rounded-lg font-black text-lg ${
+                          isSelected
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-slate-700 text-slate-200'
+                        }`}>
+                          ${plan.price}
+                          <span className="text-xs font-medium opacity-70 ml-0.5">USD</span>
+                        </div>
                       </div>
-                      <span className="text-[8px] sm:text-[10px] text-slate-500 mt-1">MIN</span>
-                    </div>
-                    <span className="text-xl font-bold text-red-400">:</span>
-                    <div className="text-center">
-                      <div className="bg-slate-900 rounded-lg px-2 sm:px-3 py-1 border border-slate-700">
-                        <span className="text-lg sm:text-2xl font-black text-red-400">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                      </div>
-                      <span className="text-[8px] sm:text-[10px] text-slate-500 mt-1">SEG</span>
-                    </div>
-                  </div>
-                </div>
+                    </button>
+                  );
+                })}
               </div>
-              
+
               {/* Lista */}
               <div className="space-y-2 mb-6 text-left">
                 {[
@@ -899,12 +955,25 @@ export default function LandingPage({ onLogin }) {
                   </div>
                 ))}
               </div>
-              
-              {/* Botón */}
-              <div className="flex justify-center">
-                <BuyButton />
+
+              {/* Botón de Pago */}
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
+                <button
+                  onClick={handlePayPal}
+                  className="relative w-full bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-6 py-3 sm:py-4"
+                >
+                  <div className="absolute inset-0 overflow-hidden rounded-xl">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  </div>
+                  <div className="relative flex items-center justify-center gap-3">
+                    <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />
+                    <span className="text-base sm:text-lg font-black">Pagar ${selectedPlanData?.price} USD</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
               </div>
-              
+
               {/* Trust */}
               <div className="mt-4 sm:mt-6 flex flex-wrap items-center justify-center gap-3 text-slate-500 text-[10px] sm:text-xs">
                 <div className="flex items-center gap-1">

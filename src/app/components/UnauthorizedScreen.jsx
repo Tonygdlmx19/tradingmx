@@ -1,13 +1,54 @@
 "use client";
 import { useState } from 'react';
-import { LogOut, ShieldX, CheckCircle, ArrowRight, Mail, MessageCircle, HelpCircle, Clock, Ticket, Loader2 } from 'lucide-react';
+import { LogOut, ShieldX, CheckCircle, ArrowRight, Mail, MessageCircle, HelpCircle, Clock, Ticket, Loader2, Crown, Zap, Star, Infinity } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
+const PLANS = [
+  {
+    id: '1month',
+    name: '1 Mes',
+    price: 10,
+    duration: '1 mes',
+    icon: Zap,
+    color: 'blue',
+    paypalLink: 'https://www.paypal.com/ncp/payment/1MONTH_LINK'
+  },
+  {
+    id: '3months',
+    name: '3 Meses',
+    price: 20,
+    duration: '3 meses',
+    icon: Star,
+    color: 'purple',
+    popular: true,
+    paypalLink: 'https://www.paypal.com/ncp/payment/3MONTHS_LINK'
+  },
+  {
+    id: '1year',
+    name: '1 Año',
+    price: 50,
+    duration: '12 meses',
+    icon: Crown,
+    color: 'amber',
+    paypalLink: 'https://www.paypal.com/ncp/payment/1YEAR_LINK'
+  },
+  {
+    id: 'lifetime',
+    name: 'De por vida',
+    price: 100,
+    duration: 'Para siempre',
+    icon: Infinity,
+    color: 'green',
+    paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU'
+  },
+];
 
 export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
   const [codeLoading, setCodeLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('3months');
 
   const isExpired = authStatus === 'expired';
 
@@ -70,8 +111,13 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
   };
 
   const handlePayPal = () => {
-    window.open('https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU', '_blank');
+    const plan = PLANS.find(p => p.id === selectedPlan);
+    if (plan) {
+      window.open(plan.paypalLink, '_blank');
+    }
   };
+
+  const selectedPlanData = PLANS.find(p => p.id === selectedPlan);
 
   const contactEmail = "tmsolucionesdigitales@gmail.com";
   const whatsappNumber = "523316145522";
@@ -166,18 +212,64 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
             </div>
           </div>
 
-          {/* Precio */}
+          {/* Selector de planes - Cards */}
           <div className="mb-6">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <span className="text-slate-400 line-through text-lg">$49.99</span>
-              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                -60%
-              </span>
+            <p className="text-xs font-bold text-slate-500 uppercase mb-3">
+              Selecciona tu plan:
+            </p>
+            <div className="space-y-2">
+              {PLANS.map((plan) => {
+                const isSelected = selectedPlan === plan.id;
+
+                return (
+                  <button
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan.id)}
+                    className={`relative w-full p-3 rounded-xl border-2 transition-all flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-emerald-50 border-emerald-500'
+                        : 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    {/* Radio button visual */}
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-slate-400'
+                      }`}>
+                        {isSelected && (
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <div className={`font-bold text-sm ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
+                          {plan.name}
+                        </div>
+                        <div className={`text-xs ${isSelected ? 'text-emerald-600' : 'text-slate-500'}`}>
+                          {plan.duration}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Precio y badge */}
+                    <div className="flex items-center gap-2">
+                      {plan.popular && (
+                        <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                          POPULAR
+                        </span>
+                      )}
+                      <div className={`px-3 py-1.5 rounded-lg font-black text-base ${
+                        isSelected
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-200 text-slate-700'
+                      }`}>
+                        ${plan.price}
+                        <span className="text-xs font-medium opacity-70 ml-0.5">USD</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-            <div className="text-4xl font-black text-slate-800">
-              $19.99 <span className="text-base font-normal text-slate-500">USD</span>
-            </div>
-            <p className="text-xs text-slate-400 mt-1">Pago único &bull; Acceso de por vida</p>
           </div>
 
           {/* Botón de compra */}
@@ -186,7 +278,7 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
             className="w-full bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold py-4 px-6 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-yellow-500/30 flex items-center justify-center gap-3 mb-4"
           >
             <img src="/paypal.png" alt="PayPal" className="h-6" />
-            <span className="text-lg font-black">Activar Ahora</span>
+            <span className="text-lg font-black">Pagar ${selectedPlanData?.price} USD</span>
             <ArrowRight size={20} />
           </button>
 

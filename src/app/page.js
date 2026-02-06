@@ -84,17 +84,29 @@ export default function TradingJournalPRO() {
             const userType = data.type || 'paid'; // backwards compat
 
             if (data.status === 'active') {
-              if (userType === 'trial') {
-                const now = new Date();
+              const now = new Date();
+              let isExpired = false;
+
+              // Check trial expiration
+              if (userType === 'trial' && data.trialEnd) {
                 const trialEnd = data.trialEnd?.toDate?.() || new Date(data.trialEnd);
                 if (now > trialEnd) {
-                  await updateDoc(authDocRef, { status: 'expired' });
-                  setIsAuthorized(false);
-                  setAuthStatus('expired');
-                } else {
-                  setIsAuthorized(true);
-                  setAuthStatus('active');
+                  isExpired = true;
                 }
+              }
+
+              // Check subscription expiration
+              if (userType === 'subscription' && data.subscriptionEnd) {
+                const subscriptionEnd = data.subscriptionEnd?.toDate?.() || new Date(data.subscriptionEnd);
+                if (now > subscriptionEnd) {
+                  isExpired = true;
+                }
+              }
+
+              if (isExpired) {
+                await updateDoc(authDocRef, { status: 'expired' });
+                setIsAuthorized(false);
+                setAuthStatus('expired');
               } else {
                 setIsAuthorized(true);
                 setAuthStatus('active');

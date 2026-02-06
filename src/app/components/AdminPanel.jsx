@@ -24,7 +24,19 @@ import {
   Ban,
   Clock,
   CreditCard,
+  Zap,
+  Star,
+  Crown,
+  Infinity,
 } from 'lucide-react';
+
+// Plan definitions for activation
+const SUBSCRIPTION_PLANS = [
+  { id: '1month', name: '1 Mes', months: 1, icon: Zap, color: 'blue' },
+  { id: '3months', name: '3 Meses', months: 3, icon: Star, color: 'purple' },
+  { id: '1year', name: '1 Año', months: 12, icon: Crown, color: 'amber' },
+  { id: 'lifetime', name: 'Lifetime', months: null, icon: Infinity, color: 'green' },
+];
 
 // Generar código alfanumérico legible (sin I, O, 0, 1)
 function generateCode() {
@@ -117,26 +129,47 @@ export default function AdminPanel({ user, onClose }) {
     setActivating(false);
   };
 
-  // Activate user as paid (permanent)
-  const activatePaid = async (email) => {
+  // Activate user with specific subscription plan
+  const activateSubscription = async (email, planId) => {
     const emailLower = email.toLowerCase().trim();
     if (!emailLower) return;
+
+    const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
+    if (!plan) return;
+
     setActivating(true);
     try {
+      const now = new Date();
+      let subscriptionEnd = null;
+
+      if (plan.months !== null) {
+        // Calculate end date based on months
+        subscriptionEnd = new Date(now);
+        subscriptionEnd.setMonth(subscriptionEnd.getMonth() + plan.months);
+      }
+
       await setDoc(doc(db, 'authorized_users', emailLower), {
         email: emailLower,
         status: 'active',
-        type: 'paid',
+        type: plan.months === null ? 'lifetime' : 'subscription',
+        subscriptionPlan: plan.id,
+        subscriptionStart: serverTimestamp(),
+        subscriptionEnd: subscriptionEnd,
         trialStart: null,
         trialEnd: null,
         authorizedAt: serverTimestamp(),
       }, { merge: true });
       setActivateEmail('');
     } catch (err) {
-      console.error('Error activating paid:', err);
+      console.error('Error activating subscription:', err);
       alert('Error al activar: ' + err.message);
     }
     setActivating(false);
+  };
+
+  // Activate user as paid (permanent) - legacy, now uses lifetime
+  const activatePaid = async (email) => {
+    await activateSubscription(email, 'lifetime');
   };
 
   // Deactivate user
@@ -203,17 +236,32 @@ export default function AdminPanel({ user, onClose }) {
 
   // Days remaining helper
   const getDaysRemaining = (u) => {
-    if (u.type !== 'trial' || !u.trialEnd) return null;
-    const end = u.trialEnd?.toDate?.() || new Date(u.trialEnd);
+    let endDate = null;
+    if (u.type === 'trial' && u.trialEnd) {
+      endDate = u.trialEnd?.toDate?.() || new Date(u.trialEnd);
+    } else if (u.type === 'subscription' && u.subscriptionEnd) {
+      endDate = u.subscriptionEnd?.toDate?.() || new Date(u.subscriptionEnd);
+    }
+    if (!endDate) return null;
     const now = new Date();
-    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
     return days;
+  };
+
+  // Get plan name
+  const getPlanName = (u) => {
+    if (u.subscriptionPlan) {
+      const plan = SUBSCRIPTION_PLANS.find(p => p.id === u.subscriptionPlan);
+      return plan?.name || u.subscriptionPlan;
+    }
+    return null;
   };
 
   // Status badge
   const StatusBadge = ({ u }) => {
     const type = u.type || 'paid';
     const daysLeft = getDaysRemaining(u);
+    const planName = getPlanName(u);
 
     if (u.status === 'active' && type === 'trial') {
       return (
@@ -223,11 +271,19 @@ export default function AdminPanel({ user, onClose }) {
         </span>
       );
     }
-    if (u.status === 'active') {
+    if (u.status === 'active' && type === 'subscription') {
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+          <Star size={12} />
+          {planName || 'Suscripción'} {daysLeft !== null ? `(${daysLeft}d)` : ''}
+        </span>
+      );
+    }
+    if (u.status === 'active' && (type === 'lifetime' || type === 'paid')) {
       return (
         <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-          <CreditCard size={12} />
-          Pagado
+          <Infinity size={12} />
+          Lifetime
         </span>
       );
     }
@@ -307,7 +363,7 @@ export default function AdminPanel({ user, onClose }) {
             {/* Activate user section */}
             <div className={`p-4 rounded-xl border ${cardBg} ${border}`}>
               <h3 className={`text-sm font-bold mb-3 ${text}`}>Activar usuario</h3>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap mb-3">
                 <input
                   type="email"
                   value={activateEmail}
@@ -325,16 +381,31 @@ export default function AdminPanel({ user, onClose }) {
                   className="px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-1"
                 >
                   {activating ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
-                  Trial 15 días
+                  Trial 15d
                 </button>
-                <button
-                  onClick={() => activatePaid(activateEmail)}
-                  disabled={activating || !activateEmail.trim()}
-                  className="px-3 py-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-1"
-                >
-                  {activating ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />}
-                  Permanente
-                </button>
+              </div>
+              {/* Subscription plan buttons */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {SUBSCRIPTION_PLANS.map((plan) => {
+                  const Icon = plan.icon;
+                  const colorClasses = {
+                    blue: 'bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300',
+                    purple: 'bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300',
+                    amber: 'bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300',
+                    green: 'bg-green-500 hover:bg-green-600 disabled:bg-green-300',
+                  };
+                  return (
+                    <button
+                      key={plan.id}
+                      onClick={() => activateSubscription(activateEmail, plan.id)}
+                      disabled={activating || !activateEmail.trim()}
+                      className={`px-3 py-2 ${colorClasses[plan.color]} text-white text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1`}
+                    >
+                      {activating ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} />}
+                      {plan.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -380,20 +451,41 @@ export default function AdminPanel({ user, onClose }) {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-1.5 flex-shrink-0">
+                      <div className="flex gap-1 flex-shrink-0">
                         <button
                           onClick={() => activateTrial(u.email)}
                           className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
-                          title="Activar Trial"
+                          title="Trial 15 días"
                         >
                           <Clock size={16} />
                         </button>
                         <button
-                          onClick={() => activatePaid(u.email)}
-                          className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors"
-                          title="Activar Pagado"
+                          onClick={() => activateSubscription(u.email, '1month')}
+                          className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
+                          title="1 Mes"
                         >
-                          <CreditCard size={16} />
+                          <Zap size={16} />
+                        </button>
+                        <button
+                          onClick={() => activateSubscription(u.email, '3months')}
+                          className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 transition-colors"
+                          title="3 Meses"
+                        >
+                          <Star size={16} />
+                        </button>
+                        <button
+                          onClick={() => activateSubscription(u.email, '1year')}
+                          className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors"
+                          title="1 Año"
+                        >
+                          <Crown size={16} />
+                        </button>
+                        <button
+                          onClick={() => activateSubscription(u.email, 'lifetime')}
+                          className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors"
+                          title="Lifetime"
+                        >
+                          <Infinity size={16} />
                         </button>
                         <button
                           onClick={() => deactivateUser(u.email)}
