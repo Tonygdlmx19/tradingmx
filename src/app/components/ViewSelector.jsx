@@ -1,5 +1,5 @@
 "use client";
-import { LayoutGrid, Calendar, ChevronDown } from 'lucide-react';
+import { LayoutGrid, Calendar, ChevronDown, List, CalendarDays } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 const mesesFull = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -11,7 +11,9 @@ export default function ViewSelector({
   setSelectedMonth,
   selectedYear,
   setSelectedYear,
-  tradeCount
+  tradeCount,
+  displayMode = 'tabla',
+  onDisplayModeChange
 }) {
   const { isDark } = useTheme();
 
@@ -26,6 +28,36 @@ export default function ViewSelector({
     <div className={`p-4 rounded-2xl border mb-4 ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
     }`}>
+      {/* Toggle Tabla/Calendario */}
+      {onDisplayModeChange && (
+        <div className={`flex p-1 rounded-xl border mb-3 ${
+          isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-100 border-slate-200'
+        }`}>
+          <button
+            onClick={() => onDisplayModeChange('tabla')}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+              displayMode === 'tabla'
+                ? `${isDark ? 'bg-slate-800' : 'bg-white'} shadow text-blue-500`
+                : `${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'}`
+            }`}
+          >
+            <List size={16} />
+            Tabla
+          </button>
+          <button
+            onClick={() => onDisplayModeChange('calendario')}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+              displayMode === 'calendario'
+                ? `${isDark ? 'bg-slate-800' : 'bg-white'} shadow text-blue-500`
+                : `${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'}`
+            }`}
+          >
+            <CalendarDays size={16} />
+            Calendario
+          </button>
+        </div>
+      )}
+
       {/* Toggle Global/Mensual - Ancho completo */}
       <div className={`flex p-1 rounded-xl border ${
         isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-100 border-slate-200'

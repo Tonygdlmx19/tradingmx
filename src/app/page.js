@@ -21,6 +21,7 @@ import {
   DrawdownChart,
   TradesTable,
   EconomicCalendar,
+  CalendarView,
   useTheme
 } from './components';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
@@ -45,6 +46,7 @@ export default function TradingJournalPRO() {
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
   const [viewMode, setViewMode] = useState('global');
+  const [displayMode, setDisplayMode] = useState('tabla'); // 'tabla' | 'calendario'
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedTrade, setSelectedTrade] = useState(null);
@@ -404,11 +406,22 @@ export default function TradingJournalPRO() {
               selectedYear={selectedYear}
               setSelectedYear={setSelectedYear}
               tradeCount={stats.tradeCount}
+              displayMode={displayMode}
+              onDisplayModeChange={setDisplayMode}
             />
-            <TradesTable 
-              trades={filteredTrades} 
-              onTradeClick={handleTradeClick}
-            />
+            {displayMode === 'tabla' ? (
+              <TradesTable
+                trades={filteredTrades}
+                onTradeClick={handleTradeClick}
+              />
+            ) : (
+              <CalendarView
+                trades={filteredTrades}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+                onTradeClick={handleTradeClick}
+              />
+            )}
           </div>
 
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
