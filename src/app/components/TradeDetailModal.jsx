@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Clock, ArrowRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Clock, ArrowRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
@@ -12,6 +12,14 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [viewingImage, setViewingImage] = useState(null);
+
+  // Zoom state
+  const [zoom, setZoom] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const lastTouchDistance = useRef(null);
+  const imageContainerRef = useRef(null);
 
   // Reset state when trade changes
   useEffect(() => {
@@ -138,6 +146,98 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       onDelete(trade.id);
       onClose();
     }
+  };
+
+  // Zoom handlers
+  const resetZoom = () => {
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.5, 4));
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prev => {
+      const newZoom = Math.max(prev - 0.5, 1);
+      if (newZoom === 1) setPosition({ x: 0, y: 0 });
+      return newZoom;
+    });
+  };
+
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    // Double tap to zoom
+    if (zoom === 1) {
+      setZoom(2);
+    } else {
+      resetZoom();
+    }
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      // Pinch start
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      lastTouchDistance.current = distance;
+    } else if (e.touches.length === 1 && zoom > 1) {
+      // Pan start
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - position.x,
+        y: e.touches[0].clientY - position.y
+      });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && lastTouchDistance.current) {
+      // Pinch zoom
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const delta = distance - lastTouchDistance.current;
+      lastTouchDistance.current = distance;
+
+      setZoom(prev => {
+        const newZoom = prev + delta * 0.01;
+        return Math.max(1, Math.min(4, newZoom));
+      });
+    } else if (e.touches.length === 1 && isDragging && zoom > 1) {
+      // Pan
+      const newX = e.touches[0].clientX - dragStart.x;
+      const newY = e.touches[0].clientY - dragStart.y;
+
+      // Limit pan based on zoom level
+      const maxPan = (zoom - 1) * 150;
+      setPosition({
+        x: Math.max(-maxPan, Math.min(maxPan, newX)),
+        y: Math.max(-maxPan, Math.min(maxPan, newY))
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    lastTouchDistance.current = null;
+    setIsDragging(false);
+    if (zoom <= 1) {
+      resetZoom();
+    }
+  };
+
+  const openImageViewer = (img) => {
+    setViewingImage(img);
+    resetZoom();
+  };
+
+  const closeImageViewer = () => {
+    setViewingImage(null);
+    resetZoom();
   };
 
   return (
@@ -329,7 +429,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                     {/* Imagen grande arriba */}
                     <div
                       className="relative w-full h-32 rounded-lg overflow-hidden border border-blue-500 cursor-pointer hover:opacity-90 mb-2"
-                      onClick={() => setViewingImage(img)}
+                      onClick={() => openImageViewer(img)}
                     >
                       <img src={img.data} alt={`Captura ${index + 1}`} className="w-full h-full object-cover"/>
                     </div>
@@ -451,28 +551,81 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
         </div>
       </div>
 
-      {/* Modal para ver imagen completa */}
+      {/* Modal para ver imagen completa con zoom */}
       {viewingImage && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4"
-          onClick={() => setViewingImage(null)}
+          className="fixed inset-0 bg-black/95 flex flex-col z-[60]"
+          onClick={closeImageViewer}
         >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
-            <button
-              onClick={() => setViewingImage(null)}
-              className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300"
-            >
-              <X size={28} />
-            </button>
-            <div className="bg-black/50 text-white text-center py-2 rounded-t-xl">
-              <span className="font-bold">{viewingImage.temporalidad}</span>
+          {/* Header con controles */}
+          <div className="flex items-center justify-between p-4 bg-black/50">
+            <div className="flex items-center gap-2">
+              <span className="text-white font-bold text-sm bg-white/20 px-3 py-1 rounded-full">
+                {viewingImage.temporalidad}
+              </span>
+              <span className="text-white/60 text-xs">
+                {Math.round(zoom * 100)}%
+              </span>
             </div>
+
+            <div className="flex items-center gap-2">
+              {/* Zoom controls */}
+              <button
+                onClick={(e) => { e.stopPropagation(); handleZoomOut(); }}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                disabled={zoom <= 1}
+              >
+                <ZoomOut size={20} className={zoom <= 1 ? 'text-white/30' : 'text-white'} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleZoomIn(); }}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                disabled={zoom >= 4}
+              >
+                <ZoomIn size={20} className={zoom >= 4 ? 'text-white/30' : 'text-white'} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); resetZoom(); }}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <RotateCcw size={20} className="text-white" />
+              </button>
+              <button
+                onClick={closeImageViewer}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors ml-2"
+              >
+                <X size={20} className="text-white" />
+              </button>
+            </div>
+          </div>
+
+          {/* Imagen con zoom */}
+          <div
+            ref={imageContainerRef}
+            className="flex-1 flex items-center justify-center overflow-hidden touch-none"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <img
               src={viewingImage.data}
               alt={`Captura ${viewingImage.temporalidad}`}
-              className="w-full max-h-[80vh] object-contain rounded-b-xl"
-              onClick={(e) => e.stopPropagation()}
+              className="max-w-full max-h-full object-contain transition-transform duration-100"
+              style={{
+                transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+                cursor: zoom > 1 ? 'grab' : 'zoom-in'
+              }}
+              onClick={handleImageClick}
+              draggable={false}
             />
+          </div>
+
+          {/* Hint */}
+          <div className="p-3 text-center bg-black/50">
+            <p className="text-white/50 text-xs">
+              {zoom === 1 ? 'Toca para hacer zoom · Pellizca para ajustar' : 'Arrastra para mover · Toca para restablecer'}
+            </p>
           </div>
         </div>
       )}
