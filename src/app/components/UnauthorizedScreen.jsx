@@ -12,7 +12,7 @@ const PLANS = [
     duration: '1 mes',
     icon: Zap,
     color: 'blue',
-    paypalLink: 'https://www.paypal.com/ncp/payment/1MONTH_LINK'
+    paypalLink: 'https://www.paypal.com/ncp/payment/X3GWT63PZQ8J6'
   },
   {
     id: '3months',
@@ -22,7 +22,7 @@ const PLANS = [
     icon: Star,
     color: 'purple',
     popular: true,
-    paypalLink: 'https://www.paypal.com/ncp/payment/3MONTHS_LINK'
+    paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU'
   },
   {
     id: '1year',
@@ -31,7 +31,7 @@ const PLANS = [
     duration: '12 meses',
     icon: Crown,
     color: 'amber',
-    paypalLink: 'https://www.paypal.com/ncp/payment/1YEAR_LINK'
+    paypalLink: 'https://www.paypal.com/ncp/payment/8DV9WS43YAXV8'
   },
   {
     id: 'lifetime',
@@ -40,7 +40,7 @@ const PLANS = [
     duration: 'Para siempre',
     icon: Infinity,
     color: 'green',
-    paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU'
+    paypalLink: 'https://www.paypal.com/ncp/payment/Z2NETX47DZ5K4'
   },
 ];
 
@@ -48,9 +48,50 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
   const [codeLoading, setCodeLoading] = useState(false);
+  const [trialLoading, setTrialLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('3months');
 
   const isExpired = authStatus === 'expired';
+
+  // Activar prueba gratis automáticamente
+  const handleStartTrial = async () => {
+    setTrialLoading(true);
+    try {
+      const email = user.email.toLowerCase();
+
+      // Verificar si ya usó una prueba antes
+      const authDocRef = doc(db, 'authorized_users', email);
+      const authDoc = await getDoc(authDocRef);
+
+      if (authDoc.exists()) {
+        const data = authDoc.data();
+        if (data.trialUsed) {
+          setCodeError('Ya utilizaste tu prueba gratis anteriormente.');
+          setTrialLoading(false);
+          return;
+        }
+      }
+
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
+
+      await setDoc(authDocRef, {
+        email,
+        status: 'active',
+        type: 'trial',
+        trialStart: serverTimestamp(),
+        trialEnd: trialEnd,
+        trialUsed: true,
+        authorizedAt: serverTimestamp(),
+      }, { merge: true });
+
+      window.location.reload();
+    } catch (err) {
+      console.error('Error starting trial:', err);
+      setCodeError('Error al activar la prueba. Intenta de nuevo.');
+      setTrialLoading(false);
+    }
+  };
 
   const handleRedeemCode = async () => {
     const trimmedCode = code.trim().toUpperCase();
@@ -161,35 +202,37 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
             }
           </p>
 
-          {/* Sección de código de prueba */}
-          <div className="bg-blue-50 rounded-2xl p-4 mb-6">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Ticket size={18} className="text-blue-500" />
-              <span className="text-sm font-bold text-blue-700">
-                {isExpired ? '¿Tienes otro código?' : '¿Tienes un código de prueba?'}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={code}
-                onChange={e => setCode(e.target.value.toUpperCase())}
-                placeholder="CÓDIGO"
-                maxLength={8}
-                className="flex-1 px-3 py-2.5 bg-white border border-blue-200 rounded-xl text-center font-mono font-bold text-sm text-slate-700 uppercase tracking-widest placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
+          {/* Botón de prueba gratis (solo para usuarios nuevos) */}
+          {!isExpired && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-6 border border-blue-200">
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full mb-2">
+                  <Clock size={14} />
+                  PRUEBA GRATIS
+                </div>
+                <h3 className="text-lg font-black text-slate-800">15 días sin costo</h3>
+                <p className="text-xs text-slate-500 mt-1">Sin tarjeta de crédito requerida</p>
+              </div>
               <button
-                onClick={handleRedeemCode}
-                disabled={codeLoading || !code.trim()}
-                className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98]"
+                onClick={handleStartTrial}
+                disabled={trialLoading}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 disabled:from-blue-300 disabled:to-indigo-300 text-white font-bold rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                {codeLoading ? <Loader2 size={16} className="animate-spin" /> : 'Canjear'}
+                {trialLoading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <>
+                    <Clock size={18} />
+                    Comenzar Prueba Gratis
+                  </>
+                )}
               </button>
+              {codeError && (
+                <p className="text-xs text-red-500 font-bold mt-2 text-center">{codeError}</p>
+              )}
             </div>
-            {codeError && (
-              <p className="text-xs text-red-500 font-bold mt-2">{codeError}</p>
-            )}
-          </div>
+          )}
+
 
           {/* Beneficios */}
           <div className="bg-slate-50 rounded-2xl p-4 mb-6 text-left">
@@ -198,7 +241,7 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
             </p>
             <div className="space-y-2">
               {[
-                "Acceso de por vida",
+                "Acceso completo a la app",
                 "Todas las métricas y estadísticas",
                 "Curva de capital y drawdown",
                 "Calculadora de riesgo",
