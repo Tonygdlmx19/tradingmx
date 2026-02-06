@@ -176,6 +176,9 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       imageTooLarge: 'La imagen es muy grande (max 5MB)',
       imageError: 'Error al procesar la imagen',
       tradeTime: 'Hora del Trade',
+      entryDate: 'Fecha de Entrada',
+      exitDate: 'Fecha de Cierre',
+      swingTrade: 'Swing Trade (multi-día)',
     },
     en: {
       title: 'Record Trade',
@@ -219,6 +222,9 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       imageTooLarge: 'Image is too large (max 5MB)',
       imageError: 'Error processing image',
       tradeTime: 'Trade Time',
+      entryDate: 'Entry Date',
+      exitDate: 'Exit Date',
+      swingTrade: 'Swing Trade (multi-day)',
     },
   };
   const t = labels[language];
@@ -507,6 +513,40 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           </div>
         </div>
 
+        {/* Fechas de entrada y salida */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+              {t.entryDate}
+            </label>
+            <input
+              type="date"
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+                isDark
+                  ? 'bg-slate-700 border-slate-600 text-white'
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}
+              value={form.fechaEntrada || new Date().toISOString().split('T')[0]}
+              onChange={e => setForm({...form, fechaEntrada: e.target.value})}
+            />
+          </div>
+          <div>
+            <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+              {t.exitDate}
+            </label>
+            <input
+              type="date"
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+                isDark
+                  ? 'bg-slate-700 border-slate-600 text-white'
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}
+              value={form.fechaSalida || new Date().toISOString().split('T')[0]}
+              onChange={e => setForm({...form, fechaSalida: e.target.value})}
+            />
+          </div>
+        </div>
+
         {/* Hora del trade */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
@@ -523,6 +563,15 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
             onChange={e => setForm({...form, hora: e.target.value})}
           />
         </div>
+
+        {/* Indicador de swing trade */}
+        {form.fechaEntrada && form.fechaSalida && form.fechaEntrada !== form.fechaSalida && (
+          <div className={`p-2 rounded-xl text-center text-xs font-bold ${
+            isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'
+          }`}>
+            {t.swingTrade} ({Math.ceil((new Date(form.fechaSalida) - new Date(form.fechaEntrada)) / (1000 * 60 * 60 * 24))} días)
+          </div>
+        )}
 
         {/* --- MODO OPCIONES BINARIAS --- */}
         {isBinaryOptions ? (

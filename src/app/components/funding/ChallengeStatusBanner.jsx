@@ -1,16 +1,54 @@
 "use client";
 import { CheckCircle2, AlertTriangle, XCircle, Trophy, Clock } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
+import { useLanguage } from '../LanguageProvider';
 
 export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, reglas }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const labels = {
+    es: {
+      approved: 'CHALLENGE APROBADO',
+      approvedSub: 'Felicidades! Has completado el challenge exitosamente',
+      failed: 'CHALLENGE FALLIDO',
+      failedSub: 'Has violado una de las reglas del challenge',
+      dangerZone: 'EN ZONA DE PELIGRO',
+      dangerSub: (pct) => `Drawdown al ${pct}% del límite - opera con precaución`,
+      caution: 'PRECAUCIÓN',
+      cautionSub: (pct) => `Drawdown al ${pct}% del límite`,
+      onTrack: 'EN BUEN CAMINO',
+      onTrackSub: 'Sigue operando con disciplina',
+      ofTarget: 'del objetivo',
+      progressTo: 'Progreso hacia',
+      daysRemaining: 'días restantes',
+      minDays: 'días mínimos',
+    },
+    en: {
+      approved: 'CHALLENGE APPROVED',
+      approvedSub: 'Congratulations! You have completed the challenge successfully',
+      failed: 'CHALLENGE FAILED',
+      failedSub: 'You have violated one of the challenge rules',
+      dangerZone: 'DANGER ZONE',
+      dangerSub: (pct) => `Drawdown at ${pct}% of limit - trade with caution`,
+      caution: 'CAUTION',
+      cautionSub: (pct) => `Drawdown at ${pct}% of limit`,
+      onTrack: 'ON TRACK',
+      onTrackSub: 'Keep trading with discipline',
+      ofTarget: 'of target',
+      progressTo: 'Progress to',
+      daysRemaining: 'days remaining',
+      minDays: 'min days',
+    },
+  };
+  const t = labels[language] || labels.es;
 
   const getStatusConfig = () => {
     if (estado === 'aprobado') {
       return {
         icon: Trophy,
-        title: 'CHALLENGE APROBADO',
-        subtitle: 'Felicidades! Has completado el challenge exitosamente',
+        title: t.approved,
+        subtitle: t.approvedSub,
         bgClass: 'bg-green-500/10 border-green-500/30',
         textClass: 'text-green-500',
         iconClass: 'text-green-500',
@@ -20,8 +58,8 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
     if (estado === 'fallido') {
       return {
         icon: XCircle,
-        title: 'CHALLENGE FALLIDO',
-        subtitle: 'Has violado una de las reglas del challenge',
+        title: t.failed,
+        subtitle: t.failedSub,
         bgClass: 'bg-red-500/10 border-red-500/30',
         textClass: 'text-red-500',
         iconClass: 'text-red-500',
@@ -32,8 +70,8 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
     if (nivelRiesgo >= 80) {
       return {
         icon: AlertTriangle,
-        title: 'EN ZONA DE PELIGRO',
-        subtitle: `Drawdown al ${nivelRiesgo.toFixed(0)}% del limite - opera con precaucion`,
+        title: t.dangerZone,
+        subtitle: t.dangerSub(nivelRiesgo.toFixed(0)),
         bgClass: 'bg-red-500/10 border-red-500/30',
         textClass: 'text-red-500',
         iconClass: 'text-red-500 animate-pulse',
@@ -43,8 +81,8 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
     if (nivelRiesgo >= 50) {
       return {
         icon: AlertTriangle,
-        title: 'PRECAUCION',
-        subtitle: `Drawdown al ${nivelRiesgo.toFixed(0)}% del limite`,
+        title: t.caution,
+        subtitle: t.cautionSub(nivelRiesgo.toFixed(0)),
         bgClass: 'bg-amber-500/10 border-amber-500/30',
         textClass: 'text-amber-500',
         iconClass: 'text-amber-500',
@@ -53,8 +91,8 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
 
     return {
       icon: CheckCircle2,
-      title: 'EN BUEN CAMINO',
-      subtitle: 'Sigue operando con disciplina',
+      title: t.onTrack,
+      subtitle: t.onTrackSub,
       bgClass: 'bg-green-500/10 border-green-500/30',
       textClass: 'text-green-500',
       iconClass: 'text-green-500',
@@ -94,7 +132,7 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
               {metricas.pnlTotal >= 0 ? '+' : ''}{formatMoney(metricas.pnlTotal)}
             </p>
             <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              {metricas.progresoTarget.toFixed(1)}% del objetivo
+              {metricas.progresoTarget.toFixed(1)}% {t.ofTarget}
             </p>
           </div>
         )}
@@ -105,7 +143,7 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
         <div className="mt-4">
           <div className="flex justify-between text-xs mb-1">
             <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
-              Progreso hacia {formatMoney(reglas.profitTargetUSD)}
+              {t.progressTo} {formatMoney(reglas.profitTargetUSD)}
             </span>
             <span className={`font-bold ${metricas.progresoTarget >= 100 ? 'text-green-500' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
               {metricas.progresoTarget.toFixed(1)}%
@@ -127,13 +165,13 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
         <div className="mt-3 flex items-center gap-2 text-xs">
           <Clock size={14} className={isDark ? 'text-slate-400' : 'text-slate-500'}/>
           <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
-            {metricas.diasRestantes} dias restantes
+            {metricas.diasRestantes} {t.daysRemaining}
           </span>
           {reglas.diasMinimos > 0 && (
             <>
               <span className={isDark ? 'text-slate-600' : 'text-slate-300'}>|</span>
               <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
-                {metricas.diasOperados}/{reglas.diasMinimos} dias minimos
+                {metricas.diasOperados}/{reglas.diasMinimos} {t.minDays}
               </span>
             </>
           )}

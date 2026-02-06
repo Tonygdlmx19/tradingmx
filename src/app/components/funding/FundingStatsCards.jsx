@@ -1,10 +1,30 @@
 "use client";
 import { DollarSign, TrendingDown, Target, Calendar, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
+import { useLanguage } from '../LanguageProvider';
 import { getColorRiesgo } from '../../utils/fundingCalculations';
 
 export default function FundingStatsCards({ metricas, reglas }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const labels = {
+    es: {
+      currentBalance: 'Balance Actual',
+      dailyDD: 'DD Diario',
+      totalDD: 'DD Total',
+      daysTraded: 'Días Operados',
+      noMinimum: 'Sin mínimo',
+    },
+    en: {
+      currentBalance: 'Current Balance',
+      dailyDD: 'Daily DD',
+      totalDD: 'Total DD',
+      daysTraded: 'Days Traded',
+      noMinimum: 'No minimum',
+    },
+  };
+  const t = labels[language] || labels.es;
 
   const formatMoney = (value) => {
     return new Intl.NumberFormat('en-US', {
@@ -16,14 +36,14 @@ export default function FundingStatsCards({ metricas, reglas }) {
 
   const cards = [
     {
-      label: 'Balance Actual',
+      label: t.currentBalance,
       value: formatMoney(metricas.balanceActual),
       subvalue: `${metricas.pnlPorcentaje >= 0 ? '+' : ''}${metricas.pnlPorcentaje.toFixed(2)}%`,
       icon: DollarSign,
       color: metricas.pnlTotal >= 0 ? 'green' : 'red',
     },
     {
-      label: 'DD Diario',
+      label: t.dailyDD,
       value: `${metricas.drawdownDiario.porcentaje.toFixed(2)}%`,
       subvalue: `Max: ${reglas.maxDrawdownDiario}%`,
       icon: TrendingDown,
@@ -31,7 +51,7 @@ export default function FundingStatsCards({ metricas, reglas }) {
       progress: (metricas.drawdownDiario.porcentaje / reglas.maxDrawdownDiario) * 100,
     },
     {
-      label: 'DD Total',
+      label: t.totalDD,
       value: `${metricas.drawdownTotal.porcentaje.toFixed(2)}%`,
       subvalue: `Max: ${reglas.maxDrawdownTotal}%`,
       icon: TrendingDown,
@@ -39,9 +59,9 @@ export default function FundingStatsCards({ metricas, reglas }) {
       progress: (metricas.drawdownTotal.porcentaje / reglas.maxDrawdownTotal) * 100,
     },
     {
-      label: 'Dias Operados',
+      label: t.daysTraded,
       value: metricas.diasOperados,
-      subvalue: reglas.diasMinimos > 0 ? `Min: ${reglas.diasMinimos}` : 'Sin minimo',
+      subvalue: reglas.diasMinimos > 0 ? `Min: ${reglas.diasMinimos}` : t.noMinimum,
       icon: Calendar,
       color: reglas.diasMinimos > 0 && metricas.diasOperados >= reglas.diasMinimos ? 'green' : 'slate',
     },

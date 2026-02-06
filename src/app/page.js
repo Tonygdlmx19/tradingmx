@@ -16,10 +16,8 @@ import {
   TradeForm,
   StatsCards,
   AdvancedStats,
-  ViewSelector,
   EquityChart,
   DrawdownChart,
-  TradesTable,
   EconomicCalendar,
   CalendarView,
   useTheme
@@ -49,13 +47,13 @@ export default function TradingJournalPRO() {
   const [userType, setUserType] = useState(null);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
-  const [viewMode, setViewMode] = useState('global');
-  const [displayMode, setDisplayMode] = useState('tabla'); // 'tabla' | 'calendario'
+  const [viewMode] = useState('mensual'); // Siempre mensual para coincidir con el calendario
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [showTradeDetail, setShowTradeDetail] = useState(false);
   const [forceTourStart, setForceTourStart] = useState(false);
+  const [diasNoOperativos, setDiasNoOperativos] = useState([]); // Array de fechas 'YYYY-MM-DD'
 
   const [form, setForm] = useState({
     res: '',
@@ -164,9 +162,11 @@ export default function TradingJournalPRO() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (data.config) setConfig(data.config);
+        if (data.diasNoOperativos) setDiasNoOperativos(data.diasNoOperativos);
       } else {
         setDoc(doc(db, "users", user.uid), {
-          config: { capitalInicial: 10000, metaDiaria: 200 }
+          config: { capitalInicial: 10000, metaDiaria: 200 },
+          diasNoOperativos: []
         }, { merge: true });
       }
     });
@@ -206,9 +206,17 @@ export default function TradingJournalPRO() {
       ? Math.abs(parseFloat(form.res)) 
       : -Math.abs(parseFloat(form.res));
     
+    // Usar fechaSalida como fecha principal para compatibilidad
+    const hoy = new Date().toISOString().split('T')[0];
+    const fechaEntrada = form.fechaEntrada || hoy;
+    const fechaSalida = form.fechaSalida || hoy;
+
     const tradeData = {
       uid: user.uid,
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: fechaSalida, // Fecha principal (cierre)
+      fechaEntrada: fechaEntrada,
+      fechaSalida: fechaSalida,
+      hora: form.hora || null,
       activo: form.activo,
       dir: form.dir,
       res: resultadoFinal,
@@ -258,11 +266,54 @@ export default function TradingJournalPRO() {
     setShowTradeDetail(true);
   }, []);
 
+  // Toggle día no operativo
+  const toggleDiaNoOperativo = useCallback(async (fecha) => {
+    if (!user) return;
+
+    const newDias = diasNoOperativos.includes(fecha)
+      ? diasNoOperativos.filter(d => d !== fecha)
+      : [...diasNoOperativos, fecha];
+
+    setDiasNoOperativos(newDias);
+
+    // Guardar en Firestore
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        diasNoOperativos: newDias
+      });
+    } catch (error) {
+      console.error('Error guardando día no operativo:', error);
+    }
+  }, [user, diasNoOperativos]);
+
   const filteredTrades = useMemo(() => {
     return trades.filter(t => {
-      const [y, m] = t.fecha.split('-').map(Number);
-      if (viewMode === 'global') return y === selectedYear;
-      return y === selectedYear && (m - 1) === selectedMonth;
+      const exitDate = t.fechaSalida || t.fecha;
+      const entryDate = t.fechaEntrada || t.fecha;
+
+      const [exitY, exitM] = exitDate.split('-').map(Number);
+      const [entryY, entryM] = entryDate.split('-').map(Number);
+
+      if (viewMode === 'global') {
+        // En vista global, incluir si cualquier parte del trade está en el año
+        return exitY === selectedYear || entryY === selectedYear;
+      }
+
+      // En vista mensual, incluir si:
+      // 1. El trade cierra en este mes
+      // 2. El trade abre en este mes
+      // 3. El trade cruza este mes (abre antes, cierra después)
+      const isExitInMonth = exitY === selectedYear && (exitM - 1) === selectedMonth;
+      const isEntryInMonth = entryY === selectedYear && (entryM - 1) === selectedMonth;
+
+      // Para swing trades que cruzan el mes
+      const monthStart = new Date(selectedYear, selectedMonth, 1);
+      const monthEnd = new Date(selectedYear, selectedMonth + 1, 0);
+      const tradeEntry = new Date(entryDate);
+      const tradeExit = new Date(exitDate);
+      const crossesMonth = tradeEntry <= monthEnd && tradeExit >= monthStart;
+
+      return isExitInMonth || isEntryInMonth || crossesMonth;
     });
   }, [trades, viewMode, selectedMonth, selectedYear]);
 
@@ -433,30 +484,17 @@ export default function TradingJournalPRO() {
               <EquityChart data={stats.data} startBalance={stats.startBalance} />
             </div>
             <DrawdownChart data={stats.data} />
-            <ViewSelector
-              viewMode={viewMode}
-              setViewMode={setViewMode}
+            <CalendarView
+              trades={filteredTrades}
               selectedMonth={selectedMonth}
               setSelectedMonth={setSelectedMonth}
               selectedYear={selectedYear}
               setSelectedYear={setSelectedYear}
+              onTradeClick={handleTradeClick}
               tradeCount={stats.tradeCount}
-              displayMode={displayMode}
-              onDisplayModeChange={setDisplayMode}
+              diasNoOperativos={diasNoOperativos}
+              onToggleDiaNoOperativo={toggleDiaNoOperativo}
             />
-            {displayMode === 'tabla' ? (
-              <TradesTable
-                trades={filteredTrades}
-                onTradeClick={handleTradeClick}
-              />
-            ) : (
-              <CalendarView
-                trades={filteredTrades}
-                selectedMonth={selectedMonth}
-                selectedYear={selectedYear}
-                onTradeClick={handleTradeClick}
-              />
-            )}
           </div>
 
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">

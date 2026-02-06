@@ -1,6 +1,7 @@
 "use client";
 import { Trophy, RotateCcw, X, Trash2 } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
+import { useLanguage } from '../LanguageProvider';
 import ChallengeStatusBanner from './ChallengeStatusBanner';
 import FundingStatsCards from './FundingStatsCards';
 import FundingRulesCard from './FundingRulesCard';
@@ -18,6 +19,33 @@ export default function FundingDashboard({
   onClose,
 }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const labels = {
+    es: {
+      fundingSimulator: 'Simulador de Fondeo',
+      resetTitle: 'Reiniciar challenge (mismas reglas)',
+      abandonTitle: 'Abandonar y elegir otro challenge',
+      backToJournal: 'Volver al journal',
+      challengeCompleted: 'Challenge Completado!',
+      challengeFailed: 'Challenge Fallido',
+      congratulations: 'Felicidades! Has demostrado que puedes pasar el challenge.',
+      dontGiveUp: 'No te desanimes, puedes volver a intentarlo.',
+      newChallenge: 'Nuevo Challenge',
+    },
+    en: {
+      fundingSimulator: 'Funding Simulator',
+      resetTitle: 'Reset challenge (same rules)',
+      abandonTitle: 'Abandon and choose another challenge',
+      backToJournal: 'Back to journal',
+      challengeCompleted: 'Challenge Completed!',
+      challengeFailed: 'Challenge Failed',
+      congratulations: 'Congratulations! You have proven you can pass the challenge.',
+      dontGiveUp: 'Don\'t give up, you can try again.',
+      newChallenge: 'New Challenge',
+    },
+  };
+  const t = labels[language] || labels.es;
 
   const { estado, metricas, nivelRiesgo } = estadoChallenge;
   const { reglas, empresa, nombreChallenge } = challenge;
@@ -45,7 +73,7 @@ export default function FundingDashboard({
                 {nombreChallenge}
               </h1>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Simulador de Fondeo
+                {t.fundingSimulator}
               </p>
             </div>
           </div>
@@ -57,7 +85,7 @@ export default function FundingDashboard({
               className={`p-2 rounded-xl transition-colors ${
                 isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
               }`}
-              title="Reiniciar challenge (mismas reglas)"
+              title={t.resetTitle}
             >
               <RotateCcw size={18}/>
             </button>
@@ -67,7 +95,7 @@ export default function FundingDashboard({
               className={`p-2 rounded-xl transition-colors ${
                 isDark ? 'hover:bg-red-500/20 text-red-400' : 'hover:bg-red-50 text-red-500'
               }`}
-              title="Abandonar y elegir otro challenge"
+              title={t.abandonTitle}
             >
               <Trash2 size={18}/>
             </button>
@@ -77,7 +105,7 @@ export default function FundingDashboard({
               className={`p-2 rounded-xl transition-colors ${
                 isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
               }`}
-              title="Volver al journal"
+              title={t.backToJournal}
             >
               <X size={18}/>
             </button>
@@ -124,12 +152,10 @@ export default function FundingDashboard({
               }`}>
                 <Trophy size={48} className={`mx-auto mb-3 ${estado === 'aprobado' ? 'text-green-500' : 'text-red-500'}`}/>
                 <h3 className={`font-bold text-lg ${estado === 'aprobado' ? 'text-green-500' : 'text-red-500'}`}>
-                  {estado === 'aprobado' ? 'Challenge Completado!' : 'Challenge Fallido'}
+                  {estado === 'aprobado' ? t.challengeCompleted : t.challengeFailed}
                 </h3>
                 <p className={`text-sm mt-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {estado === 'aprobado'
-                    ? 'Felicidades! Has demostrado que puedes pasar el challenge.'
-                    : 'No te desanimes, puedes volver a intentarlo.'}
+                  {estado === 'aprobado' ? t.congratulations : t.dontGiveUp}
                 </p>
                 <button
                   onClick={onResetChallenge}
@@ -138,7 +164,7 @@ export default function FundingDashboard({
                   }`}
                 >
                   <RotateCcw size={14} className="inline mr-2"/>
-                  Nuevo Challenge
+                  {t.newChallenge}
                 </button>
               </div>
             )}

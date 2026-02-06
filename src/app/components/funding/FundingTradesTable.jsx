@@ -2,20 +2,54 @@
 import { useState } from 'react';
 import { TrendingUp, TrendingDown, Trash2, Image, X } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
+import { useLanguage } from '../LanguageProvider';
 
 export default function FundingTradesTable({ trades, onDeleteTrade }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [viewingImage, setViewingImage] = useState(null);
+
+  const labels = {
+    es: {
+      noTrades: 'No hay trades registrados aun',
+      registerFirst: 'Registra tu primer trade para comenzar el seguimiento',
+      tradeHistory: 'Historial de Trades',
+      date: 'Fecha',
+      asset: 'Activo',
+      dir: 'Dir',
+      pnl: 'P&L',
+      img: 'Img',
+      viewImages: (n) => `Ver ${n} imagen(es)`,
+      deleteTrade: 'Eliminar trade',
+      totalPnl: 'Total P&L:',
+      screenshot: 'Captura',
+    },
+    en: {
+      noTrades: 'No trades registered yet',
+      registerFirst: 'Register your first trade to start tracking',
+      tradeHistory: 'Trade History',
+      date: 'Date',
+      asset: 'Asset',
+      dir: 'Dir',
+      pnl: 'P&L',
+      img: 'Img',
+      viewImages: (n) => `View ${n} image(s)`,
+      deleteTrade: 'Delete trade',
+      totalPnl: 'Total P&L:',
+      screenshot: 'Screenshot',
+    },
+  };
+  const t = labels[language] || labels.es;
 
   if (!trades || trades.length === 0) {
     return (
       <div className={`p-6 rounded-2xl border text-center ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
         <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-          No hay trades registrados aun
+          {t.noTrades}
         </p>
         <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-          Registra tu primer trade para comenzar el seguimiento
+          {t.registerFirst}
         </p>
       </div>
     );
@@ -41,7 +75,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
     <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
       <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
         <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          Historial de Trades ({trades.length})
+          {t.tradeHistory} ({trades.length})
         </h3>
       </div>
 
@@ -49,11 +83,11 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
         <table className="w-full">
           <thead className={`sticky top-0 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
             <tr className={`text-xs font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              <th className="text-left p-3">Fecha</th>
-              <th className="text-left p-3">Activo</th>
-              <th className="text-center p-3">Dir</th>
-              <th className="text-right p-3">P&L</th>
-              <th className="text-center p-3">Img</th>
+              <th className="text-left p-3">{t.date}</th>
+              <th className="text-left p-3">{t.asset}</th>
+              <th className="text-center p-3">{t.dir}</th>
+              <th className="text-right p-3">{t.pnl}</th>
+              <th className="text-center p-3">{t.img}</th>
               <th className="text-center p-3"></th>
             </tr>
           </thead>
@@ -90,7 +124,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
                       className={`p-1.5 rounded-lg transition-colors ${
                         isDark ? 'hover:bg-amber-500/20 text-amber-400' : 'hover:bg-amber-50 text-amber-500'
                       }`}
-                      title={`Ver ${trade.imagenes.length} imagen(es)`}
+                      title={t.viewImages(trade.imagenes.length)}
                     >
                       <Image size={14}/>
                     </button>
@@ -105,7 +139,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
                       className={`p-1.5 rounded-lg transition-colors ${
                         isDark ? 'hover:bg-red-500/20 text-red-400' : 'hover:bg-red-50 text-red-500'
                       }`}
-                      title="Eliminar trade"
+                      title={t.deleteTrade}
                     >
                       <Trash2 size={14}/>
                     </button>
@@ -120,7 +154,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
       {/* Resumen */}
       <div className={`px-4 py-3 border-t ${isDark ? 'border-slate-700 bg-slate-700/30' : 'border-slate-200 bg-slate-50'}`}>
         <div className="flex justify-between items-center text-sm">
-          <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Total P&L:</span>
+          <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.totalPnl}</span>
           <span className={`font-bold ${trades.reduce((sum, t) => sum + t.res, 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {formatMoney(trades.reduce((sum, t) => sum + t.res, 0))}
           </span>
@@ -189,7 +223,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
             </div>
             <img
               src={viewingImage.data}
-              alt={`Captura ${viewingImage.temporalidad}`}
+              alt={`${t.screenshot} ${viewingImage.temporalidad}`}
               className="w-full max-h-[80vh] object-contain rounded-b-xl"
               onClick={(e) => e.stopPropagation()}
             />

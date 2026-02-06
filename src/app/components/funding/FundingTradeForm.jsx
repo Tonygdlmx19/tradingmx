@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { PlusCircle, TrendingUp, TrendingDown, AlertTriangle, Camera, X } from 'lucide-react';
 import { useTheme } from '../ThemeProvider';
+import { useLanguage } from '../LanguageProvider';
 
 const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
 
@@ -21,6 +22,54 @@ const ACTIVOS_COMUNES = [
 
 export default function FundingTradeForm({ onAddTrade, reglas, metricas, disabled }) {
   const { isDark } = useTheme();
+  const { language } = useLanguage();
+
+  const labels = {
+    es: {
+      registerTrade: 'Registrar Trade',
+      violationAlert: 'Alerta de Violación',
+      understood: 'Entendido',
+      asset: 'Activo',
+      lots: 'Lotes',
+      direction: 'Dirección',
+      resultUSD: 'Resultado (USD)',
+      screenshots: 'Capturas (opcional - max 3)',
+      timeframe: 'Temporalidad',
+      addScreenshot: 'Agregar captura',
+      addAnotherScreenshot: 'Agregar otra captura',
+      balanceAfter: 'Balance después:',
+      addTrade: 'Agregar Trade',
+      max3Images: 'Máximo 3 imágenes por trade',
+      imageTooLarge: 'La imagen es muy grande (max 5MB)',
+      errorProcessing: 'Error al procesar la imagen',
+      ddDailyExceed: (pct, max) => `Este trade excedería el DD diario (${pct}% >= ${max}%)`,
+      ddTotalExceed: (pct, max) => `Este trade excedería el DD total (${pct}% >= ${max}%)`,
+      deleteImage: 'Eliminar imagen',
+    },
+    en: {
+      registerTrade: 'Register Trade',
+      violationAlert: 'Violation Alert',
+      understood: 'Understood',
+      asset: 'Asset',
+      lots: 'Lots',
+      direction: 'Direction',
+      resultUSD: 'Result (USD)',
+      screenshots: 'Screenshots (optional - max 3)',
+      timeframe: 'Timeframe',
+      addScreenshot: 'Add screenshot',
+      addAnotherScreenshot: 'Add another screenshot',
+      balanceAfter: 'Balance after:',
+      addTrade: 'Add Trade',
+      max3Images: 'Maximum 3 images per trade',
+      imageTooLarge: 'Image is too large (max 5MB)',
+      errorProcessing: 'Error processing image',
+      ddDailyExceed: (pct, max) => `This trade would exceed daily DD (${pct}% >= ${max}%)`,
+      ddTotalExceed: (pct, max) => `This trade would exceed total DD (${pct}% >= ${max}%)`,
+      deleteImage: 'Delete image',
+    },
+  };
+  const t = labels[language] || labels.es;
+
   const [form, setForm] = useState({
     activo: 'EUR/USD',
     dir: 'Long',
@@ -79,11 +128,11 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
   const agregarImagen = async (file) => {
     if (!file) return;
     if (imagenes.length >= 3) {
-      alert('Máximo 3 imágenes por trade');
+      alert(t.max3Images);
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen es muy grande (max 5MB)');
+      alert(t.imageTooLarge);
       return;
     }
     try {
@@ -91,7 +140,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
       setImagenes(prev => [...prev, { data: compressed, temporalidad: '1H' }]);
     } catch (error) {
       console.error('Error procesando imagen:', error);
-      alert('Error al procesar la imagen');
+      alert(t.errorProcessing);
     }
   };
 
@@ -133,7 +182,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
     if (ddDiarioPotencial >= reglas.maxDrawdownDiario) {
       setShowWarning({
         tipo: 'dd_diario',
-        mensaje: `Este trade excederia el DD diario (${ddDiarioPotencial.toFixed(2)}% >= ${reglas.maxDrawdownDiario}%)`,
+        mensaje: t.ddDailyExceed(ddDiarioPotencial.toFixed(2), reglas.maxDrawdownDiario),
       });
       return;
     }
@@ -141,7 +190,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
     if (ddTotalPotencial >= reglas.maxDrawdownTotal) {
       setShowWarning({
         tipo: 'dd_total',
-        mensaje: `Este trade excederia el DD total (${ddTotalPotencial.toFixed(2)}% >= ${reglas.maxDrawdownTotal}%)`,
+        mensaje: t.ddTotalExceed(ddTotalPotencial.toFixed(2), reglas.maxDrawdownTotal),
       });
       return;
     }
@@ -175,7 +224,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
     <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
       <h3 className={`text-sm font-bold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
         <PlusCircle size={16} className="text-amber-500"/>
-        Registrar Trade
+        {t.registerTrade}
       </h3>
 
       {/* Warning */}
@@ -183,13 +232,13 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
         <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-2">
           <AlertTriangle size={18} className="text-red-500 flex-shrink-0 mt-0.5"/>
           <div>
-            <p className="text-red-500 text-sm font-bold">Alerta de Violacion</p>
+            <p className="text-red-500 text-sm font-bold">{t.violationAlert}</p>
             <p className={`text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{showWarning.mensaje}</p>
             <button
               onClick={() => setShowWarning(null)}
               className="text-xs text-red-500 underline mt-1"
             >
-              Entendido
+              {t.understood}
             </button>
           </div>
         </div>
@@ -200,7 +249,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
           {/* Activo */}
           <div>
             <label className={`text-xs font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Activo
+              {t.asset}
             </label>
             <select
               value={form.activo}
@@ -220,7 +269,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
           {/* Lotes */}
           <div>
             <label className={`text-xs font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Lotes
+              {t.lots}
             </label>
             <input
               type="number"
@@ -240,7 +289,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
         {/* Direccion */}
         <div>
           <label className={`text-xs font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Direccion
+            {t.direction}
           </label>
           <div className="flex gap-2">
             <button
@@ -271,7 +320,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
         {/* Resultado */}
         <div>
           <label className={`text-xs font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Resultado (USD)
+            {t.resultUSD}
           </label>
           <div className="flex gap-2">
             <button
@@ -320,7 +369,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
         {/* Imagenes con temporalidad */}
         <div>
           <label className={`text-xs font-bold uppercase mb-2 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            <Camera size={12} className="inline mr-1"/> Capturas (opcional - max 3)
+            <Camera size={12} className="inline mr-1"/> {t.screenshots}
           </label>
 
           {/* Imágenes agregadas */}
@@ -337,7 +386,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
                     <div className="flex-1">
                       {/* Selector de temporalidad */}
                       <label className={`text-[10px] font-bold uppercase mb-1 block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Temporalidad
+                        {t.timeframe}
                       </label>
                       <select
                         value={img.temporalidad}
@@ -359,7 +408,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
                       type="button"
                       onClick={() => removeImage(index)}
                       className="p-2 rounded-lg hover:bg-red-500/20 text-red-500 flex-shrink-0"
-                      title="Eliminar imagen"
+                      title={t.deleteImage}
                     >
                       <X size={16}/>
                     </button>
@@ -395,7 +444,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
               >
                 <PlusCircle size={18}/>
                 <span className="text-sm font-bold">
-                  {imagenes.length === 0 ? 'Agregar captura' : 'Agregar otra captura'}
+                  {imagenes.length === 0 ? t.addScreenshot : t.addAnotherScreenshot}
                 </span>
               </label>
             </div>
@@ -406,7 +455,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
         {form.res && (
           <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
             <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Balance despues: <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
+              {t.balanceAfter} <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
                 {formatMoney(metricas.balanceActual + (isWin ? Math.abs(parseFloat(form.res || 0)) : -Math.abs(parseFloat(form.res || 0))))}
               </span>
             </p>
@@ -424,7 +473,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
           }`}
         >
           <PlusCircle size={18} className="inline mr-2"/>
-          Agregar Trade
+          {t.addTrade}
         </button>
       </form>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Clock, ArrowRight } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
@@ -168,14 +168,43 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                   {trade.dir}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar size={14} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
-                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
-                  {formatDate(trade.fecha)}
-                </span>
+              {/* Fecha y hora */}
+              <div className="flex flex-col gap-1 text-sm">
+                {/* Swing trade: mostrar fechas de entrada y salida */}
+                {trade.fechaEntrada && trade.fechaSalida && trade.fechaEntrada !== trade.fechaSalida ? (
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <Calendar size={14} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
+                    <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                      {formatDate(trade.fechaEntrada)}
+                    </span>
+                    <ArrowRight size={12} className="text-amber-500" />
+                    <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                      {formatDate(trade.fechaSalida)}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-500 ml-1">
+                      SWING
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
+                    <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                      {formatDate(trade.fecha)}
+                    </span>
+                  </div>
+                )}
+                {/* Hora del trade */}
+                {trade.hora && (
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
+                    <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                      {trade.hora}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right pr-10">
               <p className={`text-3xl font-black ${isWin ? 'text-green-500' : 'text-red-500'}`}>
                 {isWin ? '+' : ''}{trade.res?.toFixed(2)}$
               </p>
@@ -186,13 +215,13 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
               )}
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
+            className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
               isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-400'
             }`}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -221,43 +250,6 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
               </div>
             </div>
           )}
-
-          {/* Autoevaluacion */}
-          <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-            <p className={`text-[10px] font-bold uppercase mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Autoevaluacion
-            </p>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded flex items-center justify-center ${
-                  trade.seguiPlan ? 'bg-green-500' : isDark ? 'bg-slate-600' : 'bg-slate-300'
-                }`}>
-                  {trade.seguiPlan && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-                <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Segui plan
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded flex items-center justify-center ${
-                  trade.respetoRiesgo ? 'bg-green-500' : isDark ? 'bg-slate-600' : 'bg-slate-300'
-                }`}>
-                  {trade.respetoRiesgo && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-                <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Respete riesgo
-                </span>
-              </div>
-            </div>
-          </div>
 
           {/* Estado emocional */}
           <div className={`p-4 rounded-xl flex items-center justify-between ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
