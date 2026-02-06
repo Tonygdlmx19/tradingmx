@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck, Globe } from 'lucide-react';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck } from 'lucide-react';
 import CalculatorModal from './CalculatorModal';
 
 export default function Header({
@@ -20,7 +20,7 @@ export default function Header({
   onLogout
 }) {
   const { isDark, toggleTheme } = useTheme();
-  const { language, toggleLanguage } = useLanguage();
+  const { language } = useLanguage();
   const [showCalculator, setShowCalculator] = useState(false);
 
   const displayName = config?.nombreTrader || user.displayName || user.email?.split('@')[0];
@@ -72,18 +72,6 @@ export default function Header({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={toggleLanguage}
-              className={`px-2 py-1 rounded-full transition-all text-xs font-bold ${
-                isDark
-                  ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
-                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-              }`}
-              title={language === 'es' ? 'Switch to English' : 'Cambiar a Español'}
-            >
-              {language === 'es' ? 'EN' : 'ES'}
-            </button>
-
             <button
               onClick={toggleTheme}
               className={`p-2 rounded-full transition-all ${

@@ -105,8 +105,14 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
     return isDark ? 'bg-slate-600 hover:bg-slate-500' : 'bg-slate-200 hover:bg-slate-300';
   };
 
-  // Trades del día seleccionado
-  const selectedDayTrades = selectedDay ? tradesByDay[selectedDay] || [] : [];
+  // Trades del día seleccionado (ordenados por hora, más reciente primero)
+  const selectedDayTrades = selectedDay
+    ? [...(tradesByDay[selectedDay] || [])].sort((a, b) => {
+        const timeA = a.hora || '00:00';
+        const timeB = b.hora || '00:00';
+        return timeB.localeCompare(timeA);
+      })
+    : [];
 
   // Es hoy?
   const today = new Date();
@@ -194,28 +200,33 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
 
           {selectedDayTrades.length > 0 ? (
             <div className={`divide-y ${isDark ? 'divide-slate-700' : 'divide-slate-100'}`}>
-              {selectedDayTrades.map(t => (
+              {selectedDayTrades.map(trade => (
                 <div
-                  key={t.id}
-                  onClick={() => onTradeClick(t)}
+                  key={trade.id}
+                  onClick={() => onTradeClick(trade)}
                   className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
                     isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-lg">{getEmojiForEmotion(t.emo)}</span>
+                    <span className="text-lg">{getEmojiForEmotion(trade.emo)}</span>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                          {t.activo}
+                          {trade.activo}
                         </span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          t.dir === 'Long' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                          trade.dir === 'Long' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
                         }`}>
-                          {t.dir}
+                          {trade.dir}
                         </span>
-                        {t.imagen && <Image size={12} className="text-blue-400" />}
-                        {t.notas && <FileText size={12} className="text-purple-400" />}
+                        {trade.hora && (
+                          <span className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {trade.hora}
+                          </span>
+                        )}
+                        {trade.imagen && <Image size={12} className="text-blue-400" />}
+                        {trade.notas && <FileText size={12} className="text-purple-400" />}
                       </div>
                       {trade.lotes && (
                         <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -225,8 +236,8 @@ export default function CalendarView({ trades, selectedMonth, selectedYear, onTr
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`font-black text-sm ${t.res >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {t.res >= 0 ? '+' : ''}{t.res?.toFixed(2)}$
+                    <span className={`font-black text-sm ${trade.res >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {trade.res >= 0 ? '+' : ''}{trade.res?.toFixed(2)}$
                     </span>
                     <ChevronRight size={16} className={isDark ? 'text-slate-600' : 'text-slate-300'} />
                   </div>

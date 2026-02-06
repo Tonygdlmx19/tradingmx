@@ -175,6 +175,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       maxImages: 'Máximo 3 imágenes por trade',
       imageTooLarge: 'La imagen es muy grande (max 5MB)',
       imageError: 'Error al procesar la imagen',
+      tradeTime: 'Hora del Trade',
     },
     en: {
       title: 'Record Trade',
@@ -217,9 +218,16 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       maxImages: 'Maximum 3 images per trade',
       imageTooLarge: 'Image is too large (max 5MB)',
       imageError: 'Error processing image',
+      tradeTime: 'Trade Time',
     },
   };
   const t = labels[language];
+
+  // Get current time as default
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
 
   // Usar activos favoritos si existen, sino mostrar lista por defecto
   const tieneActivosFavoritos = activosFavoritos && activosFavoritos.length > 0;
@@ -497,6 +505,23 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
               {isBinaryOptions ? '↓ PUT' : '↓ SHORT'}
             </button>
           </div>
+        </div>
+
+        {/* Hora del trade */}
+        <div>
+          <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+            {t.tradeTime}
+          </label>
+          <input
+            type="time"
+            className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
+              isDark
+                ? 'bg-slate-700 border-slate-600 text-white'
+                : 'bg-slate-50 border-slate-200 text-slate-600'
+            }`}
+            value={form.hora || getCurrentTime()}
+            onChange={e => setForm({...form, hora: e.target.value})}
+          />
         </div>
 
         {/* --- MODO OPCIONES BINARIAS --- */}

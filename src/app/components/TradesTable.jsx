@@ -11,7 +11,7 @@ export default function TradesTable({ trades, onTradeClick }) {
     es: {
       title: 'Historial de Trades',
       tapForDetails: 'Toca un trade para ver detalles',
-      date: 'Fecha',
+      dateTime: 'Fecha / Hora',
       asset: 'Activo',
       dir: 'Dir',
       result: 'Resultado',
@@ -24,7 +24,7 @@ export default function TradesTable({ trades, onTradeClick }) {
     en: {
       title: 'Trade History',
       tapForDetails: 'Tap a trade to see details',
-      date: 'Date',
+      dateTime: 'Date / Time',
       asset: 'Asset',
       dir: 'Dir',
       result: 'Result',
@@ -36,6 +36,13 @@ export default function TradesTable({ trades, onTradeClick }) {
     },
   };
   const t = labels[language];
+
+  // Ordenar trades por fecha y hora (más reciente primero)
+  const sortedTrades = [...trades].sort((a, b) => {
+    const dateA = new Date(`${a.fecha}T${a.hora || '00:00'}`);
+    const dateB = new Date(`${b.fecha}T${b.hora || '00:00'}`);
+    return dateB - dateA;
+  });
 
   const getEmojiForEmotion = (emo) => {
     const emojis = {
@@ -71,7 +78,7 @@ export default function TradesTable({ trades, onTradeClick }) {
             isDark ? 'text-slate-400 bg-slate-800/50' : 'text-slate-400 bg-slate-50/50'
           }`}>
             <tr>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">{t.date}</th>
+              <th className="px-4 sm:px-6 py-3 sm:py-4">{t.dateTime}</th>
               <th className="px-4 sm:px-6 py-3 sm:py-4">{t.asset}</th>
               <th className="px-4 sm:px-6 py-3 sm:py-4 text-center">{t.dir}</th>
               <th className="px-4 sm:px-6 py-3 sm:py-4 text-right">{t.result}</th>
@@ -80,7 +87,7 @@ export default function TradesTable({ trades, onTradeClick }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDark ? 'divide-slate-700' : 'divide-slate-100'}`}>
-            {trades.slice().reverse().map((trade) => (
+            {sortedTrades.map((trade) => (
               <tr
                 key={trade.id}
                 onClick={() => onTradeClick(trade)}
@@ -89,7 +96,12 @@ export default function TradesTable({ trades, onTradeClick }) {
                 }`}
               >
                 <td className={`px-4 sm:px-6 py-3 sm:py-4 font-mono text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {trade.fecha}
+                  <div>{trade.fecha}</div>
+                  {trade.hora && (
+                    <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {trade.hora}
+                    </div>
+                  )}
                 </td>
                 <td className={`px-4 sm:px-6 py-3 sm:py-4 font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
                   {trade.activo}
