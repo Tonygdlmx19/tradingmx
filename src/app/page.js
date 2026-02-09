@@ -194,17 +194,21 @@ export default function TradingJournalPRO() {
     await setDoc(doc(db, "users", user.uid), { config }, { merge: true });
   }, [user, config]);
 
-  const addTrade = useCallback(async (e) => {
+  const addTrade = useCallback(async (e, opciones = {}) => {
     e.preventDefault();
-    if (!form.res || form.res === '') {
+
+    // Usar resultado calculado si viene de opciones binarias, sino usar form.res
+    const resultado = opciones.resCalculado !== undefined ? opciones.resCalculado : form.res;
+
+    if (resultado === '' || resultado === undefined || resultado === null) {
       alert("Debes ingresar el resultado del trade.");
       return;
     }
-    
+
     // Aplicar signo según el toggle WIN/LOSS
-    const resultadoFinal = form.esGanancia !== false 
-      ? Math.abs(parseFloat(form.res)) 
-      : -Math.abs(parseFloat(form.res));
+    const resultadoFinal = form.esGanancia !== false
+      ? Math.abs(parseFloat(resultado))
+      : -Math.abs(parseFloat(resultado));
     
     // Usar fechaSalida como fecha principal para compatibilidad
     const hoy = new Date().toISOString().split('T')[0];

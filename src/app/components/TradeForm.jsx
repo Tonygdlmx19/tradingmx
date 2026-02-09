@@ -354,15 +354,13 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Si es opciones binarias, calcular el resultado
+    // Si es opciones binarias, calcular el resultado y pasarlo directamente
     if (isBinaryOptions) {
       const plCalculado = calcularPLBinario();
-      setForm(prev => ({ ...prev, res: plCalculado }));
+      onSubmit(e, { resCalculado: plCalculado });
+    } else {
+      onSubmit(e);
     }
-
-    onSubmit(e);
-    // Limpiar imágenes y checklist después de guardar
-    setImagenes([]);
   };
   
   return (
