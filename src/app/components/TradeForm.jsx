@@ -219,6 +219,13 @@ export default function TradeForm({
     }
   }, [form.preTradeAnalysis, form.preTradeImages]);
 
+  // Reset local imagenes state when form.imagenes is cleared (after saving a trade)
+  useEffect(() => {
+    if (form.imagenes && form.imagenes.length === 0 && imagenes.length > 0) {
+      setImagenes([]);
+    }
+  }, [form.imagenes]);
+
   // Increment AI query count (pre-trade uses separate counter)
   const incrementQueryCount = async () => {
     if (!userId) {

@@ -261,7 +261,12 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       setImagenes(imgs);
       setHasChanges(false);
       setIsEditMode(false);
-      setAiAnalysis({});
+      // Load saved AI analysis from trade if exists
+      if (trade.aiAnalysis) {
+        setAiAnalysis({ 0: { text: trade.aiAnalysis, expanded: true } });
+      } else {
+        setAiAnalysis({});
+      }
       setAnalyzingIndex(null);
     }
   }, [trade]);

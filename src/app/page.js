@@ -567,7 +567,7 @@ export default function TradingJournalPRO() {
 
       <main className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-          <div className="lg:col-span-9 space-y-6 lg:space-y-8 order-2 lg:order-1">
+          <div className="lg:col-span-8 space-y-6 lg:space-y-8 order-2 lg:order-1">
             <StatsCards stats={stats} />
             <AdvancedStats trades={filteredTrades} capitalInicial={config.capitalInicial} balance={stats.balance} />
             <div data-tour="charts">
@@ -589,7 +589,7 @@ export default function TradingJournalPRO() {
             />
           </div>
 
-          <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
+          <div className="lg:col-span-4 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
             <TradeForm
               onSubmit={addTrade}
               form={form}
