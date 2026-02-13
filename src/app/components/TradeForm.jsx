@@ -155,8 +155,8 @@ export default function TradeForm({
   const [isBinaryOptions, setIsBinaryOptions] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
 
-  // Pre-trade AI analysis state
-  const [preTradeImage, setPreTradeImage] = useState(null);
+  // Pre-trade AI analysis state (up to 3 images for different timeframes)
+  const [preTradeImages, setPreTradeImages] = useState([]);
   const [preTradeDescription, setPreTradeDescription] = useState('');
   const [preTradeAnalysis, setPreTradeAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -211,17 +211,23 @@ export default function TradeForm({
 
   // Reset pre-trade states when form is reset (after saving a trade)
   useEffect(() => {
-    if (form.preTradeAnalysis === null && form.preTradeImage === null) {
-      setPreTradeImage(null);
+    if (form.preTradeAnalysis === null && form.preTradeImages === null) {
+      setPreTradeImages([]);
       setPreTradeDescription('');
       setPreTradeAnalysis(null);
       setShowPreTradeSection(false);
     }
-  }, [form.preTradeAnalysis, form.preTradeImage]);
+  }, [form.preTradeAnalysis, form.preTradeImages]);
 
   // Increment AI query count (pre-trade uses separate counter)
   const incrementQueryCount = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.warn('incrementQueryCount: No userId available');
+      return;
+    }
+
+    // Immediately update local state for instant UI feedback
+    setAiQueriesUsed(prev => prev + 1);
 
     try {
       const todayKey = getTodayKey();
@@ -238,9 +244,13 @@ export default function TradeForm({
         lastQuery: new Date().toISOString(),
       });
 
+      // Sync with actual Firestore count (in case of discrepancy)
       setAiQueriesUsed(newCount);
+      console.log(`AI Pre-Trade query count updated: ${newCount}/${aiQueriesLimit}`);
     } catch (error) {
       console.error('Error updating AI query count:', error);
+      // Revert local state on error using functional update
+      setAiQueriesUsed(prev => Math.max(0, prev - 1));
     }
   };
 
@@ -297,19 +307,22 @@ export default function TradeForm({
       selectAccount: 'Selecciona una cuenta',
       noAccounts: 'Sin cuenta asignada',
       preTradeAnalysis: 'Análisis Pre-Trade',
-      preTradeDesc: 'Sube una captura antes de operar para recibir retroalimentación de la IA',
-      analyzeBeforeTrading: 'Analizar antes de operar',
+      preTradeDesc: 'Sube hasta 3 capturas (diferentes temporalidades) para un análisis más completo',
+      analyzeBeforeTrading: 'IA Pre Trade',
       analyzing: 'Analizando...',
       aiMentor: 'Mentor IA',
       queriesRemaining: 'consultas restantes',
       basedOnHistory: 'Basado en tu historial',
       noQueriesLeft: 'Sin consultas disponibles hoy',
-      uploadPreTrade: 'Subir imagen pre-trade',
+      uploadPreTrade: 'Agregar imagen',
+      addMoreImages: 'Agregar otra temporalidad',
       hidePreTrade: 'Ocultar análisis pre-trade',
-      showPreTrade: 'Análisis Pre-Trade con IA',
+      showPreTrade: 'IA Pre Trade',
       preTradeDescLabel: '¿Qué ves en el gráfico?',
       preTradeDescPlaceholder: 'Describe lo que ves: estructura, patrones, zonas de interés, tu emoción actual, por qué quieres entrar...',
       preTradeDescHint: 'Cuanto más detallado, mejor retroalimentación recibirás',
+      imagesCount: 'imágenes',
+      selectTimeframe: 'Temporalidad',
     },
     en: {
       title: 'Record Trade',
@@ -362,19 +375,22 @@ export default function TradeForm({
       selectAccount: 'Select an account',
       noAccounts: 'No account assigned',
       preTradeAnalysis: 'Pre-Trade Analysis',
-      preTradeDesc: 'Upload a screenshot before trading to receive AI feedback',
-      analyzeBeforeTrading: 'Analyze before trading',
+      preTradeDesc: 'Upload up to 3 screenshots (different timeframes) for a more complete analysis',
+      analyzeBeforeTrading: 'AI Pre Trade',
       analyzing: 'Analyzing...',
       aiMentor: 'AI Mentor',
       queriesRemaining: 'queries remaining',
       basedOnHistory: 'Based on your history',
       noQueriesLeft: 'No queries available today',
-      uploadPreTrade: 'Upload pre-trade image',
+      uploadPreTrade: 'Add image',
+      addMoreImages: 'Add another timeframe',
       hidePreTrade: 'Hide pre-trade analysis',
-      showPreTrade: 'Pre-Trade AI Analysis',
+      showPreTrade: 'AI Pre Trade',
       preTradeDescLabel: 'What do you see in the chart?',
       preTradeDescPlaceholder: 'Describe what you see: structure, patterns, zones of interest, your current emotion, why you want to enter...',
       preTradeDescHint: 'The more detailed, the better feedback you\'ll receive',
+      imagesCount: 'images',
+      selectTimeframe: 'Timeframe',
     },
   };
   const t = labels[language];
@@ -493,16 +509,17 @@ export default function TradeForm({
     setForm(prev => ({ ...prev, checklist: resultado }));
   };
 
-  // Pre-trade image handling
-  const handlePreTradeImage = async (file) => {
+  // Pre-trade image handling (up to 3 images)
+  const handlePreTradeImage = async (file, timeframe = '15M') => {
     if (!file) return;
+    if (preTradeImages.length >= 3) return;
     if (file.size > 5 * 1024 * 1024) {
       alert(t.imageTooLarge);
       return;
     }
     try {
       const compressed = await compressImage(file);
-      setPreTradeImage(compressed);
+      setPreTradeImages(prev => [...prev, { base64: compressed, timeframe }]);
       setPreTradeAnalysis(null);
     } catch (error) {
       console.error('Error processing pre-trade image:', error);
@@ -510,8 +527,24 @@ export default function TradeForm({
     }
   };
 
-  const removePreTradeImage = () => {
-    setPreTradeImage(null);
+  const updatePreTradeImageTimeframe = (index, timeframe) => {
+    setPreTradeImages(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], timeframe };
+      return updated;
+    });
+  };
+
+  const removePreTradeImage = (index) => {
+    setPreTradeImages(prev => prev.filter((_, i) => i !== index));
+    if (preTradeImages.length === 1) {
+      setPreTradeDescription('');
+      setPreTradeAnalysis(null);
+    }
+  };
+
+  const clearAllPreTradeImages = () => {
+    setPreTradeImages([]);
     setPreTradeDescription('');
     setPreTradeAnalysis(null);
   };
@@ -534,19 +567,28 @@ export default function TradeForm({
       }));
   };
 
-  // Analyze pre-trade with AI
+  // Analyze pre-trade with AI (supports multiple images)
   const analyzePreTrade = async () => {
-    if (!preTradeImage || aiQueriesUsed >= aiQueriesLimit) return;
+    if (preTradeImages.length === 0 || aiQueriesUsed >= aiQueriesLimit) return;
 
     setIsAnalyzing(true);
     try {
       const assetHistory = getAssetHistory();
 
+      // Prepare images with their timeframes
+      const imagesWithTimeframes = preTradeImages.map(img => ({
+        base64: img.base64,
+        timeframe: img.timeframe
+      }));
+
       const response = await fetch('/api/analyze-trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageBase64: preTradeImage,
+          // Send first image for backward compatibility
+          imageBase64: preTradeImages[0].base64,
+          // Send all images with timeframes
+          multipleImages: imagesWithTimeframes,
           tradeData: {
             activo: form.activo,
             dir: form.dir,
@@ -554,7 +596,7 @@ export default function TradeForm({
           isPreTrade: true,
           assetHistory,
           language,
-          userPreTradeNotes: preTradeDescription, // User's description of what they see
+          userPreTradeNotes: preTradeDescription,
         }),
       });
 
@@ -568,8 +610,8 @@ export default function TradeForm({
         setForm(prev => ({
           ...prev,
           preTradeAnalysis: data.analysis,
-          preTradeImage,
-          preTradeDescription, // Also save user's description
+          preTradeImages: preTradeImages.map(img => img.base64),
+          preTradeDescription,
         }));
         // Increment query count
         await incrementQueryCount();
@@ -581,7 +623,7 @@ export default function TradeForm({
     }
   };
 
-  const canAnalyze = preTradeImage && aiQueriesUsed < aiQueriesLimit && !isAnalyzing;
+  const canAnalyze = preTradeImages.length > 0 && aiQueriesUsed < aiQueriesLimit && !isAnalyzing;
 
   const getChecklistSemaforo = () => {
     if (!form.checklist) return null;
@@ -713,49 +755,78 @@ export default function TradeForm({
               {t.preTradeDesc}
             </p>
 
-            {/* Pre-trade image upload */}
-            {!preTradeImage ? (
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) await handlePreTradeImage(file);
-                    e.target.value = '';
-                  }}
-                  className="hidden"
-                  id="pre-trade-image"
-                />
-                <label
-                  htmlFor="pre-trade-image"
-                  className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                    isDark
-                      ? 'border-purple-500/30 hover:border-purple-500 text-purple-400'
-                      : 'border-purple-300 hover:border-purple-500 text-purple-500'
-                  }`}
-                >
-                  <Camera size={20} />
-                  <span className="text-sm font-bold">{t.uploadPreTrade}</span>
-                </label>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Image preview */}
-                <div className="relative">
-                  <img
-                    src={preTradeImage}
-                    alt="Pre-trade"
-                    className="w-full h-48 object-cover rounded-xl border-2 border-purple-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={removePreTradeImage}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+            {/* Pre-trade images upload (up to 3) */}
+            <div className="space-y-3">
+              {/* Display existing images */}
+              {preTradeImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {preTradeImages.map((img, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={img.base64}
+                        alt={`Pre-trade ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-lg border-2 border-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePreTradeImage(index)}
+                        className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X size={12} />
+                      </button>
+                      {/* Timeframe selector */}
+                      <select
+                        value={img.timeframe}
+                        onChange={(e) => updatePreTradeImageTimeframe(index, e.target.value)}
+                        className={`absolute bottom-1 left-1 right-1 text-[10px] font-bold rounded px-1 py-0.5 ${
+                          isDark ? 'bg-slate-800/90 text-purple-400' : 'bg-white/90 text-purple-600'
+                        }`}
+                      >
+                        {TEMPORALIDADES.map(tf => (
+                          <option key={tf} value={tf}>{tf}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
                 </div>
+              )}
+
+              {/* Add image button */}
+              {preTradeImages.length < 3 && !preTradeAnalysis && (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) await handlePreTradeImage(file, '15M');
+                      e.target.value = '';
+                    }}
+                    className="hidden"
+                    id="pre-trade-image"
+                  />
+                  <label
+                    htmlFor="pre-trade-image"
+                    className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                      isDark
+                        ? 'border-purple-500/30 hover:border-purple-500 text-purple-400'
+                        : 'border-purple-300 hover:border-purple-500 text-purple-500'
+                    }`}
+                  >
+                    <Camera size={18} />
+                    <span className="text-sm font-bold">
+                      {preTradeImages.length === 0 ? t.uploadPreTrade : t.addMoreImages}
+                    </span>
+                    <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      ({preTradeImages.length}/3)
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {preTradeImages.length > 0 && (
+              <div className="space-y-3">
 
                 {/* User description textarea */}
                 {!preTradeAnalysis && (

@@ -199,6 +199,10 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       return false;
     }
 
+    // Immediately update local state for instant UI feedback
+    const previousCount = aiQueriesUsed;
+    setAiQueriesUsed(prev => prev + 1);
+
     try {
       const todayKey = getTodayKey();
       const queryDocRef = doc(db, 'ai_queries', `${userId}_${todayKey}`);
@@ -215,10 +219,14 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
         lastQuery: new Date().toISOString(),
       });
 
+      // Sync with actual Firestore count
       setAiQueriesUsed(newCount);
+      console.log(`AI Post-Trade query count updated: ${newCount}/${aiQueriesLimit}`);
       return true;
     } catch (error) {
       console.error('Error updating AI query count:', error);
+      // Revert on error
+      setAiQueriesUsed(previousCount);
       return false;
     }
   };

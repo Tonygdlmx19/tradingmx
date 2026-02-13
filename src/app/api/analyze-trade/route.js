@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { imageBase64, tradeData, userNotes, isPreTrade, assetHistory, language = 'es', userPreTradeNotes } = await request.json();
+    const { imageBase64, multipleImages, tradeData, userNotes, isPreTrade, assetHistory, language = 'es', userPreTradeNotes } = await request.json();
 
-    if (!imageBase64) {
+    if (!imageBase64 && (!multipleImages || multipleImages.length === 0)) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
     }
 
@@ -17,8 +17,40 @@ export async function POST(request) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    // Remove data URL prefix if present
-    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    // Helper to clean base64 data
+    const cleanBase64 = (data) => data.replace(/^data:image\/\w+;base64,/, '');
+
+    // Build image parts for multiple images or single image
+    const imageParts = [];
+    let timeframeInfo = '';
+
+    if (multipleImages && multipleImages.length > 0) {
+      // Multiple images with timeframes
+      multipleImages.forEach((img, index) => {
+        imageParts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: cleanBase64(img.base64),
+          },
+        });
+      });
+      // Build timeframe info for the prompt
+      const timeframes = multipleImages.map(img => img.timeframe).join(', ');
+      timeframeInfo = language === 'es'
+        ? `\nTemporalidades proporcionadas: ${timeframes}\nANALIZA TODAS LAS TEMPORALIDADES para tener una visión más completa del contexto del mercado.\n`
+        : `\nTimeframes provided: ${timeframes}\nANALYZE ALL TIMEFRAMES to have a more complete view of the market context.\n`;
+    } else {
+      // Single image (backward compatibility)
+      imageParts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: cleanBase64(imageBase64),
+        },
+      });
+    }
+
+    // Remove data URL prefix if present (for backward compatibility)
+    const base64Data = imageBase64 ? cleanBase64(imageBase64) : '';
 
     // Build notes section if user provided notes
     const notesSection = {
@@ -99,8 +131,8 @@ IMPORTANT: The trader is sharing their analysis and perspective. Evaluate if the
 Datos de la operación que planea:
 - Activo: ${tradeData.activo || 'No especificado'}
 - Dirección planeada: ${tradeData.dir || 'No especificada'}
-${userPreTradeSection}${historySection}
-ANALIZA LA IMAGEN Y RESPONDE:
+${timeframeInfo}${userPreTradeSection}${historySection}
+ANALIZA ${multipleImages && multipleImages.length > 1 ? 'LAS IMÁGENES' : 'LA IMAGEN'} Y RESPONDE:
 
 1. **¿Es buen momento para entrar?** - Evalúa si el setup actual justifica la entrada
 2. **Señales a favor** - ¿Qué indica que podría funcionar?
@@ -118,8 +150,8 @@ Sé directo y honesto. Si no es buen momento, dilo claramente. ${userPreTradeNot
 Planned trade data:
 - Asset: ${tradeData.activo || 'Not specified'}
 - Planned direction: ${tradeData.dir || 'Not specified'}
-${userPreTradeSection}${historySection}
-ANALYZE THE IMAGE AND RESPOND:
+${timeframeInfo}${userPreTradeSection}${historySection}
+ANALYZE ${multipleImages && multipleImages.length > 1 ? 'THE IMAGES' : 'THE IMAGE'} AND RESPOND:
 
 1. **Is it a good time to enter?** - Evaluate if the current setup justifies entry
 2. **Signals in favor** - What indicates this could work?
@@ -178,13 +210,9 @@ Be concise but helpful. Respond in English. Use bullet points for easy reading.$
       ? (preTradePrompts[language] || preTradePrompts.es)
       : (prompts[language] || prompts.es);
 
+    // Send all images followed by the prompt
     const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: base64Data,
-        },
-      },
+      ...imageParts,
       selectedPrompt,
     ]);
 
