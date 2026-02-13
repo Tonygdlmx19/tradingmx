@@ -16,3 +16,4 @@ export { default as EconomicCalendar } from './EconomicCalendar';
 export { default as CalendarView } from './CalendarView';
 export { ThemeProvider, useTheme } from './ThemeProvider';
 export { LanguageProvider, useLanguage } from './LanguageProvider';
+export { default as TradingAcademy } from './TradingAcademy';

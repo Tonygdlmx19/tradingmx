@@ -1,9 +1,21 @@
 "use client";
-import { useState } from 'react';
-import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, GraduationCap, Loader2, Eye, Trash2 } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import TradeChecklist from './TradeChecklist';
+import { db } from '../../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
+// AI Query limits by plan
+const AI_QUERY_LIMITS = {
+  trial: 5,
+  '1month': 5,
+  '3months': 10,
+  '1year': 20,
+  lifetime: 30,
+  paid: 30,
+};
 
 const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
 
@@ -125,12 +137,112 @@ const ACTIVOS_POR_CATEGORIA = {
   ],
 };
 
-export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = [], reglasSetup = [], cuentasBroker = [] }) {
+export default function TradeForm({
+  onSubmit,
+  form,
+  setForm,
+  activosFavoritos = [],
+  reglasSetup = [],
+  cuentasBroker = [],
+  userId,
+  userType,
+  userPlan,
+  trades = [],
+}) {
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [imagenes, setImagenes] = useState([]);
   const [isBinaryOptions, setIsBinaryOptions] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
+
+  // Pre-trade AI analysis state
+  const [preTradeImage, setPreTradeImage] = useState(null);
+  const [preTradeDescription, setPreTradeDescription] = useState('');
+  const [preTradeAnalysis, setPreTradeAnalysis] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showPreTradeSection, setShowPreTradeSection] = useState(false);
+
+  // AI query tracking
+  const [aiQueriesUsed, setAiQueriesUsed] = useState(0);
+  const [aiQueriesLimit, setAiQueriesLimit] = useState(5);
+
+  // Get AI query limit based on user plan
+  const getQueryLimit = () => {
+    if (userType === 'lifetime' || userType === 'paid') return AI_QUERY_LIMITS.lifetime;
+    if (userType === 'trial') return AI_QUERY_LIMITS.trial;
+    if (userType === 'subscription' && userPlan) {
+      return AI_QUERY_LIMITS[userPlan] || AI_QUERY_LIMITS.trial;
+    }
+    return AI_QUERY_LIMITS.trial;
+  };
+
+  // Get today's date string for tracking
+  const getTodayKey = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+
+  // Load AI query count (pre-trade uses separate counter)
+  useEffect(() => {
+    const loadQueryCount = async () => {
+      if (!userId) return;
+
+      const limit = getQueryLimit();
+      setAiQueriesLimit(limit);
+
+      try {
+        const todayKey = getTodayKey();
+        const queryDocRef = doc(db, 'ai_queries_pretrade', `${userId}_${todayKey}`);
+        const queryDoc = await getDoc(queryDocRef);
+
+        if (queryDoc.exists()) {
+          setAiQueriesUsed(queryDoc.data().count || 0);
+        } else {
+          setAiQueriesUsed(0);
+        }
+      } catch (error) {
+        console.error('Error loading AI query count:', error);
+        setAiQueriesUsed(0);
+      }
+    };
+
+    loadQueryCount();
+  }, [userId, userType, userPlan]);
+
+  // Reset pre-trade states when form is reset (after saving a trade)
+  useEffect(() => {
+    if (form.preTradeAnalysis === null && form.preTradeImage === null) {
+      setPreTradeImage(null);
+      setPreTradeDescription('');
+      setPreTradeAnalysis(null);
+      setShowPreTradeSection(false);
+    }
+  }, [form.preTradeAnalysis, form.preTradeImage]);
+
+  // Increment AI query count (pre-trade uses separate counter)
+  const incrementQueryCount = async () => {
+    if (!userId) return;
+
+    try {
+      const todayKey = getTodayKey();
+      const queryDocRef = doc(db, 'ai_queries_pretrade', `${userId}_${todayKey}`);
+
+      const currentDoc = await getDoc(queryDocRef);
+      const currentCount = currentDoc.exists() ? (currentDoc.data().count || 0) : 0;
+      const newCount = currentCount + 1;
+
+      await setDoc(queryDocRef, {
+        userId,
+        date: todayKey,
+        count: newCount,
+        lastQuery: new Date().toISOString(),
+      });
+
+      setAiQueriesUsed(newCount);
+    } catch (error) {
+      console.error('Error updating AI query count:', error);
+    }
+  };
 
   // Traducciones
   const labels = {
@@ -184,6 +296,20 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       brokerAccount: 'Cuenta',
       selectAccount: 'Selecciona una cuenta',
       noAccounts: 'Sin cuenta asignada',
+      preTradeAnalysis: 'Análisis Pre-Trade',
+      preTradeDesc: 'Sube una captura antes de operar para recibir retroalimentación de la IA',
+      analyzeBeforeTrading: 'Analizar antes de operar',
+      analyzing: 'Analizando...',
+      aiMentor: 'Mentor IA',
+      queriesRemaining: 'consultas restantes',
+      basedOnHistory: 'Basado en tu historial',
+      noQueriesLeft: 'Sin consultas disponibles hoy',
+      uploadPreTrade: 'Subir imagen pre-trade',
+      hidePreTrade: 'Ocultar análisis pre-trade',
+      showPreTrade: 'Análisis Pre-Trade con IA',
+      preTradeDescLabel: '¿Qué ves en el gráfico?',
+      preTradeDescPlaceholder: 'Describe lo que ves: estructura, patrones, zonas de interés, tu emoción actual, por qué quieres entrar...',
+      preTradeDescHint: 'Cuanto más detallado, mejor retroalimentación recibirás',
     },
     en: {
       title: 'Record Trade',
@@ -235,6 +361,20 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       brokerAccount: 'Account',
       selectAccount: 'Select an account',
       noAccounts: 'No account assigned',
+      preTradeAnalysis: 'Pre-Trade Analysis',
+      preTradeDesc: 'Upload a screenshot before trading to receive AI feedback',
+      analyzeBeforeTrading: 'Analyze before trading',
+      analyzing: 'Analyzing...',
+      aiMentor: 'AI Mentor',
+      queriesRemaining: 'queries remaining',
+      basedOnHistory: 'Based on your history',
+      noQueriesLeft: 'No queries available today',
+      uploadPreTrade: 'Upload pre-trade image',
+      hidePreTrade: 'Hide pre-trade analysis',
+      showPreTrade: 'Pre-Trade AI Analysis',
+      preTradeDescLabel: 'What do you see in the chart?',
+      preTradeDescPlaceholder: 'Describe what you see: structure, patterns, zones of interest, your current emotion, why you want to enter...',
+      preTradeDescHint: 'The more detailed, the better feedback you\'ll receive',
     },
   };
   const t = labels[language];
@@ -353,6 +493,96 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
     setForm(prev => ({ ...prev, checklist: resultado }));
   };
 
+  // Pre-trade image handling
+  const handlePreTradeImage = async (file) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert(t.imageTooLarge);
+      return;
+    }
+    try {
+      const compressed = await compressImage(file);
+      setPreTradeImage(compressed);
+      setPreTradeAnalysis(null);
+    } catch (error) {
+      console.error('Error processing pre-trade image:', error);
+      alert(t.imageError);
+    }
+  };
+
+  const removePreTradeImage = () => {
+    setPreTradeImage(null);
+    setPreTradeDescription('');
+    setPreTradeAnalysis(null);
+  };
+
+  // Get trade history for this asset
+  const getAssetHistory = () => {
+    if (!trades || trades.length === 0) return [];
+    return trades
+      .filter(t => t.activo === form.activo)
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+      .slice(0, 10)
+      .map(t => ({
+        fecha: t.fecha,
+        dir: t.dir,
+        res: t.res,
+        puntos: t.puntos,
+        emo: t.emo,
+        notas: t.notas,
+        aiAnalysis: t.aiAnalysis || t.postTradeAnalysis,
+      }));
+  };
+
+  // Analyze pre-trade with AI
+  const analyzePreTrade = async () => {
+    if (!preTradeImage || aiQueriesUsed >= aiQueriesLimit) return;
+
+    setIsAnalyzing(true);
+    try {
+      const assetHistory = getAssetHistory();
+
+      const response = await fetch('/api/analyze-trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: preTradeImage,
+          tradeData: {
+            activo: form.activo,
+            dir: form.dir,
+          },
+          isPreTrade: true,
+          assetHistory,
+          language,
+          userPreTradeNotes: preTradeDescription, // User's description of what they see
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        setPreTradeAnalysis({ error: data.error });
+      } else {
+        setPreTradeAnalysis({ text: data.analysis });
+        // Save to form so it gets stored with the trade
+        setForm(prev => ({
+          ...prev,
+          preTradeAnalysis: data.analysis,
+          preTradeImage,
+          preTradeDescription, // Also save user's description
+        }));
+        // Increment query count
+        await incrementQueryCount();
+      }
+    } catch (error) {
+      setPreTradeAnalysis({ error: error.message });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const canAnalyze = preTradeImage && aiQueriesUsed < aiQueriesLimit && !isAnalyzing;
+
   const getChecklistSemaforo = () => {
     if (!form.checklist) return null;
     const pct = form.checklist.porcentaje;
@@ -447,7 +677,182 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           IQ Option, Olymp Trade, Quotex, etc.
         </p>
       </div>
-      
+
+      {/* Pre-Trade AI Analysis Section */}
+      <div className={`mb-4 rounded-xl border overflow-hidden ${
+        isDark ? 'bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30' : 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200'
+      }`}>
+        <button
+          type="button"
+          onClick={() => setShowPreTradeSection(!showPreTradeSection)}
+          className={`w-full p-3 flex items-center justify-between transition-colors ${
+            isDark ? 'hover:bg-white/5' : 'hover:bg-white/50'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <GraduationCap size={18} className="text-purple-500" />
+            <span className={`text-sm font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              {t.showPreTrade}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+              isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+            }`}>
+              {aiQueriesLimit - aiQueriesUsed} {t.queriesRemaining}
+            </span>
+            <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              {showPreTradeSection ? '▲' : '▼'}
+            </span>
+          </div>
+        </button>
+
+        {showPreTradeSection && (
+          <div className={`p-4 border-t ${isDark ? 'border-purple-500/20' : 'border-purple-200'}`}>
+            <p className={`text-xs mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              {t.preTradeDesc}
+            </p>
+
+            {/* Pre-trade image upload */}
+            {!preTradeImage ? (
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) await handlePreTradeImage(file);
+                    e.target.value = '';
+                  }}
+                  className="hidden"
+                  id="pre-trade-image"
+                />
+                <label
+                  htmlFor="pre-trade-image"
+                  className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                    isDark
+                      ? 'border-purple-500/30 hover:border-purple-500 text-purple-400'
+                      : 'border-purple-300 hover:border-purple-500 text-purple-500'
+                  }`}
+                >
+                  <Camera size={20} />
+                  <span className="text-sm font-bold">{t.uploadPreTrade}</span>
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Image preview */}
+                <div className="relative">
+                  <img
+                    src={preTradeImage}
+                    alt="Pre-trade"
+                    className="w-full h-48 object-cover rounded-xl border-2 border-purple-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={removePreTradeImage}
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                {/* User description textarea */}
+                {!preTradeAnalysis && (
+                  <div>
+                    <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                      {t.preTradeDescLabel}
+                    </label>
+                    <textarea
+                      placeholder={t.preTradeDescPlaceholder}
+                      rows={3}
+                      className={`w-full p-2.5 border rounded-xl text-sm outline-none focus:border-purple-500 resize-none ${
+                        isDark
+                          ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500'
+                          : 'bg-white border-purple-200 text-slate-800 placeholder-slate-400'
+                      }`}
+                      value={preTradeDescription}
+                      onChange={e => setPreTradeDescription(e.target.value)}
+                    />
+                    <p className={`text-[9px] mt-1 ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {t.preTradeDescHint}
+                    </p>
+                  </div>
+                )}
+
+                {/* Analyze button */}
+                {!preTradeAnalysis && (
+                  <button
+                    type="button"
+                    onClick={analyzePreTrade}
+                    disabled={!canAnalyze}
+                    className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+                      canAnalyze
+                        ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                        : 'bg-slate-500/20 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        {t.analyzing}
+                      </>
+                    ) : (
+                      <>
+                        <GraduationCap size={16} />
+                        {t.analyzeBeforeTrading}
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Analysis result */}
+                {preTradeAnalysis && (
+                  <div className={`p-4 rounded-xl ${
+                    preTradeAnalysis.error
+                      ? isDark ? 'bg-red-500/10 border border-red-500/30' : 'bg-red-50 border border-red-200'
+                      : isDark ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-purple-50 border border-purple-200'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <GraduationCap size={14} className={preTradeAnalysis.error ? 'text-red-500' : 'text-purple-500'} />
+                      <span className={`text-xs font-bold ${
+                        preTradeAnalysis.error
+                          ? 'text-red-500'
+                          : isDark ? 'text-purple-400' : 'text-purple-600'
+                      }`}>
+                        {t.aiMentor}
+                      </span>
+                      {!preTradeAnalysis.error && getAssetHistory().length > 0 && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                          isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          {t.basedOnHistory} ({getAssetHistory().length} trades)
+                        </span>
+                      )}
+                    </div>
+                    {preTradeAnalysis.error ? (
+                      <p className="text-red-500 text-sm">{preTradeAnalysis.error}</p>
+                    ) : (
+                      <div className={`text-xs leading-relaxed whitespace-pre-wrap ${
+                        isDark ? 'text-slate-300' : 'text-slate-700'
+                      }`}>
+                        {preTradeAnalysis.text}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {aiQueriesUsed >= aiQueriesLimit && (
+              <p className="text-amber-500 text-xs text-center mt-2 font-medium">
+                {t.noQueriesLeft}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Cuenta de Broker */}
         {cuentasBroker.length > 0 && (

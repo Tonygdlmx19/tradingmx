@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { auth, provider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from '../../firebase';
 import { signInWithPopup } from "firebase/auth";
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
+import { useLanguage } from './LanguageProvider';
 
-const firebaseErrors = {
+const firebaseErrorsES = {
   'auth/user-not-found': 'No existe una cuenta con ese correo',
   'auth/wrong-password': 'Contraseña incorrecta',
   'auth/invalid-credential': 'Correo o contraseña incorrectos',
@@ -16,11 +17,80 @@ const firebaseErrors = {
   'auth/popup-blocked': 'El navegador bloqueó la ventana. Permite popups para este sitio.',
 };
 
-function getErrorMessage(error) {
-  return firebaseErrors[error.code] || `Error: ${error.message || error.code}`;
+const firebaseErrorsEN = {
+  'auth/user-not-found': 'No account exists with that email',
+  'auth/wrong-password': 'Incorrect password',
+  'auth/invalid-credential': 'Incorrect email or password',
+  'auth/email-already-in-use': 'An account already exists with that email',
+  'auth/weak-password': 'Password must be at least 6 characters',
+  'auth/invalid-email': 'Invalid email address',
+  'auth/too-many-requests': 'Too many attempts. Please wait a few minutes.',
+  'auth/popup-closed-by-user': 'You closed the Google window. Please try again.',
+  'auth/popup-blocked': 'Browser blocked the popup. Please allow popups for this site.',
+};
+
+function getErrorMessage(error, language) {
+  const errors = language === 'en' ? firebaseErrorsEN : firebaseErrorsES;
+  return errors[error.code] || `Error: ${error.message || error.code}`;
 }
 
+const labels = {
+  es: {
+    login: 'Iniciar sesión',
+    register: 'Registrarse',
+    back: 'Volver',
+    recoverPassword: 'Recuperar contraseña',
+    recoverPasswordDesc: 'Te enviaremos un correo para restablecer tu contraseña.',
+    emailPlaceholder: 'Correo electrónico',
+    passwordPlaceholder: 'Contraseña',
+    passwordMinChars: 'Contraseña (mín. 6 caracteres)',
+    confirmPassword: 'Confirmar contraseña',
+    forgotPassword: '¿Olvidaste tu contraseña?',
+    createAccount: 'Crear cuenta',
+    sendRecoveryEmail: 'Enviar correo de recuperación',
+    or: 'o',
+    continueWithGoogle: 'Continuar con Google',
+    registerNote: 'Al crear tu cuenta, necesitarás activar el acceso con un código de prueba o pago.',
+    loginNote: 'Usa el correo con el que pagaste o con el que activaste tu código de prueba.',
+    backToHome: '← Volver al inicio',
+    creatingAccount: 'Creando cuenta...',
+    loggingIn: 'Iniciando sesión...',
+    emailSent: 'Correo enviado. Revisa tu bandeja de entrada (y spam).',
+    passwordsNoMatch: 'Las contraseñas no coinciden',
+    passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
+    enterEmail: 'Ingresa tu correo electrónico',
+  },
+  en: {
+    login: 'Log in',
+    register: 'Sign up',
+    back: 'Back',
+    recoverPassword: 'Recover password',
+    recoverPasswordDesc: 'We will send you an email to reset your password.',
+    emailPlaceholder: 'Email address',
+    passwordPlaceholder: 'Password',
+    passwordMinChars: 'Password (min. 6 characters)',
+    confirmPassword: 'Confirm password',
+    forgotPassword: 'Forgot your password?',
+    createAccount: 'Create account',
+    sendRecoveryEmail: 'Send recovery email',
+    or: 'or',
+    continueWithGoogle: 'Continue with Google',
+    registerNote: 'After creating your account, you will need to activate access with a trial code or payment.',
+    loginNote: 'Use the email you paid with or activated your trial code with.',
+    backToHome: '← Back to home',
+    creatingAccount: 'Creating account...',
+    loggingIn: 'Logging in...',
+    emailSent: 'Email sent. Check your inbox (and spam folder).',
+    passwordsNoMatch: 'Passwords do not match',
+    passwordTooShort: 'Password must be at least 6 characters',
+    enterEmail: 'Please enter your email address',
+  }
+};
+
 export default function LoginPage({ onBack }) {
+  const { language } = useLanguage();
+  const t = labels[language] || labels.es;
+
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,7 +107,7 @@ export default function LoginPage({ onBack }) {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err, language));
       setIsLoading(false);
     }
   };
@@ -46,18 +116,18 @@ export default function LoginPage({ onBack }) {
     e.preventDefault();
     setError('');
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError(t.passwordsNoMatch);
       return;
     }
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+      setError(t.passwordTooShort);
       return;
     }
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email.trim(), password);
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err, language));
       setIsLoading(false);
     }
   };
@@ -66,7 +136,7 @@ export default function LoginPage({ onBack }) {
     e.preventDefault();
     setError('');
     if (!email.trim()) {
-      setError('Ingresa tu correo electrónico');
+      setError(t.enterEmail);
       return;
     }
     setIsLoading(true);
@@ -74,7 +144,7 @@ export default function LoginPage({ onBack }) {
       await sendPasswordResetEmail(auth, email.trim());
       setResetSent(true);
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err, language));
     }
     setIsLoading(false);
   };
@@ -86,7 +156,7 @@ export default function LoginPage({ onBack }) {
       await signInWithPopup(auth, provider);
     } catch (err) {
       if (err.code !== 'auth/cancelled-popup-request') {
-        setError(getErrorMessage(err));
+        setError(getErrorMessage(err, language));
       }
       setIsLoading(false);
     }
@@ -111,7 +181,7 @@ export default function LoginPage({ onBack }) {
             <div className="w-2 bg-emerald-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '70%', animationDelay: '400ms'}}></div>
           </div>
           <p className="text-slate-400 text-sm">
-            {mode === 'register' ? 'Creando cuenta...' : 'Iniciando sesión...'}
+            {mode === 'register' ? t.creatingAccount : t.loggingIn}
           </p>
         </div>
       </div>
@@ -137,7 +207,7 @@ export default function LoginPage({ onBack }) {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Iniciar sesión
+              {t.login}
             </button>
             <button
               onClick={() => switchMode('register')}
@@ -147,7 +217,7 @@ export default function LoginPage({ onBack }) {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Registrarse
+              {t.register}
             </button>
           </div>
         )}
@@ -160,11 +230,11 @@ export default function LoginPage({ onBack }) {
               className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-3"
             >
               <ArrowLeft size={16} />
-              Volver
+              {t.back}
             </button>
-            <h2 className="text-lg font-bold text-slate-800">Recuperar contraseña</h2>
+            <h2 className="text-lg font-bold text-slate-800">{t.recoverPassword}</h2>
             <p className="text-sm text-slate-500 mt-1">
-              Te enviaremos un correo para restablecer tu contraseña.
+              {t.recoverPasswordDesc}
             </p>
           </div>
         )}
@@ -179,7 +249,7 @@ export default function LoginPage({ onBack }) {
         {/* Reset sent success */}
         {resetSent && (
           <div className="p-3 bg-green-50 text-green-600 text-xs rounded-lg font-bold mb-4">
-            Correo enviado. Revisa tu bandeja de entrada (y spam).
+            {t.emailSent}
           </div>
         )}
 
@@ -190,7 +260,7 @@ export default function LoginPage({ onBack }) {
               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="email"
-                placeholder="Correo electrónico"
+                placeholder={t.emailPlaceholder}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -201,7 +271,7 @@ export default function LoginPage({ onBack }) {
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Contraseña"
+                placeholder={t.passwordPlaceholder}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -219,14 +289,14 @@ export default function LoginPage({ onBack }) {
               type="submit"
               className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
             >
-              Iniciar sesión
+              {t.login}
             </button>
             <button
               type="button"
               onClick={() => switchMode('reset')}
               className="text-xs text-blue-500 hover:text-blue-700"
             >
-              ¿Olvidaste tu contraseña?
+              {t.forgotPassword}
             </button>
           </form>
         )}
@@ -238,7 +308,7 @@ export default function LoginPage({ onBack }) {
               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="email"
-                placeholder="Correo electrónico"
+                placeholder={t.emailPlaceholder}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -249,7 +319,7 @@ export default function LoginPage({ onBack }) {
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Contraseña (mín. 6 caracteres)"
+                placeholder={t.passwordMinChars}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -268,7 +338,7 @@ export default function LoginPage({ onBack }) {
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Confirmar contraseña"
+                placeholder={t.confirmPassword}
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 required
@@ -280,7 +350,7 @@ export default function LoginPage({ onBack }) {
               type="submit"
               className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
             >
-              Crear cuenta
+              {t.createAccount}
             </button>
           </form>
         )}
@@ -292,7 +362,7 @@ export default function LoginPage({ onBack }) {
               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="email"
-                placeholder="Correo electrónico"
+                placeholder={t.emailPlaceholder}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -303,7 +373,7 @@ export default function LoginPage({ onBack }) {
               type="submit"
               className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition-all active:scale-[0.98]"
             >
-              Enviar correo de recuperación
+              {t.sendRecoveryEmail}
             </button>
           </form>
         )}
@@ -313,7 +383,7 @@ export default function LoginPage({ onBack }) {
           <>
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 border-t border-slate-200" />
-              <span className="text-xs text-slate-400">o</span>
+              <span className="text-xs text-slate-400">{t.or}</span>
               <div className="flex-1 border-t border-slate-200" />
             </div>
 
@@ -323,16 +393,13 @@ export default function LoginPage({ onBack }) {
               className="w-full py-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-700 flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-all shadow-sm"
             >
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google"/>
-              Continuar con Google
+              {t.continueWithGoogle}
             </button>
           </>
         )}
 
         <p className="mt-6 text-xs text-slate-400">
-          {mode === 'register'
-            ? 'Al crear tu cuenta, necesitarás activar el acceso con un código de prueba o pago.'
-            : 'Usa el correo con el que pagaste o con el que activaste tu código de prueba.'
-          }
+          {mode === 'register' ? t.registerNote : t.loginNote}
         </p>
 
         {onBack && (
@@ -340,7 +407,7 @@ export default function LoginPage({ onBack }) {
             onClick={onBack}
             className="mt-4 text-xs text-slate-400 hover:text-slate-600"
           >
-            ← Volver al inicio
+            {t.backToHome}
           </button>
         )}
       </div>

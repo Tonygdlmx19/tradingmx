@@ -20,7 +20,8 @@ import {
   DrawdownChart,
   EconomicCalendar,
   CalendarView,
-  useTheme
+  useTheme,
+  TradingAcademy
 } from './components';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
 import AdminPanel from './components/AdminPanel';
@@ -42,6 +43,7 @@ export default function TradingJournalPRO() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showFundingSimulator, setShowFundingSimulator] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showAcademy, setShowAcademy] = useState(false);
   const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'active' | 'expired' | 'unauthorized'
   const [userTrialEnd, setUserTrialEnd] = useState(null);
   const [userType, setUserType] = useState(null);
@@ -256,6 +258,9 @@ export default function TradingJournalPRO() {
       cuentaId: form.cuentaId || null,
       broker: cuentaSeleccionada?.broker || null,
       numeroCuenta: cuentaSeleccionada?.numero || null,
+      preTradeAnalysis: form.preTradeAnalysis || null,
+      preTradeImage: form.preTradeImage || null,
+      preTradeDescription: form.preTradeDescription || null,
       createdAt: new Date()
     };
     
@@ -275,6 +280,9 @@ export default function TradingJournalPRO() {
       imagenes: [],
       checklist: null,
       swap: '',
+      preTradeAnalysis: null,
+      preTradeImage: null,
+      preTradeDescription: null,
     });
   }, [form, user]);
 
@@ -442,10 +450,16 @@ export default function TradingJournalPRO() {
 
   if (loading || checkingAuth) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Cargando...</p>
+          <div className="flex items-end justify-center gap-1 mb-4 h-12">
+            <div className="w-2 bg-emerald-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '60%', animationDelay: '0ms'}}></div>
+            <div className="w-2 bg-red-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '40%', animationDelay: '100ms'}}></div>
+            <div className="w-2 bg-emerald-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '80%', animationDelay: '200ms'}}></div>
+            <div className="w-2 bg-red-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '50%', animationDelay: '300ms'}}></div>
+            <div className="w-2 bg-emerald-500 rounded-sm animate-[pulse_0.8s_ease-in-out_infinite]" style={{height: '70%', animationDelay: '400ms'}}></div>
+          </div>
+          <p className="text-slate-400 text-sm">Cargando...</p>
         </div>
       </div>
     );
@@ -518,14 +532,22 @@ export default function TradingJournalPRO() {
         onSettings={() => setShowSettings(true)}
         onCalendar={() => setShowCalendar(true)}
         onFundingSimulator={() => setShowFundingSimulator(true)}
+        onAcademy={() => setShowAcademy(true)}
         isAdmin={isAdmin}
         onAdmin={() => setShowAdminPanel(true)}
         onLogout={handleLogout}
+        userType={userType}
       />
 
       <EconomicCalendar
         isOpen={showCalendar}
         onClose={() => setShowCalendar(false)}
+      />
+
+      <TradingAcademy
+        isOpen={showAcademy}
+        onClose={() => setShowAcademy(false)}
+        userId={user?.uid}
       />
 
       {/* Alerta de prueba expirando */}
@@ -568,7 +590,18 @@ export default function TradingJournalPRO() {
           </div>
 
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
-            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} activosFavoritos={config.activosFavoritos} reglasSetup={config.reglasSetup || []} cuentasBroker={config.cuentasBroker || []} />
+            <TradeForm
+              onSubmit={addTrade}
+              form={form}
+              setForm={setForm}
+              activosFavoritos={config.activosFavoritos}
+              reglasSetup={config.reglasSetup || []}
+              cuentasBroker={config.cuentasBroker || []}
+              userId={user?.uid}
+              userType={userType}
+              userPlan={userPlan}
+              trades={trades}
+            />
           </div>
         </div>
       </main>

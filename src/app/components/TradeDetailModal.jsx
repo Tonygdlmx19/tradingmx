@@ -194,12 +194,19 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
 
   // Increment AI query count
   const incrementQueryCount = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.error('Cannot increment query count: userId is missing');
+      return false;
+    }
 
     try {
       const todayKey = getTodayKey();
       const queryDocRef = doc(db, 'ai_queries', `${userId}_${todayKey}`);
-      const newCount = aiQueriesUsed + 1;
+
+      // Get current count from Firestore to avoid stale state issues
+      const currentDoc = await getDoc(queryDocRef);
+      const currentCount = currentDoc.exists() ? (currentDoc.data().count || 0) : 0;
+      const newCount = currentCount + 1;
 
       await setDoc(queryDocRef, {
         userId,
@@ -209,8 +216,10 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       });
 
       setAiQueriesUsed(newCount);
+      return true;
     } catch (error) {
       console.error('Error updating AI query count:', error);
+      return false;
     }
   };
 
@@ -367,6 +376,9 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       puntos = editData.dir === 'Long' ? salida - entrada : entrada - salida;
     }
 
+    // Get the latest AI analysis text if available
+    const latestAiAnalysis = Object.values(aiAnalysis).find(a => a?.text)?.text || trade.aiAnalysis || null;
+
     const updates = {
       activo: editData.activo,
       dir: editData.dir,
@@ -387,6 +399,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       notas,
       imagenes,
       imagen: null,
+      aiAnalysis: latestAiAnalysis,
     };
 
     await onUpdate(trade.id, updates);
@@ -439,6 +452,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
             salida: editData.salida,
             puntos: trade.puntos,
           },
+          userNotes: notas || '',
           language,
         }),
       });
@@ -449,8 +463,13 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
         setAiAnalysis(prev => ({ ...prev, [imageIndex]: { error: data.error } }));
       } else {
         // Increment query count on successful analysis
-        await incrementQueryCount();
+        const incremented = await incrementQueryCount();
+        if (!incremented) {
+          console.warn('Failed to increment query count, but analysis was successful');
+        }
         setAiAnalysis(prev => ({ ...prev, [imageIndex]: { text: data.analysis, expanded: true } }));
+        // Mark as having changes so user can save the analysis
+        setHasChanges(true);
       }
     } catch (error) {
       setAiAnalysis(prev => ({ ...prev, [imageIndex]: { error: error.message } }));

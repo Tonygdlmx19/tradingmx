@@ -1,9 +1,7 @@
 "use client";
-import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck, User } from 'lucide-react';
-import CalculatorModal from './CalculatorModal';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Trophy, ShieldCheck, GraduationCap } from 'lucide-react';
 import SessionBar from './SessionBar';
 
 export default function Header({
@@ -16,13 +14,14 @@ export default function Header({
   onSettings,
   onCalendar,
   onFundingSimulator,
+  onAcademy,
   isAdmin,
   onAdmin,
-  onLogout
+  onLogout,
+  userType
 }) {
   const { isDark, toggleTheme } = useTheme();
   const { language } = useLanguage();
-  const [showCalculator, setShowCalculator] = useState(false);
 
   const displayName = config?.nombreTrader || user.displayName || user.email?.split('@')[0];
 
@@ -147,14 +146,6 @@ export default function Header({
             </button>
             
             <button
-              onClick={() => setShowCalculator(true)}
-              className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-green-400' : 'hover:bg-slate-100 text-green-600'}`}
-              title="Calculadora"
-            >
-              <Calculator size={18}/>
-            </button>
-
-            <button
               onClick={onFundingSimulator}
               data-tour="funding"
               className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-amber-400' : 'hover:bg-slate-100 text-amber-600'}`}
@@ -162,6 +153,16 @@ export default function Header({
             >
               <Trophy size={18}/>
             </button>
+
+            {userType !== 'trial' && (
+              <button
+                onClick={onAcademy}
+                className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-orange-400' : 'hover:bg-slate-100 text-orange-600'}`}
+                title={language === 'es' ? 'Academia de Trading' : 'Trading Academy'}
+              >
+                <GraduationCap size={18}/>
+              </button>
+            )}
 
             {isAdmin && (
               <button
@@ -269,8 +270,6 @@ export default function Header({
         </div>
       </div>
 
-      {/* Modal Calculadora */}
-      <CalculatorModal isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
     </>
   );
 }
