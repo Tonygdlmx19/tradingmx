@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, GraduationCap, Loader2, Eye, Trash2 } from 'lucide-react';
+import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Bot, Loader2, Eye, Trash2 } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import TradeChecklist from './TradeChecklist';
@@ -690,7 +690,7 @@ export default function TradeForm({
           }`}
         >
           <div className="flex items-center gap-2">
-            <GraduationCap size={18} className="text-purple-500" />
+            <Bot size={24} className="text-purple-500" />
             <span className={`text-sm font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
               {t.showPreTrade}
             </span>
@@ -799,7 +799,7 @@ export default function TradeForm({
                       </>
                     ) : (
                       <>
-                        <GraduationCap size={16} />
+                        <Bot size={20} />
                         {t.analyzeBeforeTrading}
                       </>
                     )}
@@ -814,7 +814,7 @@ export default function TradeForm({
                       : isDark ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-purple-50 border border-purple-200'
                   }`}>
                     <div className="flex items-center gap-2 mb-2">
-                      <GraduationCap size={14} className={preTradeAnalysis.error ? 'text-red-500' : 'text-purple-500'} />
+                      <Bot size={18} className={preTradeAnalysis.error ? 'text-red-500' : 'text-purple-500'} />
                       <span className={`text-xs font-bold ${
                         preTradeAnalysis.error
                           ? 'text-red-500'

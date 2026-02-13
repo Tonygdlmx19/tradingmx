@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Clock, ArrowRight, ZoomIn, ZoomOut, RotateCcw, Briefcase, Edit3, TrendingUp, TrendingDown, Crosshair, DollarSign, BarChart3, Loader2, Bot, GraduationCap } from 'lucide-react';
+import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Clock, ArrowRight, ZoomIn, ZoomOut, RotateCcw, Briefcase, Edit3, TrendingUp, TrendingDown, Crosshair, DollarSign, BarChart3, Loader2, Bot } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import { db } from '../../firebase';
@@ -1100,7 +1100,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                         {analyzingIndex === index ? (
                           <Loader2 size={18} className="animate-spin" />
                         ) : (
-                          <GraduationCap size={18} />
+                          <Bot size={24} />
                         )}
                       </button>
 
@@ -1118,7 +1118,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                     {/* Contador de consultas IA */}
                     <div className={`flex items-center justify-between mt-2 px-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                       <span className="text-[10px] flex items-center gap-1">
-                        <GraduationCap size={10} />
+                        <Bot size={16} />
                         {queriesRemaining}/{aiQueriesLimit} {t.queriesRemaining}
                       </span>
                       {!canMakeQuery() && (
@@ -1143,7 +1143,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                           <span className={`text-xs font-bold flex items-center gap-2 ${
                             isDark ? 'text-purple-400' : 'text-purple-600'
                           }`}>
-                            <Bot size={14} />
+                            <Bot size={18} />
                             {t.aiAnalysis}
                           </span>
                           <span className={`text-[10px] ${isDark ? 'text-purple-400' : 'text-purple-500'}`}>

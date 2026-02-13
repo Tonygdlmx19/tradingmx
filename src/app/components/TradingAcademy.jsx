@@ -53,28 +53,63 @@ const SupportResistanceSVG = ({ isDark }) => (
 
 // Trend Lines Diagram
 const TrendLineSVG = ({ isDark }) => (
-  <svg viewBox="0 0 400 200" className="w-full h-48">
-    <rect width="400" height="200" fill={isDark ? '#1e293b' : '#f8fafc'}/>
+  <svg viewBox="0 0 400 220" className="w-full h-56">
+    <rect width="400" height="220" fill={isDark ? '#1e293b' : '#f8fafc'}/>
 
-    {/* Uptrend */}
-    <g transform="translate(0, 0)">
-      <text x="100" y="20" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Tendencia Alcista</text>
-      <line x1="20" y1="180" x2="180" y2="40" stroke="#22c55e" strokeWidth="2"/>
-      <path d="M 20 160 L 50 120 L 80 140 L 110 100 L 140 120 L 170 60" fill="none" stroke={isDark ? '#60a5fa' : '#3b82f6'} strokeWidth="2"/>
-      <circle cx="20" cy="160" r="4" fill="#22c55e"/>
-      <circle cx="80" cy="140" r="4" fill="#22c55e"/>
-      <circle cx="140" cy="120" r="4" fill="#22c55e"/>
+    {/* Uptrend - connecting the LOWS */}
+    <g transform="translate(0, 10)">
+      <text x="100" y="15" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Tendencia Alcista</text>
+      <text x="100" y="28" fill="#22c55e" fontSize="9" textAnchor="middle">(Conectar minimos ascendentes)</text>
+
+      {/* Price action with clear higher lows and higher highs */}
+      <path d="M 20 160 L 40 100 L 60 140 L 85 80 L 105 115 L 130 55 L 155 85 L 180 40"
+            fill="none" stroke={isDark ? '#60a5fa' : '#3b82f6'} strokeWidth="2"/>
+
+      {/* Trend line connecting the lows: 20,160 -> 60,140 -> 105,115 -> 155,85 */}
+      <line x1="20" y1="160" x2="180" y2="70" stroke="#22c55e" strokeWidth="2.5"/>
+
+      {/* Mark the lows (where line connects) */}
+      <circle cx="20" cy="160" r="5" fill="#22c55e"/>
+      <circle cx="60" cy="140" r="5" fill="#22c55e"/>
+      <circle cx="105" cy="115" r="5" fill="#22c55e"/>
+      <circle cx="155" cy="85" r="5" fill="#22c55e"/>
+
+      {/* Labels */}
+      <text x="20" y="175" fill="#22c55e" fontSize="8" textAnchor="middle">L1</text>
+      <text x="60" y="155" fill="#22c55e" fontSize="8" textAnchor="middle">L2</text>
+      <text x="105" y="130" fill="#22c55e" fontSize="8" textAnchor="middle">L3</text>
+      <text x="155" y="100" fill="#22c55e" fontSize="8" textAnchor="middle">L4</text>
     </g>
 
-    {/* Downtrend */}
-    <g transform="translate(200, 0)">
-      <text x="100" y="20" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Tendencia Bajista</text>
-      <line x1="20" y1="40" x2="180" y2="180" stroke="#ef4444" strokeWidth="2"/>
-      <path d="M 20 60 L 50 100 L 80 80 L 110 120 L 140 100 L 170 160" fill="none" stroke={isDark ? '#60a5fa' : '#3b82f6'} strokeWidth="2"/>
-      <circle cx="50" cy="100" r="4" fill="#ef4444"/>
-      <circle cx="110" cy="120" r="4" fill="#ef4444"/>
-      <circle cx="170" cy="160" r="4" fill="#ef4444"/>
+    {/* Downtrend - connecting the HIGHS */}
+    <g transform="translate(200, 10)">
+      <text x="100" y="15" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Tendencia Bajista</text>
+      <text x="100" y="28" fill="#ef4444" fontSize="9" textAnchor="middle">(Conectar maximos descendentes)</text>
+
+      {/* Price action with clear lower highs and lower lows */}
+      <path d="M 20 40 L 40 80 L 60 55 L 85 100 L 105 75 L 130 125 L 155 100 L 180 160"
+            fill="none" stroke={isDark ? '#60a5fa' : '#3b82f6'} strokeWidth="2"/>
+
+      {/* Trend line connecting the highs: 20,40 -> 60,55 -> 105,75 -> 155,100 */}
+      <line x1="20" y1="40" x2="180" y2="115" stroke="#ef4444" strokeWidth="2.5"/>
+
+      {/* Mark the highs (where line connects) */}
+      <circle cx="20" cy="40" r="5" fill="#ef4444"/>
+      <circle cx="60" cy="55" r="5" fill="#ef4444"/>
+      <circle cx="105" cy="75" r="5" fill="#ef4444"/>
+      <circle cx="155" cy="100" r="5" fill="#ef4444"/>
+
+      {/* Labels */}
+      <text x="20" y="33" fill="#ef4444" fontSize="8" textAnchor="middle">H1</text>
+      <text x="60" y="48" fill="#ef4444" fontSize="8" textAnchor="middle">H2</text>
+      <text x="105" y="68" fill="#ef4444" fontSize="8" textAnchor="middle">H3</text>
+      <text x="155" y="93" fill="#ef4444" fontSize="8" textAnchor="middle">H4</text>
     </g>
+
+    {/* Footer explanation */}
+    <text x="200" y="210" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9" textAnchor="middle">
+      La linea debe tocar al menos 2-3 puntos de swing para ser valida
+    </text>
   </svg>
 );
 
@@ -112,63 +147,120 @@ const ChannelSVG = ({ isDark }) => (
 
 // Candlestick Types Diagram
 const CandlestickTypesSVG = ({ isDark }) => (
-  <svg viewBox="0 0 400 220" className="w-full h-56">
-    <rect width="400" height="220" fill={isDark ? '#1e293b' : '#f8fafc'}/>
+  <svg viewBox="0 0 420 320" className="w-full h-80">
+    <rect width="420" height="320" fill={isDark ? '#1e293b' : '#f8fafc'}/>
 
+    {/* Title */}
+    <text x="210" y="18" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Tipos de Velas Japonesas</text>
+
+    {/* Row 1: Basic candles */}
     {/* Bullish candle */}
-    <g transform="translate(30, 30)">
-      <text x="25" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold" textAnchor="middle">Alcista</text>
-      <line x1="25" y1="20" x2="25" y2="40" stroke="#22c55e" strokeWidth="1"/>
-      <rect x="15" y="40" width="20" height="60" fill="#22c55e" rx="2"/>
-      <line x1="25" y1="100" x2="25" y2="120" stroke="#22c55e" strokeWidth="1"/>
-      <text x="25" y="140" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Cuerpo verde</text>
-      <text x="25" y="150" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Cierre {'>'} Apertura</text>
+    <g transform="translate(20, 35)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Alcista</text>
+      <line x1="30" y1="15" x2="30" y2="30" stroke="#22c55e" strokeWidth="1.5"/>
+      <rect x="20" y="30" width="20" height="45" fill="#22c55e" rx="2"/>
+      <line x1="30" y1="75" x2="30" y2="90" stroke="#22c55e" strokeWidth="1.5"/>
+      {/* Labels */}
+      <text x="48" y="22" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="7">Max</text>
+      <text x="48" y="38" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="7">Cierre</text>
+      <text x="48" y="72" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="7">Apertura</text>
+      <text x="48" y="88" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="7">Min</text>
     </g>
 
     {/* Bearish candle */}
-    <g transform="translate(100, 30)">
-      <text x="25" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold" textAnchor="middle">Bajista</text>
-      <line x1="25" y1="20" x2="25" y2="40" stroke="#ef4444" strokeWidth="1"/>
-      <rect x="15" y="40" width="20" height="60" fill="#ef4444" rx="2"/>
-      <line x1="25" y1="100" x2="25" y2="120" stroke="#ef4444" strokeWidth="1"/>
-      <text x="25" y="140" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Cuerpo rojo</text>
-      <text x="25" y="150" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Cierre {'<'} Apertura</text>
+    <g transform="translate(95, 35)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Bajista</text>
+      <line x1="30" y1="15" x2="30" y2="30" stroke="#ef4444" strokeWidth="1.5"/>
+      <rect x="20" y="30" width="20" height="45" fill="#ef4444" rx="2"/>
+      <line x1="30" y1="75" x2="30" y2="90" stroke="#ef4444" strokeWidth="1.5"/>
+      <text x="48" y="38" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="7">Apertura</text>
+      <text x="48" y="72" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="7">Cierre</text>
     </g>
 
     {/* Doji */}
-    <g transform="translate(170, 30)">
-      <text x="25" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold" textAnchor="middle">Doji</text>
-      <line x1="25" y1="20" x2="25" y2="60" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="1"/>
-      <line x1="15" y1="60" x2="35" y2="60" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="2"/>
-      <line x1="25" y1="60" x2="25" y2="100" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="1"/>
-      <text x="25" y="125" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Indecision</text>
-      <text x="25" y="135" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Apertura = Cierre</text>
+    <g transform="translate(170, 35)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Doji</text>
+      <line x1="30" y1="15" x2="30" y2="50" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="1.5"/>
+      <line x1="18" y1="50" x2="42" y2="50" stroke={isDark ? '#f59e0b' : '#d97706'} strokeWidth="3"/>
+      <line x1="30" y1="50" x2="30" y2="85" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="1.5"/>
+      <text x="30" y="100" fill={isDark ? '#f59e0b' : '#d97706'} fontSize="7" textAnchor="middle">Indecision</text>
     </g>
 
+    {/* Marubozu */}
+    <g transform="translate(245, 35)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Marubozu</text>
+      <rect x="20" y="15" width="20" height="75" fill="#22c55e" rx="2"/>
+      <text x="30" y="100" fill="#22c55e" fontSize="7" textAnchor="middle">Fuerza total</text>
+    </g>
+
+    {/* Spinning Top */}
+    <g transform="translate(320, 35)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Spinning</text>
+      <line x1="30" y1="15" x2="30" y2="40" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="1.5"/>
+      <rect x="22" y="40" width="16" height="12" fill={isDark ? '#94a3b8' : '#64748b'} rx="2"/>
+      <line x1="30" y1="52" x2="30" y2="85" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="1.5"/>
+      <text x="30" y="100" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="7" textAnchor="middle">Indecision</text>
+    </g>
+
+    {/* Divider */}
+    <line x1="20" y1="145" x2="400" y2="145" stroke={isDark ? '#334155' : '#e2e8f0'} strokeWidth="1"/>
+    <text x="210" y="160" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold" textAnchor="middle">Patrones de Reversal</text>
+
+    {/* Row 2: Reversal patterns */}
     {/* Hammer */}
-    <g transform="translate(240, 30)">
-      <text x="25" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold" textAnchor="middle">Martillo</text>
-      <rect x="18" y="30" width="14" height="15" fill="#22c55e" rx="2"/>
-      <line x1="25" y1="45" x2="25" y2="100" stroke="#22c55e" strokeWidth="1"/>
-      <text x="25" y="125" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Reversal alcista</text>
-      <text x="25" y="135" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Mecha larga abajo</text>
+    <g transform="translate(30, 175)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Martillo</text>
+      <line x1="30" y1="12" x2="30" y2="18" stroke="#22c55e" strokeWidth="1.5"/>
+      <rect x="22" y="18" width="16" height="12" fill="#22c55e" rx="2"/>
+      <line x1="30" y1="30" x2="30" y2="70" stroke="#22c55e" strokeWidth="1.5"/>
+      <text x="30" y="82" fill="#22c55e" fontSize="7" textAnchor="middle">Alcista</text>
+      <text x="30" y="92" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="6" textAnchor="middle">En soporte</text>
+    </g>
+
+    {/* Inverted Hammer */}
+    <g transform="translate(100, 175)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Martillo Inv.</text>
+      <line x1="30" y1="12" x2="30" y2="52" stroke="#22c55e" strokeWidth="1.5"/>
+      <rect x="22" y="52" width="16" height="12" fill="#22c55e" rx="2"/>
+      <line x1="30" y1="64" x2="30" y2="70" stroke="#22c55e" strokeWidth="1.5"/>
+      <text x="30" y="82" fill="#22c55e" fontSize="7" textAnchor="middle">Alcista</text>
+      <text x="30" y="92" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="6" textAnchor="middle">En soporte</text>
     </g>
 
     {/* Shooting Star */}
-    <g transform="translate(310, 30)">
-      <text x="25" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold" textAnchor="middle">Estrella</text>
-      <line x1="25" y1="20" x2="25" y2="75" stroke="#ef4444" strokeWidth="1"/>
-      <rect x="18" y="75" width="14" height="15" fill="#ef4444" rx="2"/>
-      <line x1="25" y1="90" x2="25" y2="100" stroke="#ef4444" strokeWidth="1"/>
-      <text x="25" y="125" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Reversal bajista</text>
-      <text x="25" y="135" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Mecha larga arriba</text>
+    <g transform="translate(170, 175)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Estrella Fugaz</text>
+      <line x1="30" y1="12" x2="30" y2="52" stroke="#ef4444" strokeWidth="1.5"/>
+      <rect x="22" y="52" width="16" height="12" fill="#ef4444" rx="2"/>
+      <line x1="30" y1="64" x2="30" y2="70" stroke="#ef4444" strokeWidth="1.5"/>
+      <text x="30" y="82" fill="#ef4444" fontSize="7" textAnchor="middle">Bajista</text>
+      <text x="30" y="92" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="6" textAnchor="middle">En resistencia</text>
     </g>
 
-    {/* Anatomy labels */}
-    <g transform="translate(30, 165)">
-      <text x="185" y="15" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" textAnchor="middle" fontWeight="bold">Anatomia de una vela:</text>
-      <text x="185" y="30" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8" textAnchor="middle">Mecha superior = Maximo | Cuerpo = Apertura/Cierre | Mecha inferior = Minimo</text>
+    {/* Hanging Man */}
+    <g transform="translate(250, 175)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Hombre Colg.</text>
+      <line x1="30" y1="12" x2="30" y2="18" stroke="#ef4444" strokeWidth="1.5"/>
+      <rect x="22" y="18" width="16" height="12" fill="#ef4444" rx="2"/>
+      <line x1="30" y1="30" x2="30" y2="70" stroke="#ef4444" strokeWidth="1.5"/>
+      <text x="30" y="82" fill="#ef4444" fontSize="7" textAnchor="middle">Bajista</text>
+      <text x="30" y="92" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="6" textAnchor="middle">En resistencia</text>
     </g>
+
+    {/* Dragonfly Doji */}
+    <g transform="translate(320, 175)">
+      <text x="30" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Doji Libelula</text>
+      <line x1="18" y1="18" x2="42" y2="18" stroke={isDark ? '#f59e0b' : '#d97706'} strokeWidth="3"/>
+      <line x1="30" y1="18" x2="30" y2="70" stroke={isDark ? '#f59e0b' : '#d97706'} strokeWidth="1.5"/>
+      <text x="30" y="82" fill={isDark ? '#f59e0b' : '#d97706'} fontSize="7" textAnchor="middle">Reversal</text>
+      <text x="30" y="92" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="6" textAnchor="middle">Muy fuerte</text>
+    </g>
+
+    {/* Footer */}
+    <rect x="20" y="285" width="380" height="28" fill={isDark ? '#334155' : '#e2e8f0'} rx="6"/>
+    <text x="210" y="303" fill={isDark ? '#fff' : '#1e293b'} fontSize="8" textAnchor="middle">
+      El contexto es clave: estas velas son mas efectivas en zonas de soporte/resistencia
+    </text>
   </svg>
 );
 
@@ -276,41 +368,177 @@ const HeadShouldersSVG = ({ isDark }) => (
 
 // Order Book / Order Flow
 const OrderBookSVG = ({ isDark }) => (
-  <svg viewBox="0 0 400 200" className="w-full h-52">
-    <rect width="400" height="200" fill={isDark ? '#1e293b' : '#f8fafc'}/>
+  <svg viewBox="0 0 420 280" className="w-full h-72">
+    <rect width="420" height="280" fill={isDark ? '#1e293b' : '#f8fafc'}/>
 
-    <text x="200" y="18" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Libro de Ordenes (Order Book)</text>
+    <text x="210" y="18" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Libro de Ordenes (Order Book)</text>
 
-    {/* Buy side */}
-    <g transform="translate(30, 35)">
-      <text x="70" y="0" fill="#22c55e" fontSize="10" fontWeight="bold" textAnchor="middle">COMPRADORES (Bids)</text>
-      <rect x="0" y="10" width="140" height="20" fill="#22c55e" opacity="0.8" rx="2"/>
-      <text x="70" y="24" fill="white" fontSize="9" textAnchor="middle">$50,000 - 15.5 BTC</text>
-      <rect x="20" y="35" width="100" height="20" fill="#22c55e" opacity="0.6" rx="2"/>
-      <text x="70" y="49" fill="white" fontSize="9" textAnchor="middle">$49,950 - 8.2 BTC</text>
-      <rect x="40" y="60" width="60" height="20" fill="#22c55e" opacity="0.4" rx="2"/>
-      <text x="70" y="74" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" textAnchor="middle">$49,900 - 3.1 BTC</text>
+    {/* Visual representation - DOM style */}
+    <g transform="translate(20, 35)">
+      {/* Headers */}
+      <rect x="0" y="0" width="180" height="20" fill="#22c55e" opacity="0.3" rx="4"/>
+      <text x="90" y="14" fill="#22c55e" fontSize="10" fontWeight="bold" textAnchor="middle">BIDS (Compra)</text>
+
+      <rect x="200" y="0" width="180" height="20" fill="#ef4444" opacity="0.3" rx="4"/>
+      <text x="290" y="14" fill="#ef4444" fontSize="10" fontWeight="bold" textAnchor="middle">ASKS (Venta)</text>
+
+      {/* Price ladder with depth visualization */}
+      {/* Row 1 - Closest to spread */}
+      <g transform="translate(0, 28)">
+        <rect x="80" y="0" width="100" height="22" fill="#22c55e" opacity="0.9" rx="3"/>
+        <text x="20" y="15" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9">25.5</text>
+        <text x="130" y="15" fill="white" fontSize="10" fontWeight="bold">50,045</text>
+
+        <rect x="200" y="0" width="85" height="22" fill="#ef4444" opacity="0.9" rx="3"/>
+        <text x="360" y="15" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9">18.2</text>
+        <text x="242" y="15" fill="white" fontSize="10" fontWeight="bold">50,050</text>
+      </g>
+
+      {/* Row 2 */}
+      <g transform="translate(0, 54)">
+        <rect x="60" y="0" width="120" height="22" fill="#22c55e" opacity="0.7" rx="3"/>
+        <text x="20" y="15" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9">32.1</text>
+        <text x="130" y="15" fill="white" fontSize="10" fontWeight="bold">50,040</text>
+
+        <rect x="200" y="0" width="65" height="22" fill="#ef4444" opacity="0.7" rx="3"/>
+        <text x="360" y="15" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9">12.8</text>
+        <text x="232" y="15" fill="white" fontSize="10" fontWeight="bold">50,055</text>
+      </g>
+
+      {/* Row 3 - BIG WALL */}
+      <g transform="translate(0, 80)">
+        <rect x="10" y="0" width="170" height="22" fill="#22c55e" opacity="0.95" rx="3" stroke="#22c55e" strokeWidth="2"/>
+        <text x="20" y="15" fill="white" fontSize="9" fontWeight="bold">85.0</text>
+        <text x="130" y="15" fill="white" fontSize="10" fontWeight="bold">50,035</text>
+        <text x="95" y="15" fill="#fbbf24" fontSize="8" fontWeight="bold">WALL</text>
+
+        <rect x="200" y="0" width="45" height="22" fill="#ef4444" opacity="0.5" rx="3"/>
+        <text x="360" y="15" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9">8.5</text>
+        <text x="222" y="15" fill="white" fontSize="10" fontWeight="bold">50,060</text>
+      </g>
+
+      {/* Row 4 */}
+      <g transform="translate(0, 106)">
+        <rect x="90" y="0" width="90" height="22" fill="#22c55e" opacity="0.5" rx="3"/>
+        <text x="20" y="15" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9">18.3</text>
+        <text x="130" y="15" fill="white" fontSize="10" fontWeight="bold">50,030</text>
+
+        <rect x="200" y="0" width="150" height="22" fill="#ef4444" opacity="0.95" rx="3" stroke="#ef4444" strokeWidth="2"/>
+        <text x="360" y="15" fill="white" fontSize="9" fontWeight="bold">62.0</text>
+        <text x="275" y="15" fill="white" fontSize="10" fontWeight="bold">50,065</text>
+        <text x="230" y="15" fill="#fbbf24" fontSize="8" fontWeight="bold">WALL</text>
+      </g>
+
+      {/* Labels */}
+      <text x="20" y="145" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="8">Vol</text>
+      <text x="130" y="145" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="8" textAnchor="middle">Precio</text>
+      <text x="242" y="145" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="8">Precio</text>
+      <text x="360" y="145" fill={isDark ? '#64748b' : '#94a3b8'} fontSize="8">Vol</text>
     </g>
 
-    {/* Sell side */}
-    <g transform="translate(230, 35)">
-      <text x="70" y="0" fill="#ef4444" fontSize="10" fontWeight="bold" textAnchor="middle">VENDEDORES (Asks)</text>
-      <rect x="0" y="10" width="140" height="20" fill="#ef4444" opacity="0.8" rx="2"/>
-      <text x="70" y="24" fill="white" fontSize="9" textAnchor="middle">$50,100 - 12.3 BTC</text>
-      <rect x="20" y="35" width="100" height="20" fill="#ef4444" opacity="0.6" rx="2"/>
-      <text x="70" y="49" fill="white" fontSize="9" textAnchor="middle">$50,150 - 6.8 BTC</text>
-      <rect x="40" y="60" width="60" height="20" fill="#ef4444" opacity="0.4" rx="2"/>
-      <text x="70" y="74" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" textAnchor="middle">$50,200 - 2.4 BTC</text>
+    {/* Spread indicator */}
+    <g transform="translate(185, 75)">
+      <rect x="0" y="0" width="50" height="18" fill={isDark ? '#3b82f6' : '#2563eb'} rx="9"/>
+      <text x="25" y="13" fill="white" fontSize="8" fontWeight="bold" textAnchor="middle">SPREAD</text>
     </g>
 
-    {/* Current price */}
-    <rect x="150" y="70" width="100" height="25" fill={isDark ? '#3b82f6' : '#2563eb'} rx="4"/>
-    <text x="200" y="87" fill="white" fontSize="11" fontWeight="bold" textAnchor="middle">$50,050</text>
+    {/* Legend */}
+    <g transform="translate(20, 200)">
+      <rect x="0" y="0" width="380" height="70" fill={isDark ? '#334155' : '#e2e8f0'} rx="8"/>
+      <text x="190" y="18" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold" textAnchor="middle">Como leer el Order Book:</text>
 
-    {/* Explanation */}
-    <text x="200" y="135" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9" textAnchor="middle">Las barras muestran la liquidez en cada nivel de precio</text>
-    <text x="200" y="150" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9" textAnchor="middle">Mayor liquidez = zona de interes para el precio</text>
-    <text x="200" y="165" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="9" textAnchor="middle">Los grandes traders colocan ordenes en estas zonas</text>
+      <circle cx="25" cy="35" r="6" fill="#22c55e"/>
+      <text x="40" y="38" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8">Bids = Ordenes de compra esperando (soporte)</text>
+
+      <circle cx="25" cy="52" r="6" fill="#ef4444"/>
+      <text x="40" y="55" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8">Asks = Ordenes de venta esperando (resistencia)</text>
+
+      <rect x="210" y="29" width="30" height="12" fill="#fbbf24" opacity="0.5" rx="2"/>
+      <text x="245" y="38" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8">WALL = Gran volumen (zona importante)</text>
+
+      <text x="245" y="55" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8">Barras largas = mas liquidez</text>
+    </g>
+  </svg>
+);
+
+// Liquidity Zones SVG
+const LiquidityZonesSVG = ({ isDark }) => (
+  <svg viewBox="0 0 420 300" className="w-full h-80">
+    <rect width="420" height="300" fill={isDark ? '#1e293b' : '#f8fafc'}/>
+
+    <text x="210" y="18" fill={isDark ? '#fff' : '#1e293b'} fontSize="12" fontWeight="bold" textAnchor="middle">Zonas de Liquidez y Caza de Stops</text>
+
+    {/* Main chart area */}
+    <g transform="translate(20, 35)">
+      {/* Price action */}
+      <path d="M 10 120 L 40 80 L 70 100 L 100 60 L 130 85 L 160 45 L 190 70 L 220 50 L 250 75 L 280 55 L 310 90 L 340 70 L 370 100"
+            fill="none" stroke={isDark ? '#60a5fa' : '#3b82f6'} strokeWidth="2.5"/>
+
+      {/* Previous high - resistance */}
+      <line x1="160" y1="45" x2="370" y2="45" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,3"/>
+      <text x="375" y="48" fill="#ef4444" fontSize="8">Maximo anterior</text>
+
+      {/* Stop loss zone above - where retail places stops */}
+      <rect x="140" y="25" width="100" height="18" fill="#ef4444" opacity="0.2" rx="3" stroke="#ef4444" strokeDasharray="3,2"/>
+      <text x="190" y="37" fill="#ef4444" fontSize="8" textAnchor="middle">Stop Loss Retail</text>
+
+      {/* Arrow showing stop hunt */}
+      <path d="M 200 50 L 200 28" fill="none" stroke="#f59e0b" strokeWidth="2"/>
+      <polygon points="200,25 195,32 205,32" fill="#f59e0b"/>
+      <text x="215" y="20" fill="#f59e0b" fontSize="7" fontWeight="bold">CAZA</text>
+
+      {/* Support level */}
+      <line x1="10" y1="120" x2="370" y2="120" stroke="#22c55e" strokeWidth="1.5" strokeDasharray="4,3"/>
+      <text x="375" y="123" fill="#22c55e" fontSize="8">Soporte</text>
+
+      {/* Stop loss zone below - where retail places stops */}
+      <rect x="10" y="125" width="120" height="18" fill="#22c55e" opacity="0.2" rx="3" stroke="#22c55e" strokeDasharray="3,2"/>
+      <text x="70" y="137" fill="#22c55e" fontSize="8" textAnchor="middle">Stop Loss Retail</text>
+
+      {/* Liquidity pools visualization */}
+      <g transform="translate(280, 130)">
+        <rect x="0" y="0" width="80" height="55" fill={isDark ? '#334155' : '#e2e8f0'} rx="6"/>
+        <text x="40" y="15" fill={isDark ? '#fff' : '#1e293b'} fontSize="8" fontWeight="bold" textAnchor="middle">LIQUIDEZ</text>
+        <text x="40" y="28" fill="#22c55e" fontSize="7" textAnchor="middle">Bajo soporte</text>
+        <text x="40" y="40" fill="#ef4444" fontSize="7" textAnchor="middle">Sobre resistencia</text>
+        <text x="40" y="52" fill={isDark ? '#f59e0b' : '#d97706'} fontSize="6" textAnchor="middle">= Donde estan los stops</text>
+      </g>
+    </g>
+
+    {/* Second example: The fakeout */}
+    <g transform="translate(20, 195)">
+      <text x="0" y="0" fill={isDark ? '#fff' : '#1e293b'} fontSize="10" fontWeight="bold">El Fakeout (Trampa):</text>
+
+      {/* Mini chart showing fakeout */}
+      <g transform="translate(0, 15)">
+        {/* Support */}
+        <line x1="10" y1="50" x2="150" y2="50" stroke="#22c55e" strokeWidth="1.5" strokeDasharray="3,2"/>
+
+        {/* Price breaking support briefly */}
+        <path d="M 10 30 L 30 45 L 50 35 L 70 48 L 90 60 L 100 55 L 110 65 L 120 45 L 140 20"
+              fill="none" stroke={isDark ? '#60a5fa' : '#3b82f6'} strokeWidth="2"/>
+
+        {/* Stop hunt wick */}
+        <line x1="110" y1="55" x2="110" y2="72" stroke="#ef4444" strokeWidth="2"/>
+        <circle cx="110" cy="72" r="4" fill="#ef4444"/>
+        <text x="110" y="85" fill="#ef4444" fontSize="7" textAnchor="middle">Caza de stops</text>
+
+        {/* Arrow showing reversal */}
+        <path d="M 125 55 L 145 25" fill="none" stroke="#22c55e" strokeWidth="2"/>
+        <polygon points="145,22 138,30 145,33" fill="#22c55e"/>
+        <text x="155" y="25" fill="#22c55e" fontSize="7">Reversal</text>
+      </g>
+
+      {/* Explanation box */}
+      <g transform="translate(180, 10)">
+        <rect x="0" y="0" width="200" height="75" fill={isDark ? '#334155' : '#e2e8f0'} rx="8"/>
+        <text x="100" y="18" fill={isDark ? '#fff' : '#1e293b'} fontSize="9" fontWeight="bold" textAnchor="middle">Como opera el dinero inteligente:</text>
+        <text x="10" y="35" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8">1. Identifica donde estan los stops</text>
+        <text x="10" y="48" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8">2. Mueve precio para activarlos</text>
+        <text x="10" y="61" fill={isDark ? '#94a3b8' : '#64748b'} fontSize="8">3. Usa esa liquidez para entrar</text>
+        <text x="10" y="74" fill="#22c55e" fontSize="8">4. Precio revierte en direccion real</text>
+      </g>
+    </g>
   </svg>
 );
 
@@ -774,7 +1002,7 @@ Proceso donde los grandes venden gradualmente:
               'Los FVG/imbalances tienden a llenarse',
               'Opera el "fakeout", no el "breakout" obvio'
             ],
-            diagram: null // Complex concept, text is enough
+            diagram: LiquidityZonesSVG
           }
         ]
       }
@@ -1179,7 +1407,7 @@ Process where big players gradually sell:
               'FVG/imbalances tend to get filled',
               'Trade the "fakeout", not the obvious "breakout"'
             ],
-            diagram: null
+            diagram: LiquidityZonesSVG
           }
         ]
       }
