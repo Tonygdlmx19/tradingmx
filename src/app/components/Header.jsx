@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck } from 'lucide-react';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Calculator, Trophy, ShieldCheck, User } from 'lucide-react';
 import CalculatorModal from './CalculatorModal';
 import SessionBar from './SessionBar';
 
@@ -209,9 +209,20 @@ export default function Header({
       <div className={`px-4 sm:px-6 lg:px-8 py-5 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <div className="mx-auto" style={{ maxWidth: '1280px' }}>
           <div className="text-center mb-5">
-            <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-2 ${greetingData.bgIcon}`}>
-              {greetingData.icon}
-            </div>
+            {/* Foto de perfil */}
+            {config?.fotoPerfil ? (
+              <div className="mb-3">
+                <img
+                  src={config.fotoPerfil}
+                  alt="Perfil"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-3 border-blue-500 mx-auto shadow-lg"
+                />
+              </div>
+            ) : (
+              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-2 ${greetingData.bgIcon}`}>
+                {greetingData.icon}
+              </div>
+            )}
             <h2 className={`text-lg sm:text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               {greetingData.text}, <span className="text-blue-500">{displayName}</span>
             </h2>

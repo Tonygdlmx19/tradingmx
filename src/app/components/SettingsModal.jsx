@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Settings, X, Target, User, TrendingUp, Plus, Trash2, ClipboardCheck, HelpCircle } from 'lucide-react';
+import { Settings, X, Target, User, TrendingUp, Plus, Trash2, ClipboardCheck, HelpCircle, Briefcase, Eye, EyeOff, Server, ChevronUp, ChevronDown, Camera } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 
@@ -61,6 +61,8 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
   const [nuevoActivo, setNuevoActivo] = useState('');
   const [showSugerencias, setShowSugerencias] = useState(false);
   const [nuevaRegla, setNuevaRegla] = useState('');
+  const [nuevaCuenta, setNuevaCuenta] = useState({ broker: '', numero: '', servidor: '', password: '' });
+  const [showPassword, setShowPassword] = useState({});
 
   const labels = {
     es: {
@@ -78,8 +80,25 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       rulesDescription: 'Define tus criterios para tomar un trade. Se usaran como checklist antes de operar.',
       rulePlaceholder: 'Ej: Confluencia de soportes...',
       noRulesYet: 'No has agregado reglas de setup aun',
+      moveUp: 'Mover arriba',
+      moveDown: 'Mover abajo',
+      profilePhoto: 'Foto de perfil',
+      changePhoto: 'Cambiar foto',
+      removePhoto: 'Quitar foto',
       viewTour: 'Ver tour de la app',
       saveConfig: 'Guardar Configuracion',
+      brokerAccounts: 'Cuentas de Broker',
+      brokerAccountsDesc: 'Guarda la informacion de tus cuentas de trading',
+      brokerName: 'Broker',
+      brokerPlaceholder: 'Ej: WelTrade, XM, Exness...',
+      accountNumber: 'Numero de cuenta',
+      serverName: 'Servidor (opcional)',
+      serverPlaceholder: 'Ej: WelTrade-Live',
+      investorPassword: 'Contrasena de inversor',
+      investorPasswordHint: 'Solo lectura, no permite operar',
+      addAccount: 'Agregar cuenta',
+      noAccountsYet: 'No has agregado cuentas aun',
+      accountAdded: 'Cuenta agregada',
     },
     en: {
       title: 'Settings',
@@ -96,8 +115,25 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       rulesDescription: 'Define your criteria to take a trade. They will be used as a checklist before trading.',
       rulePlaceholder: 'Ex: Support confluence...',
       noRulesYet: 'You haven\'t added any setup rules yet',
+      moveUp: 'Move up',
+      moveDown: 'Move down',
+      profilePhoto: 'Profile photo',
+      changePhoto: 'Change photo',
+      removePhoto: 'Remove photo',
       viewTour: 'View app tour',
       saveConfig: 'Save Settings',
+      brokerAccounts: 'Broker Accounts',
+      brokerAccountsDesc: 'Save your trading accounts information',
+      brokerName: 'Broker',
+      brokerPlaceholder: 'Ex: WelTrade, XM, Exness...',
+      accountNumber: 'Account number',
+      serverName: 'Server (optional)',
+      serverPlaceholder: 'Ex: WelTrade-Live',
+      investorPassword: 'Investor password',
+      investorPasswordHint: 'Read-only, cannot trade',
+      addAccount: 'Add account',
+      noAccountsYet: 'You haven\'t added any accounts yet',
+      accountAdded: 'Account added',
     },
   };
   const t = labels[language];
@@ -149,6 +185,88 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
     const actuales = config.reglasSetup || [];
     setConfig({ ...config, reglasSetup: actuales.filter((_, i) => i !== index) });
   };
+
+  const moverRegla = (index, direccion) => {
+    const actuales = [...(config.reglasSetup || [])];
+    const nuevoIndex = index + direccion;
+    if (nuevoIndex < 0 || nuevoIndex >= actuales.length) return;
+    // Intercambiar posiciones
+    [actuales[index], actuales[nuevoIndex]] = [actuales[nuevoIndex], actuales[index]];
+    setConfig({ ...config, reglasSetup: actuales });
+  };
+
+  // Comprimir imagen de perfil
+  const compressProfileImage = (file, maxWidth = 200) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Error leyendo archivo'));
+      reader.onload = (event) => {
+        const img = document.createElement('img');
+        img.onerror = () => reject(new Error('Error cargando imagen'));
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            // Hacer cuadrada (crop al centro)
+            const size = Math.min(width, height);
+            const offsetX = (width - size) / 2;
+            const offsetY = (height - size) / 2;
+            canvas.width = maxWidth;
+            canvas.height = maxWidth;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, maxWidth, maxWidth);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleProfilePhoto = async (file) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen es muy grande (max 5MB)');
+      return;
+    }
+    try {
+      const compressed = await compressProfileImage(file);
+      setConfig({ ...config, fotoPerfil: compressed });
+    } catch (error) {
+      console.error('Error procesando imagen:', error);
+    }
+  };
+
+  const removeProfilePhoto = () => {
+    setConfig({ ...config, fotoPerfil: null });
+  };
+
+  const agregarCuenta = () => {
+    if (!nuevaCuenta.broker.trim() || !nuevaCuenta.numero.trim()) return;
+    const actuales = config.cuentasBroker || [];
+    const cuenta = {
+      id: Date.now().toString(),
+      broker: nuevaCuenta.broker.trim(),
+      numero: nuevaCuenta.numero.trim(),
+      servidor: nuevaCuenta.servidor.trim() || null,
+      password: nuevaCuenta.password.trim() || null,
+    };
+    setConfig({ ...config, cuentasBroker: [...actuales, cuenta] });
+    setNuevaCuenta({ broker: '', numero: '', servidor: '', password: '' });
+  };
+
+  const eliminarCuenta = (id) => {
+    const actuales = config.cuentasBroker || [];
+    setConfig({ ...config, cuentasBroker: actuales.filter(c => c.id !== id) });
+  };
+
+  const toggleShowPassword = (id) => {
+    setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   
   const handleMetaUSD = (usd) => setConfig({ ...config, metaDiaria: Number(usd) });
   
@@ -192,6 +310,56 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               <User size={14}/> {t.personalization}
             </label>
 
+            {/* Foto de perfil */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="relative">
+                {config.fotoPerfil ? (
+                  <img
+                    src={config.fotoPerfil}
+                    alt="Perfil"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
+                  />
+                ) : (
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    isDark ? 'bg-slate-600' : 'bg-slate-200'
+                  }`}>
+                    <User size={28} className={isDark ? 'text-slate-400' : 'text-slate-400'} />
+                  </div>
+                )}
+                <label
+                  htmlFor="profile-photo-input"
+                  className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-blue-500 hover:bg-blue-600 cursor-pointer transition-colors"
+                >
+                  <Camera size={12} className="text-white" />
+                </label>
+                <input
+                  id="profile-photo-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) await handleProfilePhoto(file);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+              <div className="flex-1">
+                <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {t.profilePhoto}
+                </p>
+                {config.fotoPerfil && (
+                  <button
+                    type="button"
+                    onClick={removeProfilePhoto}
+                    className="text-xs text-red-500 hover:text-red-600 font-medium mt-1"
+                  >
+                    {t.removePhoto}
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="mb-4">
               <label className={`text-[10px] font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t.traderName}
@@ -200,12 +368,12 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 type="text"
                 placeholder={t.traderNamePlaceholder}
                 className={`w-full p-2.5 border rounded-xl font-medium outline-none focus:border-blue-500 transition-colors text-sm ${
-                  isDark 
-                    ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' 
+                  isDark
+                    ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                     : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
                 }`}
-                value={config.nombreTrader || ''} 
-                onChange={e => setConfig({...config, nombreTrader: e.target.value})} 
+                value={config.nombreTrader || ''}
+                onChange={e => setConfig({...config, nombreTrader: e.target.value})}
               />
             </div>
           </div>
@@ -369,6 +537,140 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
             )}
           </div>
 
+          {/* Cuentas de Broker */}
+          <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-purple-50 border-purple-100'}`}>
+            <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              <Briefcase size={14}/> {t.brokerAccounts}
+            </label>
+            <p className={`text-[10px] mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              {t.brokerAccountsDesc}
+            </p>
+
+            {/* Formulario para nueva cuenta */}
+            <div className={`p-3 rounded-xl mb-3 space-y-2 ${isDark ? 'bg-slate-600/50' : 'bg-white border border-purple-200'}`}>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder={t.brokerPlaceholder}
+                  className={`w-full p-2 border rounded-lg font-medium outline-none focus:border-purple-500 transition-colors text-sm ${
+                    isDark
+                      ? 'bg-slate-700 border-slate-500 text-white placeholder-slate-400'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
+                  }`}
+                  value={nuevaCuenta.broker}
+                  onChange={e => setNuevaCuenta({ ...nuevaCuenta, broker: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder={t.accountNumber}
+                  className={`w-full p-2 border rounded-lg font-mono font-medium outline-none focus:border-purple-500 transition-colors text-sm ${
+                    isDark
+                      ? 'bg-slate-700 border-slate-500 text-white placeholder-slate-400'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
+                  }`}
+                  value={nuevaCuenta.numero}
+                  onChange={e => setNuevaCuenta({ ...nuevaCuenta, numero: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder={t.serverPlaceholder}
+                  className={`w-full p-2 border rounded-lg font-medium outline-none focus:border-purple-500 transition-colors text-sm ${
+                    isDark
+                      ? 'bg-slate-700 border-slate-500 text-white placeholder-slate-400'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
+                  }`}
+                  value={nuevaCuenta.servidor}
+                  onChange={e => setNuevaCuenta({ ...nuevaCuenta, servidor: e.target.value })}
+                />
+                <input
+                  type="password"
+                  placeholder={t.investorPassword}
+                  className={`w-full p-2 border rounded-lg font-medium outline-none focus:border-purple-500 transition-colors text-sm ${
+                    isDark
+                      ? 'bg-slate-700 border-slate-500 text-white placeholder-slate-400'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
+                  }`}
+                  value={nuevaCuenta.password}
+                  onChange={e => setNuevaCuenta({ ...nuevaCuenta, password: e.target.value })}
+                />
+              </div>
+              <p className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {t.investorPasswordHint}
+              </p>
+              <button
+                type="button"
+                onClick={agregarCuenta}
+                disabled={!nuevaCuenta.broker.trim() || !nuevaCuenta.numero.trim()}
+                className={`w-full py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${
+                  nuevaCuenta.broker.trim() && nuevaCuenta.numero.trim()
+                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                    : isDark ? 'bg-slate-600 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                <Plus size={16}/> {t.addAccount}
+              </button>
+            </div>
+
+            {/* Lista de cuentas guardadas */}
+            {(config.cuentasBroker || []).length > 0 ? (
+              <div className="space-y-2">
+                {(config.cuentasBroker || []).map((cuenta) => (
+                  <div
+                    key={cuenta.id}
+                    className={`p-3 rounded-lg ${isDark ? 'bg-slate-600' : 'bg-white border border-slate-200'}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                            {cuenta.broker}
+                          </span>
+                          <span className={`font-mono text-xs px-2 py-0.5 rounded ${isDark ? 'bg-slate-500 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                            #{cuenta.numero}
+                          </span>
+                        </div>
+                        {cuenta.servidor && (
+                          <div className={`flex items-center gap-1 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <Server size={10}/> {cuenta.servidor}
+                          </div>
+                        )}
+                        {cuenta.password && (
+                          <div className={`flex items-center gap-1 mt-1 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <button
+                              type="button"
+                              onClick={() => toggleShowPassword(cuenta.id)}
+                              className="flex items-center gap-1 hover:text-purple-500 transition-colors"
+                            >
+                              {showPassword[cuenta.id] ? <EyeOff size={10}/> : <Eye size={10}/>}
+                              <span className="font-mono">
+                                {showPassword[cuenta.id] ? cuenta.password : '••••••••'}
+                              </span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => eliminarCuenta(cuenta.id)}
+                        className={`p-1.5 rounded transition-colors flex-shrink-0 ${
+                          isDark ? 'hover:bg-red-500/30 text-red-400' : 'hover:bg-red-50 text-red-500'
+                        }`}
+                      >
+                        <Trash2 size={14}/>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={`text-xs text-center py-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {t.noAccountsYet}
+              </p>
+            )}
+          </div>
+
           {/* Reglas de Setup / Checklist */}
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-amber-50 border-amber-100'}`}>
             <label className={`text-xs font-bold uppercase tracking-wider mb-2 block flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
@@ -417,13 +719,50 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 {(config.reglasSetup || []).map((regla, index) => (
                   <div
                     key={index}
-                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
                       isDark ? 'bg-slate-600' : 'bg-white border border-slate-200'
                     }`}
                   >
-                    <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                      {index + 1}. {regla}
+                    {/* Número */}
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                      isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                    }`}>
+                      {index + 1}
                     </span>
+                    {/* Texto de la regla */}
+                    <span className={`flex-1 font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                      {regla}
+                    </span>
+                    {/* Botones de ordenar */}
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => moverRegla(index, -1)}
+                        disabled={index === 0}
+                        className={`p-0.5 rounded transition-colors ${
+                          index === 0
+                            ? 'opacity-30 cursor-not-allowed'
+                            : isDark ? 'hover:bg-slate-500 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+                        }`}
+                        title={t.moveUp}
+                      >
+                        <ChevronUp size={14}/>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moverRegla(index, 1)}
+                        disabled={index === (config.reglasSetup || []).length - 1}
+                        className={`p-0.5 rounded transition-colors ${
+                          index === (config.reglasSetup || []).length - 1
+                            ? 'opacity-30 cursor-not-allowed'
+                            : isDark ? 'hover:bg-slate-500 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+                        }`}
+                        title={t.moveDown}
+                      >
+                        <ChevronDown size={14}/>
+                      </button>
+                    </div>
+                    {/* Botón eliminar */}
                     <button
                       type="button"
                       onClick={() => eliminarRegla(index)}

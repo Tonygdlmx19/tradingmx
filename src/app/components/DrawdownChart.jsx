@@ -13,11 +13,15 @@ export default function DrawdownChart({ data }) {
       title: 'Drawdown',
       noData: 'Registra trades para ver la gráfica',
       max: 'Max',
+      date: 'Fecha',
+      time: 'Hora',
     },
     en: {
       title: 'Drawdown',
       noData: 'Record trades to see the chart',
       max: 'Max',
+      date: 'Date',
+      time: 'Time',
     },
   };
   const t = labels[language];
@@ -131,15 +135,38 @@ export default function DrawdownChart({ data }) {
               axisLine={false}
               width={45}
             />
-            <Tooltip 
-              contentStyle={{ 
-                borderRadius: '8px', 
+            <Tooltip
+              contentStyle={{
+                borderRadius: '8px',
                 border: 'none',
                 backgroundColor: isDark ? '#1e293b' : '#ffffff',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 fontSize: '12px',
-              }} 
-              formatter={(val) => [`${Number(val).toFixed(2)}%`, 'Drawdown']}
+              }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const d = payload[0].payload;
+                  return (
+                    <div style={{
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      fontSize: '12px',
+                    }}>
+                      <p style={{ color: isDark ? '#94a3b8' : '#64748b', marginBottom: '4px', fontWeight: 600 }}>
+                        Drawdown: <span style={{ color: '#ef4444' }}>{Number(d.dd).toFixed(2)}%</span>
+                      </p>
+                      {d.fecha && (
+                        <p style={{ color: isDark ? '#64748b' : '#94a3b8', fontSize: '11px' }}>
+                          {t.date}: {d.fecha} • {t.time}: {d.hora}
+                        </p>
+                      )}
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
             <ReferenceLine 
               y={0} 

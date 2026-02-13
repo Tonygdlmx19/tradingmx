@@ -14,7 +14,16 @@
       "Bash(find:*)",
       "Bash(curl:*)",
       "Bash(node -e:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "WebSearch",
+      "WebFetch(domain:tradersunion.com)",
+      "WebFetch(domain:www.weltrade.com)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(code:*)",
+      "WebFetch(domain:ai.google.dev)"
     ]
   }
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Clock, Globe } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import MarketSessionsModal from './MarketSessionsModal';
 
 // Trading Sessions in UTC
 const SESSIONS = [
@@ -36,6 +37,7 @@ export default function SessionBar() {
   const { language, toggleLanguage } = useLanguage();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
+  const [showSessionsModal, setShowSessionsModal] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -101,8 +103,14 @@ export default function SessionBar() {
             {timeString}
           </div>
 
-          {/* Session Indicator */}
-          <div className="flex items-center gap-2">
+          {/* Session Indicator - Clickable */}
+          <button
+            onClick={() => setShowSessionsModal(true)}
+            className={`flex items-center gap-2 cursor-pointer transition-all hover:scale-105 ${
+              isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-100'
+            } px-2 py-1 rounded-lg`}
+            title={language === 'es' ? 'Ver sesiones de mercado' : 'View market sessions'}
+          >
             {activeSessions.length === 0 ? (
               <span className={`text-xs font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 {t.noSession}
@@ -125,9 +133,15 @@ export default function SessionBar() {
                 })}
               </div>
             )}
-          </div>
+          </button>
         </div>
       </div>
+
+      {/* Market Sessions Modal */}
+      <MarketSessionsModal
+        isOpen={showSessionsModal}
+        onClose={() => setShowSessionsModal(false)}
+      />
     </div>
   );
 }

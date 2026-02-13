@@ -45,6 +45,7 @@ export default function TradingJournalPRO() {
   const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'active' | 'expired' | 'unauthorized'
   const [userTrialEnd, setUserTrialEnd] = useState(null);
   const [userType, setUserType] = useState(null);
+  const [userPlan, setUserPlan] = useState(null);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
   const [viewMode] = useState('mensual'); // Siempre mensual para coincidir con el calendario
@@ -86,6 +87,7 @@ export default function TradingJournalPRO() {
             const data = authDoc.data();
             const currentUserType = data.type || 'paid'; // backwards compat
             setUserType(currentUserType);
+            setUserPlan(data.subscriptionPlan || null);
 
             if (data.status === 'active') {
               const now = new Date();
@@ -206,14 +208,30 @@ export default function TradingJournalPRO() {
     }
 
     // Aplicar signo según el toggle WIN/LOSS
+    // El swap se guarda aparte y se descuenta del balance, NO del trade
     const resultadoFinal = form.esGanancia !== false
       ? Math.abs(parseFloat(resultado))
       : -Math.abs(parseFloat(resultado));
+
+    const swapComision = parseFloat(form.swap) || 0;
     
     // Usar fechaSalida como fecha principal para compatibilidad
     const hoy = new Date().toISOString().split('T')[0];
     const fechaEntrada = form.fechaEntrada || hoy;
     const fechaSalida = form.fechaSalida || hoy;
+
+    // Obtener info de la cuenta seleccionada
+    const cuentaSeleccionada = form.cuentaId
+      ? (config.cuentasBroker || []).find(c => c.id === form.cuentaId)
+      : null;
+
+    // Calcular puntos según dirección
+    let puntos = null;
+    if (form.entrada && form.salida) {
+      const entrada = parseFloat(form.entrada);
+      const salida = parseFloat(form.salida);
+      puntos = form.dir === 'Long' ? salida - entrada : entrada - salida;
+    }
 
     const tradeData = {
       uid: user.uid,
@@ -227,12 +245,17 @@ export default function TradingJournalPRO() {
       lotes: form.lotes ? parseFloat(form.lotes) : 1,
       entrada: form.entrada ? parseFloat(form.entrada) : null,
       salida: form.salida ? parseFloat(form.salida) : null,
+      puntos: puntos,
       emo: form.emo,
       seguiPlan: form.seguiPlan,
       respetoRiesgo: form.respetoRiesgo,
       notas: form.notas || '',
       imagenes: form.imagenes || [],
       checklist: form.checklist || null,
+      swap: swapComision,
+      cuentaId: form.cuentaId || null,
+      broker: cuentaSeleccionada?.broker || null,
+      numeroCuenta: cuentaSeleccionada?.numero || null,
       createdAt: new Date()
     };
     
@@ -251,6 +274,7 @@ export default function TradingJournalPRO() {
       notas: '',
       imagenes: [],
       checklist: null,
+      swap: '',
     });
   }, [form, user]);
 
@@ -346,21 +370,50 @@ export default function TradingJournalPRO() {
       return aTime - bTime;
     });
     
+    // Métricas de puntos
+    let totalPuntos = 0;
+    let puntosGanadores = 0;
+    let puntosPerdedores = 0;
+    let tradesConPuntos = 0;
+    let totalSwap = 0;
+
     sortedTrades.forEach((t, i) => {
       const r = parseFloat(t.res);
-      currentBalance += r;
+      const swap = parseFloat(t.swap) || 0;
+      totalSwap += swap;
+      currentBalance += r - swap;
       if (r > 0) { grossWin += r; winCount++; }
       else { grossLoss += Math.abs(r); }
       if (currentBalance > maxBal) maxBal = currentBalance;
       const dd = maxBal > 0 ? ((maxBal - currentBalance) / maxBal) * 100 : 0;
-      data.push({ name: `T${i + 1}`, bal: currentBalance, dd: -parseFloat(dd.toFixed(2)), rawDD: dd });
+
+      // Acumular puntos
+      if (t.puntos !== null && t.puntos !== undefined) {
+        totalPuntos += t.puntos;
+        tradesConPuntos++;
+        if (r > 0) puntosGanadores += t.puntos;
+        else puntosPerdedores += t.puntos;
+      }
+
+      // Obtener hora del trade
+      const tradeTime = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(t.createdAt || t.fecha);
+      const hora = tradeTime.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      data.push({
+        name: `T${i + 1}`,
+        bal: currentBalance,
+        dd: -parseFloat(dd.toFixed(2)),
+        rawDD: dd,
+        fecha: t.fechaSalida || t.fecha,
+        hora: hora
+      });
     });
-    
+
     const totalPnl = currentBalance - startBalance;
     const winRate = sortedTrades.length ? ((winCount / sortedTrades.length) * 100) : 0;
     const maxDD = Math.max(...data.map(d => d.rawDD || 0));
     const profitFactor = grossLoss === 0 ? grossWin : (grossWin / grossLoss);
-    
+    const promedioPuntos = tradesConPuntos > 0 ? totalPuntos / tradesConPuntos : 0;
+
     return {
       balance: currentBalance,
       startBalance,
@@ -369,7 +422,14 @@ export default function TradingJournalPRO() {
       maxDD,
       profitFactor,
       data,
-      tradeCount: sortedTrades.length
+      tradeCount: sortedTrades.length,
+      // Métricas de puntos
+      totalPuntos,
+      promedioPuntos,
+      puntosGanadores,
+      puntosPerdedores,
+      tradesConPuntos,
+      totalSwap
     };
   }, [filteredTrades, trades, config, viewMode, selectedMonth, selectedYear]);
 
@@ -442,6 +502,10 @@ export default function TradingJournalPRO() {
         }}
         onUpdate={updateTrade}
         onDelete={deleteTrade}
+        cuentasBroker={config.cuentasBroker || []}
+        userId={user?.uid}
+        userType={userType}
+        userPlan={userPlan}
       />
 
       <Header
@@ -504,7 +568,7 @@ export default function TradingJournalPRO() {
           </div>
 
           <div className="lg:col-span-3 space-y-6 order-1 lg:order-2 lg:sticky lg:top-24 h-fit">
-            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} activosFavoritos={config.activosFavoritos} reglasSetup={config.reglasSetup || []} />
+            <TradeForm onSubmit={addTrade} form={form} setForm={setForm} activosFavoritos={config.activosFavoritos} reglasSetup={config.reglasSetup || []} cuentasBroker={config.cuentasBroker || []} />
           </div>
         </div>
       </main>

@@ -125,7 +125,7 @@ const ACTIVOS_POR_CATEGORIA = {
   ],
 };
 
-export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = [], reglasSetup = [] }) {
+export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = [], reglasSetup = [], cuentasBroker = [] }) {
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [imagenes, setImagenes] = useState([]);
@@ -167,18 +167,23 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       },
       notes: 'Notas (opcional)',
       notesPlaceholder: 'Observaciones del trade...',
-      screenshots: 'Capturas (opcional - max 3)',
+      screenshots: 'Captura (opcional)',
       timeframe: 'Temporalidad',
       addScreenshot: 'Agregar captura',
       addAnother: 'Agregar otra captura',
       saveTrade: 'Guardar Trade',
-      maxImages: 'Máximo 3 imágenes por trade',
+      maxImages: 'Máximo 1 imagen por trade',
       imageTooLarge: 'La imagen es muy grande (max 5MB)',
       imageError: 'Error al procesar la imagen',
       tradeTime: 'Hora del Trade',
       entryDate: 'Fecha de Entrada',
       exitDate: 'Fecha de Cierre',
       swingTrade: 'Swing Trade (multi-día)',
+      swapCommission: 'Swap/Comisión',
+      swapHint: 'Cargo por mantener posición overnight',
+      brokerAccount: 'Cuenta',
+      selectAccount: 'Selecciona una cuenta',
+      noAccounts: 'Sin cuenta asignada',
     },
     en: {
       title: 'Record Trade',
@@ -213,18 +218,23 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       },
       notes: 'Notes (optional)',
       notesPlaceholder: 'Trade observations...',
-      screenshots: 'Screenshots (optional - max 3)',
+      screenshots: 'Screenshot (optional)',
       timeframe: 'Timeframe',
       addScreenshot: 'Add screenshot',
       addAnother: 'Add another screenshot',
       saveTrade: 'Save Trade',
-      maxImages: 'Maximum 3 images per trade',
+      maxImages: 'Maximum 1 image per trade',
       imageTooLarge: 'Image is too large (max 5MB)',
       imageError: 'Error processing image',
       tradeTime: 'Trade Time',
       entryDate: 'Entry Date',
       exitDate: 'Exit Date',
       swingTrade: 'Swing Trade (multi-day)',
+      swapCommission: 'Swap/Commission',
+      swapHint: 'Overnight position charge',
+      brokerAccount: 'Account',
+      selectAccount: 'Select an account',
+      noAccounts: 'No account assigned',
     },
   };
   const t = labels[language];
@@ -307,7 +317,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
 
   const agregarImagen = async (file) => {
     if (!file) return;
-    if (imagenes.length >= 3) {
+    if (imagenes.length >= 1) {
       alert(t.maxImages);
       return;
     }
@@ -439,6 +449,31 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Cuenta de Broker */}
+        {cuentasBroker.length > 0 && (
+          <div>
+            <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+              {t.brokerAccount}
+            </label>
+            <select
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                isDark
+                  ? 'bg-slate-700 border-slate-600 text-white'
+                  : 'bg-purple-50 border-purple-200 text-slate-600'
+              }`}
+              value={form.cuentaId || ''}
+              onChange={e => setForm({...form, cuentaId: e.target.value})}
+            >
+              <option value="">{t.selectAccount}</option>
+              {cuentasBroker.map(cuenta => (
+                <option key={cuenta.id} value={cuenta.id}>
+                  {cuenta.broker} - #{cuenta.numero}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Activo */}
         <div>
           <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
@@ -786,22 +821,49 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
               </div>
             </div>
 
-            {/* Diferencia de puntos */}
-            {form.entrada && form.salida && (
-              <div className={`p-2.5 rounded-xl text-center ${
-                parseFloat(form.salida) - parseFloat(form.entrada) >= 0
-                  ? isDark ? 'bg-green-500/10' : 'bg-green-50'
-                  : isDark ? 'bg-red-500/10' : 'bg-red-50'
-              }`}>
-                <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.points}: </span>
-                <span className={`text-sm font-black ${
-                  parseFloat(form.salida) - parseFloat(form.entrada) >= 0 ? 'text-green-500' : 'text-red-500'
+            {/* Diferencia de puntos - considera la dirección */}
+            {form.entrada && form.salida && (() => {
+              const entrada = parseFloat(form.entrada);
+              const salida = parseFloat(form.salida);
+              // Long: gana si salida > entrada | Short: gana si entrada > salida
+              const puntos = form.dir === 'Long' ? salida - entrada : entrada - salida;
+              const esPositivo = puntos >= 0;
+              return (
+                <div className={`p-2.5 rounded-xl text-center ${
+                  esPositivo
+                    ? isDark ? 'bg-green-500/10' : 'bg-green-50'
+                    : isDark ? 'bg-red-500/10' : 'bg-red-50'
                 }`}>
-                  {(parseFloat(form.salida) - parseFloat(form.entrada)) >= 0 ? '+' : ''}
-                  {(parseFloat(form.salida) - parseFloat(form.entrada)).toFixed(2)}
-                </span>
-              </div>
-            )}
+                  <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.points}: </span>
+                  <span className={`text-sm font-black ${esPositivo ? 'text-green-500' : 'text-red-500'}`}>
+                    {esPositivo ? '+' : ''}{puntos.toFixed(2)}
+                  </span>
+                </div>
+              );
+            })()}
+
+            {/* Swap/Comisión */}
+            <div>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>
+                {t.swapCommission}
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-amber-500 ${
+                  isDark
+                    ? 'bg-slate-700 border-slate-600 text-amber-400 placeholder-slate-500'
+                    : 'bg-amber-50 border-amber-200 text-amber-600 placeholder-slate-400'
+                }`}
+                value={form.swap || ''}
+                onChange={e => setForm({...form, swap: e.target.value})}
+              />
+              <p className={`text-[9px] mt-1 ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {t.swapHint}
+              </p>
+            </div>
           </>
         )}
 
@@ -899,7 +961,7 @@ export default function TradeForm({ onSubmit, form, setForm, activosFavoritos = 
           )}
 
           {/* Botón agregar imagen */}
-          {imagenes.length < 3 && (
+          {imagenes.length < 1 && (
             <div>
               <input
                 type="file"

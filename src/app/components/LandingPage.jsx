@@ -30,7 +30,8 @@ import {
   Trophy,
   Star,
   Crown,
-  Infinity
+  Infinity,
+  GraduationCap
 } from 'lucide-react';
 
 const PLANS = [
@@ -41,6 +42,7 @@ const PLANS = [
     duration: '1 mes',
     icon: Zap,
     color: 'blue',
+    aiQueries: 5,
     paypalLink: 'https://www.paypal.com/ncp/payment/X3GWT63PZQ8J6'
   },
   {
@@ -51,6 +53,7 @@ const PLANS = [
     icon: Star,
     color: 'purple',
     popular: true,
+    aiQueries: 10,
     paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU'
   },
   {
@@ -60,6 +63,7 @@ const PLANS = [
     duration: '12 meses',
     icon: Crown,
     color: 'amber',
+    aiQueries: 20,
     paypalLink: 'https://www.paypal.com/ncp/payment/8DV9WS43YAXV8'
   },
   {
@@ -69,6 +73,7 @@ const PLANS = [
     duration: 'Para siempre',
     icon: Infinity,
     color: 'green',
+    aiQueries: 30,
     paypalLink: 'https://www.paypal.com/ncp/payment/Z2NETX47DZ5K4'
   },
 ];
@@ -162,6 +167,24 @@ export default function LandingPage({ onLogin }) {
       title: "Historial Completo",
       description: "Revisa todos tus trades con filtros avanzados",
       gradient: "from-indigo-500 to-violet-500"
+    },
+    {
+      icon: <GraduationCap className="w-7 h-7" />,
+      title: "Asistente IA",
+      description: "Mentor virtual que analiza tus gráficos y te da retroalimentación personalizada",
+      gradient: "from-purple-500 to-fuchsia-500"
+    },
+    {
+      icon: <Target className="w-7 h-7" />,
+      title: "Conteo de Puntos",
+      description: "Trackea tus puntos/pips ganados además del dinero",
+      gradient: "from-cyan-500 to-blue-500"
+    },
+    {
+      icon: <CheckCircle2 className="w-7 h-7" />,
+      title: "Plan de Trading",
+      description: "Crea tu checklist de reglas y evalúa cada trade",
+      gradient: "from-green-500 to-emerald-500"
     }
   ];
 
@@ -195,10 +218,10 @@ export default function LandingPage({ onLogin }) {
   const benefits = [
     "Identifica patrones en tu operativa",
     "Mejora tu win rate con datos reales",
+    "Trackea tus puntos/pips ganados",
     "Controla tus emociones con métricas",
     "Deja de repetir los mismos errores",
-    "Crece tu cuenta de forma consistente",
-    "Toma decisiones basadas en datos"
+    "Crece tu cuenta de forma consistente"
   ];
 
   const faqs = [
@@ -660,6 +683,7 @@ export default function LandingPage({ onLogin }) {
                 {[
                   { label: "Win Rate", value: "68%", color: "from-emerald-400 to-teal-400" },
                   { label: "Profit Factor", value: "2.4", color: "from-blue-400 to-cyan-400" },
+                  { label: "Puntos Totales", value: "+1,250", color: "from-cyan-400 to-blue-400" },
                   { label: "Mejor Día", value: "+$847", color: "from-purple-400 to-pink-400" },
                   { label: "Crecimiento", value: "+24.5%", color: "from-orange-400 to-amber-400" }
                 ].map((stat, i) => (
@@ -891,6 +915,10 @@ export default function LandingPage({ onLogin }) {
                           <div className={`text-xs ${isSelected ? 'text-emerald-300' : 'text-slate-500'}`}>
                             {plan.duration}
                           </div>
+                          <div className={`text-[10px] flex items-center gap-1 mt-0.5 ${isSelected ? 'text-purple-300' : 'text-purple-400'}`}>
+                            <GraduationCap size={10} />
+                            <span>{plan.aiQueries} análisis IA/día</span>
+                          </div>
                         </div>
                       </div>
 
@@ -919,10 +947,12 @@ export default function LandingPage({ onLogin }) {
               <div className="space-y-2 mb-6 text-left">
                 {[
                   "Acceso completo a la app",
-                  "Todas las métricas",
-                  "Calendario económico",
+                  "Todas las métricas y estadísticas",
+                  "Conteo de puntos/pips por trade",
+                  "Checklist de tu plan de trading",
+                  `Asistente IA (${selectedPlanData?.aiQueries || 5} análisis/día)`,
+                  "Calendario económico y sesiones",
                   "Updates gratuitos",
-                  "Soporte por email",
                   "Garantía de 7 días"
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2.5 p-2 rounded-lg">

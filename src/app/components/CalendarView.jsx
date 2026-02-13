@@ -356,11 +356,16 @@ export default function CalendarView({
                 <span className={`${hasSwing && !isNoOp ? 'mt-1' : ''} ${isNoOp ? 'opacity-50' : ''}`}>{day}</span>
 
                 {day && tradesByDay[day] && !isNoOp && (
-                  <span className={`text-[9px] font-normal ${
-                    pnlByDay[day] >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {pnlByDay[day] >= 0 ? '+' : ''}{pnlByDay[day]?.toFixed(0)}$
-                  </span>
+                  <div className="flex flex-col items-center">
+                    <span className={`text-[9px] font-normal ${
+                      pnlByDay[day] >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {pnlByDay[day] >= 0 ? '+' : ''}{pnlByDay[day]?.toFixed(0)}$
+                    </span>
+                    <span className={`text-[8px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {tradesByDay[day].length}T
+                    </span>
+                  </div>
                 )}
 
                 {isNoOp && !tradesByDay[day] && (
@@ -443,7 +448,26 @@ export default function CalendarView({
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg">{getEmojiForEmotion(trade.emo)}</span>
+                      {/* Mostrar puntos del trade si existen, sino mostrar icono */}
+                      {trade.puntos !== null && trade.puntos !== undefined ? (
+                        <div className={`w-12 h-8 flex items-center justify-center rounded-lg text-xs font-black ${
+                          trade.puntos >= 0
+                            ? isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600'
+                            : isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {trade.puntos >= 0 ? '+' : ''}{trade.puntos.toFixed(1)}
+                        </div>
+                      ) : (
+                        <div className={`w-8 h-8 flex items-center justify-center rounded-lg ${
+                          trade.res >= 0
+                            ? isDark ? 'bg-green-500/20' : 'bg-green-100'
+                            : isDark ? 'bg-red-500/20' : 'bg-red-100'
+                        }`}>
+                          <span className={`text-xs font-bold ${trade.res >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {trade.res >= 0 ? '↑' : '↓'}
+                          </span>
+                        </div>
+                      )}
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-700'}`}>
