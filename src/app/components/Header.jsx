@@ -11,6 +11,10 @@ export default function Header({
   metaDiaria,
   metaDiariaPct,
   progresoMeta,
+  selectedAccountId,
+  setSelectedAccountId,
+  selectedAccount,
+  currencySymbol = '$',
   onSettings,
   onCalendar,
   onFundingSimulator,
@@ -232,35 +236,73 @@ export default function Header({
             </p>
           </div>
 
+          {/* Selector de cuenta y Target */}
           <div className={`p-4 rounded-xl border ${
             isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
           }`}>
+            {/* Selector de cuenta */}
+            {(config.cuentasBroker || []).length > 0 && (
+              <div className="mb-4">
+                <label className={`text-[10px] font-bold uppercase mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {language === 'es' ? 'Cuenta activa' : 'Active account'}
+                </label>
+                <select
+                  value={selectedAccountId || ''}
+                  onChange={(e) => setSelectedAccountId(e.target.value)}
+                  className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
+                    isDark
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-200 text-slate-700'
+                  }`}
+                >
+                  {(config.cuentasBroker || []).map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.broker} - #{c.numero} ({c.divisa || 'USD'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Target del día */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${pnlHoy >= metaDiaria ? 'bg-green-500/10' : 'bg-blue-500/10'}`}>
                   <Target size={18} className={pnlHoy >= metaDiaria ? 'text-green-500' : 'text-blue-500'} />
                 </div>
                 <div>
-                  <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {language === 'es' ? 'Target del día' : 'Daily Target'} ({metaDiariaPct}%)
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {language === 'es' ? 'Target del día' : 'Daily Target'} ({metaDiariaPct}%)
+                    </p>
+                    {selectedAccount && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-500`}>
+                        {selectedAccount.divisa || 'USD'}
+                      </span>
+                    )}
+                  </div>
                   <p className={`text-lg sm:text-xl font-black ${pnlHoy >= metaDiaria ? 'text-green-500' : isDark ? 'text-white' : 'text-slate-800'}`}>
-                    ${pnlHoy.toFixed(2)} <span className={`text-xs font-normal ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>/ ${metaDiaria}</span>
+                    {currencySymbol}{pnlHoy.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <span className={`text-xs font-normal ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      / {currencySymbol}{metaDiaria.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
                   </p>
                 </div>
               </div>
-              
-              {/* Barra de progreso - ancho completo en móvil */}
+
+              {/* Barra de progreso */}
               <div className="w-full sm:flex-1 sm:max-w-[200px]">
                 <div className="flex justify-between text-[10px] mb-1">
-                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{language === 'es' ? 'Progreso' : 'Progress'}</span>
+                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+                    {language === 'es' ? 'Progreso' : 'Progress'}
+                  </span>
                   <span className={`font-bold ${pnlHoy >= metaDiaria ? 'text-green-500' : 'text-blue-500'}`}>
-                    {Math.min(100, progresoMeta).toFixed(0)}%
+                    {Math.max(0, Math.min(100, progresoMeta)).toFixed(0)}%
                   </span>
                 </div>
                 <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                  <div 
-                    className={`h-full transition-all duration-500 rounded-full ${pnlHoy >= metaDiaria ? 'bg-green-500' : 'bg-blue-500'}`} 
+                  <div
+                    className={`h-full transition-all duration-500 rounded-full ${pnlHoy >= metaDiaria ? 'bg-green-500' : 'bg-blue-500'}`}
                     style={{ width: `${Math.max(0, Math.min(100, progresoMeta))}%` }}
                   />
                 </div>

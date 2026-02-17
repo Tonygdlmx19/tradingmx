@@ -1,28 +1,28 @@
 "use client";
-import { Wallet, TrendingUp, Target, AlertTriangle, Crosshair, DollarSign } from 'lucide-react';
+import { Wallet, TrendingUp, Target, AlertTriangle, Crosshair } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 
-export default function StatsCards({ stats }) {
+export default function StatsCards({ stats, currencySymbol = '$', selectedAccount }) {
   const { isDark } = useTheme();
   const { language } = useLanguage();
 
   const labels = {
     es: {
-      balance: 'Balance Final',
+      balance: 'Balance',
       profitFactor: 'Profit Factor',
       winRate: 'Win Rate',
-      maxDrawdown: 'Max Drawdown',
+      maxDrawdown: 'Max DD',
       totalPoints: 'Puntos Totales',
       avgPoints: 'Promedio/Trade',
       totalSwap: 'Total Swap',
       trades: 'trades',
     },
     en: {
-      balance: 'Final Balance',
+      balance: 'Balance',
       profitFactor: 'Profit Factor',
       winRate: 'Win Rate',
-      maxDrawdown: 'Max Drawdown',
+      maxDrawdown: 'Max DD',
       totalPoints: 'Total Points',
       avgPoints: 'Avg/Trade',
       totalSwap: 'Total Swap',
@@ -32,16 +32,21 @@ export default function StatsCards({ stats }) {
 
   const t = labels[language];
 
+  // Calcular porcentaje de crecimiento
+  const growthPct = stats.startBalance > 0
+    ? ((stats.balance - stats.startBalance) / stats.startBalance) * 100
+    : 0;
+
   const cards = [
     {
       icon: <Wallet size={18} />,
       bgColor: 'bg-blue-500/10',
       textColor: 'text-blue-500',
       label: t.balance,
-      value: `$${stats.balance.toFixed(0)}`,
-      badge: stats.totalPnl >= 0
-        ? { text: `+${stats.totalPnl.toFixed(0)}$`, color: 'bg-green-500/20 text-green-500' }
-        : { text: `${stats.totalPnl.toFixed(0)}$`, color: 'bg-red-500/20 text-red-500' }
+      value: `${currencySymbol}${stats.balance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      badge: growthPct >= 0
+        ? { text: `+${growthPct.toFixed(1)}%`, color: 'bg-green-500/20 text-green-500' }
+        : { text: `${growthPct.toFixed(1)}%`, color: 'bg-red-500/20 text-red-500' }
     },
     {
       icon: <TrendingUp size={18} />,
@@ -68,6 +73,18 @@ export default function StatsCards({ stats }) {
 
   return (
     <div data-tour="stats" className="space-y-3">
+      {/* Header con cuenta seleccionada */}
+      {selectedAccount && (
+        <div className="flex items-center gap-2">
+          <span className={`px-3 py-1 rounded-full text-sm font-bold bg-blue-500/20 text-blue-500`}>
+            {selectedAccount.broker} #{selectedAccount.numero}
+          </span>
+          <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            {selectedAccount.divisa || 'USD'} - {stats.tradeCount} {t.trades}
+          </span>
+        </div>
+      )}
+
       {/* Stats principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {cards.map((card, i) => (
@@ -111,7 +128,6 @@ export default function StatsCards({ stats }) {
             </p>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            {/* Puntos totales */}
             <div>
               <p className={`text-[10px] font-medium uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 Total
@@ -125,7 +141,6 @@ export default function StatsCards({ stats }) {
                 {stats.tradesConPuntos} {t.trades}
               </p>
             </div>
-            {/* Promedio por trade */}
             <div>
               <p className={`text-[10px] font-medium uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 {t.avgPoints}
@@ -136,13 +151,12 @@ export default function StatsCards({ stats }) {
                 {stats.promedioPuntos >= 0 ? '+' : ''}{stats.promedioPuntos.toFixed(2)}
               </p>
             </div>
-            {/* Total swap */}
             <div>
               <p className={`text-[10px] font-medium uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 {t.totalSwap}
               </p>
               <p className={`text-lg font-black text-amber-500`}>
-                -${stats.totalSwap.toFixed(2)}
+                -{currencySymbol}{stats.totalSwap.toFixed(2)}
               </p>
             </div>
           </div>

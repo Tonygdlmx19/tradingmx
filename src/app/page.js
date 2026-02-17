@@ -23,6 +23,7 @@ import {
   useTheme,
   TradingAcademy
 } from './components';
+import MovementsModal from './components/MovementsModal';
 import UnauthorizedScreen from './components/UnauthorizedScreen';
 import AdminPanel from './components/AdminPanel';
 import TrialExpiringAlert from './components/TrialExpiringAlert';
@@ -44,6 +45,8 @@ export default function TradingJournalPRO() {
   const [showFundingSimulator, setShowFundingSimulator] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showAcademy, setShowAcademy] = useState(false);
+  const [showMovements, setShowMovements] = useState(false);
+  const [movements, setMovements] = useState([]);
   const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'active' | 'expired' | 'unauthorized'
   const [userTrialEnd, setUserTrialEnd] = useState(null);
   const [userType, setUserType] = useState(null);
@@ -57,6 +60,7 @@ export default function TradingJournalPRO() {
   const [showTradeDetail, setShowTradeDetail] = useState(false);
   const [forceTourStart, setForceTourStart] = useState(false);
   const [diasNoOperativos, setDiasNoOperativos] = useState([]); // Array de fechas 'YYYY-MM-DD'
+  const [selectedAccountId, setSelectedAccountId] = useState(null); // Se auto-selecciona la primera cuenta
 
   const [form, setForm] = useState({
     res: '',
@@ -159,6 +163,14 @@ export default function TradingJournalPRO() {
     }
   }, [config.activosFavoritos]);
 
+  // Auto-seleccionar la primera cuenta si no hay ninguna seleccionada
+  useEffect(() => {
+    const cuentas = config.cuentasBroker || [];
+    if (cuentas.length > 0 && !selectedAccountId) {
+      setSelectedAccountId(cuentas[0].id);
+    }
+  }, [config.cuentasBroker, selectedAccountId]);
+
   useEffect(() => {
     if (!user || !isAuthorized) return;
 
@@ -176,8 +188,8 @@ export default function TradingJournalPRO() {
     });
 
     const q = query(
-      collection(db, "trades"), 
-      where("uid", "==", user.uid), 
+      collection(db, "trades"),
+      where("uid", "==", user.uid),
       orderBy("fecha", "asc")
     );
     const unsubTrades = onSnapshot(q, (snapshot) => {
@@ -186,7 +198,18 @@ export default function TradingJournalPRO() {
       setLoading(false);
     });
 
-    return () => { unsubConfig(); unsubTrades(); };
+    // Suscripción a movimientos de capital (depósitos/retiros)
+    const qMovements = query(
+      collection(db, "movements"),
+      where("uid", "==", user.uid),
+      orderBy("fecha", "asc")
+    );
+    const unsubMovements = onSnapshot(qMovements, (snapshot) => {
+      const movementsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMovements(movementsData);
+    });
+
+    return () => { unsubConfig(); unsubTrades(); unsubMovements(); };
   }, [user, isAuthorized]);
 
   const handleLogout = useCallback(async () => {
@@ -353,100 +376,306 @@ export default function TradingJournalPRO() {
     });
   }, [trades, viewMode, selectedMonth, selectedYear]);
 
+  // Obtener cuenta seleccionada
+  const selectedAccount = useMemo(() => {
+    if (!selectedAccountId) return null;
+    return (config.cuentasBroker || []).find(c => c.id === selectedAccountId) || null;
+  }, [selectedAccountId, config.cuentasBroker]);
+
+  // Símbolo de moneda de la cuenta seleccionada
+  const currencySymbol = useMemo(() => {
+    if (!selectedAccount) return '$';
+    const divisa = selectedAccount.divisa || 'USD';
+    const symbols = { USD: '$', MXN: 'MX$', EUR: '€', GBP: '£', JPY: '¥', CAD: 'C$', AUD: 'A$', CHF: 'CHF ' };
+    return symbols[divisa] || '$';
+  }, [selectedAccount]);
+
+  // Filtrar trades por cuenta seleccionada
+  const accountFilteredTrades = useMemo(() => {
+    if (!selectedAccountId) return filteredTrades; // Sin filtro = todos
+    return filteredTrades.filter(t => t.cuentaId === selectedAccountId);
+  }, [filteredTrades, selectedAccountId]);
+
+  // Filtrar movimientos por cuenta seleccionada
+  const accountFilteredMovements = useMemo(() => {
+    if (!selectedAccountId) return movements; // Sin filtro = todos
+    return movements.filter(m => {
+      if (m.type === 'transfer') {
+        return m.fromCuentaId === selectedAccountId || m.toCuentaId === selectedAccountId;
+      }
+      return m.cuentaId === selectedAccountId;
+    });
+  }, [movements, selectedAccountId]);
+
+  // Calcular stats para la cuenta seleccionada
   const stats = useMemo(() => {
-    const tradesPrevios = trades.filter(t => {
+    // Verificar si la cuenta tiene depósitos o transferencias entrantes
+    const hasIncomingMovements = selectedAccountId
+      ? accountFilteredMovements.some(m =>
+          m.type === 'deposit' ||
+          (m.type === 'transfer' && m.toCuentaId === selectedAccountId)
+        )
+      : movements.some(m => m.type === 'deposit');
+
+    // Capital inicial:
+    // - Si hay depósitos/transferencias → usar 0 (los movimientos son el capital)
+    // - Si NO hay movimientos → usar saldoInicial manual
+    let capitalInicial = 0;
+    if (selectedAccount) {
+      if (hasIncomingMovements) {
+        // La cuenta tiene depósitos/transferencias, esos son el capital inicial
+        capitalInicial = 0;
+      } else {
+        // Sin movimientos, usar saldoInicial manual
+        capitalInicial = parseFloat(selectedAccount.saldoInicial) || 0;
+      }
+    } else {
+      // Sin cuenta seleccionada
+      if (hasIncomingMovements) {
+        capitalInicial = 0;
+      } else {
+        const sumaSaldos = (config.cuentasBroker || []).reduce((sum, c) => sum + (parseFloat(c.saldoInicial) || 0), 0);
+        capitalInicial = sumaSaldos > 0 ? sumaSaldos : (config.capitalInicial || 0);
+      }
+    }
+
+    // Trades para el periodo seleccionado (ya filtrados por cuenta)
+    const allAccountTrades = selectedAccountId
+      ? trades.filter(t => t.cuentaId === selectedAccountId)
+      : trades;
+
+    // Filtrar trades y movimientos de periodos anteriores
+    const tradesPrevios = allAccountTrades.filter(t => {
       const [y, m] = t.fecha.split('-').map(Number);
       if (viewMode === 'global') return y < selectedYear;
       return (y < selectedYear) || (y === selectedYear && (m - 1) < selectedMonth);
     });
-    
+
+    const movementsPrevios = accountFilteredMovements.filter(m => {
+      const [y, mo] = m.fecha.split('-').map(Number);
+      if (viewMode === 'global') return y < selectedYear;
+      return (y < selectedYear) || (y === selectedYear && (mo - 1) < selectedMonth);
+    });
+
+    // Filtrar movimientos del periodo actual
+    const periodMovements = accountFilteredMovements.filter(m => {
+      const [y, mo] = m.fecha.split('-').map(Number);
+      if (viewMode === 'global') return y === selectedYear;
+      return y === selectedYear && (mo - 1) === selectedMonth;
+    });
+
+    // Calcular impacto de periodos anteriores
     const pnlPrevio = tradesPrevios.reduce((acc, t) => acc + parseFloat(t.res), 0);
-    const startBalance = config.capitalInicial + pnlPrevio;
-    
+
+    let depositsPrevio = 0;
+    let withdrawalsPrevio = 0;
+    movementsPrevios.forEach(m => {
+      if (m.type === 'deposit') {
+        depositsPrevio += m.amount;
+      } else if (m.type === 'withdrawal') {
+        withdrawalsPrevio += m.amount;
+      } else if (m.type === 'transfer') {
+        if (m.fromCuentaId === selectedAccountId) {
+          withdrawalsPrevio += m.amount;
+        }
+        if (m.toCuentaId === selectedAccountId) {
+          depositsPrevio += m.amountConverted || m.amount;
+        }
+        // Si no hay cuenta seleccionada, las transferencias no afectan el total
+      }
+    });
+
+    const startBalance = capitalInicial + pnlPrevio + depositsPrevio - withdrawalsPrevio;
+
     let currentBalance = startBalance;
     let maxBal = startBalance;
     let grossWin = 0, grossLoss = 0;
     let winCount = 0;
-    
+
     const data = [{ name: 'Inicio', bal: startBalance, dd: 0 }];
-    const sortedTrades = [...filteredTrades].sort((a, b) => {
+
+    // Combinar trades y movimientos ordenados cronológicamente
+    const sortedTrades = [...accountFilteredTrades].map(t => ({ ...t, eventType: 'trade' }));
+    const sortedMovements = [...periodMovements].map(m => ({ ...m, eventType: m.type }));
+    const allEvents = [...sortedTrades, ...sortedMovements].sort((a, b) => {
       const dateCompare = new Date(a.fecha) - new Date(b.fecha);
       if (dateCompare !== 0) return dateCompare;
-      // Si la fecha es igual, ordenar por hora de creación
       const aTime = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
       const bTime = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
       return aTime - bTime;
     });
-    
-    // Métricas de puntos
-    let totalPuntos = 0;
-    let puntosGanadores = 0;
-    let puntosPerdedores = 0;
-    let tradesConPuntos = 0;
-    let totalSwap = 0;
 
-    sortedTrades.forEach((t, i) => {
-      const r = parseFloat(t.res);
-      const swap = parseFloat(t.swap) || 0;
-      totalSwap += swap;
-      currentBalance += r - swap;
-      if (r > 0) { grossWin += r; winCount++; }
-      else { grossLoss += Math.abs(r); }
-      if (currentBalance > maxBal) maxBal = currentBalance;
-      const dd = maxBal > 0 ? ((maxBal - currentBalance) / maxBal) * 100 : 0;
+    // Métricas
+    let totalPuntos = 0, puntosGanadores = 0, puntosPerdedores = 0, tradesConPuntos = 0;
+    let totalSwap = 0, tradeIndex = 0, depositIndex = 0, withdrawalIndex = 0;
+    let depositsTotal = 0, withdrawalsTotal = 0;
 
-      // Acumular puntos
-      if (t.puntos !== null && t.puntos !== undefined) {
-        totalPuntos += t.puntos;
-        tradesConPuntos++;
-        if (r > 0) puntosGanadores += t.puntos;
-        else puntosPerdedores += t.puntos;
+    allEvents.forEach((event) => {
+      if (event.eventType === 'trade') {
+        const r = parseFloat(event.res);
+        const swap = parseFloat(event.swap) || 0;
+        totalSwap += swap;
+        currentBalance += r - swap;
+        if (r > 0) { grossWin += r; winCount++; }
+        else { grossLoss += Math.abs(r); }
+        if (currentBalance > maxBal) maxBal = currentBalance;
+        const dd = maxBal > 0 ? ((maxBal - currentBalance) / maxBal) * 100 : 0;
+
+        if (event.puntos !== null && event.puntos !== undefined) {
+          totalPuntos += event.puntos;
+          tradesConPuntos++;
+          if (r > 0) puntosGanadores += event.puntos;
+          else puntosPerdedores += event.puntos;
+        }
+
+        const tradeTime = event.createdAt?.toDate ? event.createdAt.toDate() : new Date(event.createdAt || event.fecha);
+        const hora = tradeTime.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        tradeIndex++;
+        data.push({
+          name: `T${tradeIndex}`,
+          bal: currentBalance,
+          dd: -parseFloat(dd.toFixed(2)),
+          rawDD: dd,
+          fecha: event.fechaSalida || event.fecha,
+          hora: hora
+        });
+      } else if (event.eventType === 'deposit') {
+        currentBalance += event.amount;
+        depositsTotal += event.amount;
+        if (currentBalance > maxBal) maxBal = currentBalance;
+        const dd = maxBal > 0 ? ((maxBal - currentBalance) / maxBal) * 100 : 0;
+        depositIndex++;
+        data.push({
+          name: `D${depositIndex}`,
+          bal: currentBalance,
+          dd: -parseFloat(dd.toFixed(2)),
+          rawDD: dd,
+          fecha: event.fecha,
+          hora: event.hora || '',
+          isMovement: true,
+          movementType: 'deposit',
+          amount: event.amount
+        });
+      } else if (event.eventType === 'withdrawal') {
+        currentBalance -= event.amount;
+        withdrawalsTotal += event.amount;
+        if (currentBalance > maxBal) maxBal = currentBalance;
+        const dd = maxBal > 0 ? ((maxBal - currentBalance) / maxBal) * 100 : 0;
+        withdrawalIndex++;
+        data.push({
+          name: `W${withdrawalIndex}`,
+          bal: currentBalance,
+          dd: -parseFloat(dd.toFixed(2)),
+          rawDD: dd,
+          fecha: event.fecha,
+          hora: event.hora || '',
+          isMovement: true,
+          movementType: 'withdrawal',
+          amount: event.amount
+        });
+      } else if (event.eventType === 'transfer' && selectedAccountId) {
+        // Solo procesar transferencias si hay cuenta seleccionada
+        let amountChange = 0;
+        if (event.fromCuentaId === selectedAccountId) {
+          amountChange -= event.amount;
+          withdrawalsTotal += event.amount;
+        }
+        if (event.toCuentaId === selectedAccountId) {
+          const incomingAmount = event.amountConverted || event.amount;
+          amountChange += incomingAmount;
+          depositsTotal += incomingAmount;
+        }
+
+        if (amountChange !== 0) {
+          currentBalance += amountChange;
+          if (currentBalance > maxBal) maxBal = currentBalance;
+          const dd = maxBal > 0 ? ((maxBal - currentBalance) / maxBal) * 100 : 0;
+          data.push({
+            name: amountChange > 0 ? `TI${++depositIndex}` : `TO${++withdrawalIndex}`,
+            bal: currentBalance,
+            dd: -parseFloat(dd.toFixed(2)),
+            rawDD: dd,
+            fecha: event.fecha,
+            hora: event.hora || '',
+            isMovement: true,
+            movementType: amountChange > 0 ? 'transfer_in' : 'transfer_out',
+            amount: Math.abs(amountChange)
+          });
+        }
       }
-
-      // Obtener hora del trade
-      const tradeTime = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(t.createdAt || t.fecha);
-      const hora = tradeTime.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-      data.push({
-        name: `T${i + 1}`,
-        bal: currentBalance,
-        dd: -parseFloat(dd.toFixed(2)),
-        rawDD: dd,
-        fecha: t.fechaSalida || t.fecha,
-        hora: hora
-      });
     });
 
-    const totalPnl = currentBalance - startBalance;
-    const winRate = sortedTrades.length ? ((winCount / sortedTrades.length) * 100) : 0;
-    const maxDD = Math.max(...data.map(d => d.rawDD || 0));
+    const totalPnl = currentBalance - startBalance - depositsTotal + withdrawalsTotal;
+    const winRate = tradeIndex > 0 ? ((winCount / tradeIndex) * 100) : 0;
+    const maxDD = Math.max(...data.map(d => d.rawDD || 0), 0);
     const profitFactor = grossLoss === 0 ? grossWin : (grossWin / grossLoss);
     const promedioPuntos = tradesConPuntos > 0 ? totalPuntos / tradesConPuntos : 0;
+
+    // Capital efectivo = saldo inicial + depósitos (el dinero disponible para operar)
+    const effectiveCapital = startBalance + depositsTotal;
 
     return {
       balance: currentBalance,
       startBalance,
+      effectiveCapital,
       totalPnl,
       winRate,
       maxDD,
       profitFactor,
       data,
-      tradeCount: sortedTrades.length,
-      // Métricas de puntos
+      tradeCount: tradeIndex,
       totalPuntos,
       promedioPuntos,
       puntosGanadores,
       puntosPerdedores,
       tradesConPuntos,
-      totalSwap
+      totalSwap,
+      depositsTotal,
+      withdrawalsTotal,
+      netCapitalChange: depositsTotal - withdrawalsTotal
     };
-  }, [filteredTrades, trades, config, viewMode, selectedMonth, selectedYear]);
+  }, [accountFilteredTrades, trades, accountFilteredMovements, config, viewMode, selectedMonth, selectedYear, selectedAccountId, selectedAccount]);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const pnlHoy = trades.filter(t => t.fecha === todayStr).reduce((acc, t) => acc + t.res, 0);
-  const progresoMeta = Math.min((pnlHoy / config.metaDiaria) * 100, 100);
-  const metaDiariaPct = config.capitalInicial > 0
-    ? ((config.metaDiaria / config.capitalInicial) * 100).toFixed(1)
-    : 0;
+
+  // P&L de hoy (filtrado por cuenta si está seleccionada)
+  const pnlHoy = useMemo(() => {
+    const todayTrades = selectedAccountId
+      ? trades.filter(t => t.fecha === todayStr && t.cuentaId === selectedAccountId)
+      : trades.filter(t => t.fecha === todayStr);
+    return todayTrades.reduce((acc, t) => acc + parseFloat(t.res || 0), 0);
+  }, [trades, todayStr, selectedAccountId]);
+
+  // Meta diaria basada en el modo (porcentaje o monto fijo) y cuenta seleccionada
+  const metaDiaria = useMemo(() => {
+    // Modo porcentaje: calcular sobre el saldo de la cuenta
+    if (config.metaDiariaMode === 'percentage') {
+      const pct = config.metaDiariaPct || 2; // Default 2%
+      if (selectedAccount) {
+        // Usar saldo actual de la cuenta (saldoInicial + trades + movimientos)
+        return (stats.balance * pct) / 100;
+      }
+      // Sin cuenta seleccionada, usar capital inicial global
+      return (config.capitalInicial * pct) / 100;
+    }
+
+    // Modo monto fijo: usar el valor configurado
+    return config.metaDiaria || 0;
+  }, [config.metaDiariaMode, config.metaDiariaPct, config.metaDiaria, config.capitalInicial, selectedAccount, stats.balance]);
+
+  const progresoMeta = metaDiaria > 0 ? Math.min((pnlHoy / metaDiaria) * 100, 100) : 0;
+
+  // Calcular el porcentaje que representa la meta
+  const metaDiariaPct = useMemo(() => {
+    if (config.metaDiariaMode === 'percentage') {
+      return config.metaDiariaPct || 2;
+    }
+    // Modo monto fijo: calcular el % sobre el balance actual
+    if (selectedAccount) {
+      return stats.balance > 0 ? ((metaDiaria / stats.balance) * 100).toFixed(1) : '0';
+    }
+    return config.capitalInicial > 0 ? ((config.metaDiaria / config.capitalInicial) * 100).toFixed(1) : '0';
+  }, [config.metaDiariaMode, config.metaDiariaPct, config.metaDiaria, config.capitalInicial, selectedAccount, stats.balance, metaDiaria]);
 
   if (loading || checkingAuth) {
     return (
@@ -505,6 +734,9 @@ export default function TradingJournalPRO() {
         setConfig={setConfig}
         onSaveToCloud={saveSettingsToCloud}
         onRestartTour={() => setForceTourStart(true)}
+        trades={trades}
+        movements={movements}
+        onMovements={() => setShowMovements(true)}
       />
       
       <TradeDetailModal
@@ -526,9 +758,13 @@ export default function TradingJournalPRO() {
         user={user}
         config={config}
         pnlHoy={pnlHoy}
-        metaDiaria={config.metaDiaria}
+        metaDiaria={metaDiaria}
         metaDiariaPct={metaDiariaPct}
         progresoMeta={progresoMeta}
+        selectedAccountId={selectedAccountId}
+        setSelectedAccountId={setSelectedAccountId}
+        selectedAccount={selectedAccount}
+        currencySymbol={currencySymbol}
         onSettings={() => setShowSettings(true)}
         onCalendar={() => setShowCalendar(true)}
         onFundingSimulator={() => setShowFundingSimulator(true)}
@@ -550,6 +786,15 @@ export default function TradingJournalPRO() {
         userId={user?.uid}
       />
 
+      <MovementsModal
+        isOpen={showMovements}
+        onClose={() => setShowMovements(false)}
+        userId={user?.uid}
+        movements={movements}
+        cuentasBroker={config.cuentasBroker || []}
+        trades={trades}
+      />
+
       {/* Alerta de prueba expirando */}
       {userType === 'trial' && userTrialEnd && (
         <TrialExpiringAlert
@@ -568,10 +813,10 @@ export default function TradingJournalPRO() {
       <main className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           <div className="lg:col-span-8 space-y-6 lg:space-y-8 order-2 lg:order-1">
-            <StatsCards stats={stats} />
-            <AdvancedStats trades={filteredTrades} capitalInicial={config.capitalInicial} balance={stats.balance} />
+            <StatsCards stats={stats} currencySymbol={currencySymbol} selectedAccount={selectedAccount} />
+            <AdvancedStats trades={accountFilteredTrades} capitalInicial={stats.effectiveCapital} balance={stats.balance} currencySymbol={currencySymbol} />
             <div data-tour="charts">
-              <EquityChart data={stats.data} startBalance={stats.startBalance} />
+              <EquityChart data={stats.data} startBalance={stats.startBalance} currencySymbol={currencySymbol} />
             </div>
             <div data-tour="drawdown">
               <DrawdownChart data={stats.data} />

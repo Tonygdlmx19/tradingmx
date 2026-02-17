@@ -25,6 +25,7 @@ export default function DrawdownChart({ data }) {
     },
   };
   const t = labels[language];
+
   const [mounted, setMounted] = useState(false);
   const [ChartComponents, setChartComponents] = useState(null);
 
@@ -82,11 +83,10 @@ export default function DrawdownChart({ data }) {
 
   const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } = ChartComponents;
 
-  // Calcular domain del eje Y - CORREGIDO
+  // Calcular domain del eje Y
   const ddValues = data.map(d => d.dd).filter(d => typeof d === 'number' && !isNaN(d));
   const minDD = Math.min(...ddValues, 0);
   const maxDD = Math.max(...ddValues, 0);
-  // El eje debe ir desde el mínimo (más negativo) hasta un poco arriba de 0
   const paddingBottom = Math.abs(minDD) * 0.15 || 1;
   const paddingTop = Math.abs(maxDD) * 0.15 || 0.5;
   const yDomain = [Math.floor(minDD - paddingBottom), Math.ceil(maxDD + paddingTop)];
@@ -103,11 +103,11 @@ export default function DrawdownChart({ data }) {
           {t.max}: {Math.abs(minDD).toFixed(1)}%
         </span>
       </div>
-      
+
       <div style={{ width: '100%', height: 160, minWidth: 0 }}>
         <ResponsiveContainer width="100%" height={160}>
-          <AreaChart 
-            data={data} 
+          <AreaChart
+            data={data}
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
           >
             <defs>
@@ -116,20 +116,20 @@ export default function DrawdownChart({ data }) {
                 <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05}/>
               </linearGradient>
             </defs>
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              vertical={false} 
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
               stroke={isDark ? '#334155' : '#e2e8f0'}
             />
-            <XAxis 
-              dataKey="name" 
+            <XAxis
+              dataKey="name"
               tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
               tickLine={false}
               axisLine={{ stroke: isDark ? '#475569' : '#cbd5e1' }}
             />
-            <YAxis 
+            <YAxis
               domain={yDomain}
-              tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }} 
+              tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
               tickFormatter={(val) => `${val}%`}
               tickLine={false}
               axisLine={false}
@@ -159,7 +159,7 @@ export default function DrawdownChart({ data }) {
                       </p>
                       {d.fecha && (
                         <p style={{ color: isDark ? '#64748b' : '#94a3b8', fontSize: '11px' }}>
-                          {t.date}: {d.fecha} • {t.time}: {d.hora}
+                          {t.date}: {d.fecha} {d.hora && `• ${t.time}: ${d.hora}`}
                         </p>
                       )}
                     </div>
@@ -168,17 +168,17 @@ export default function DrawdownChart({ data }) {
                 return null;
               }}
             />
-            <ReferenceLine 
-              y={0} 
+            <ReferenceLine
+              y={0}
               stroke={isDark ? '#64748b' : '#94a3b8'}
               strokeWidth={1}
             />
-            <Area 
-              type="monotone" 
-              dataKey="dd" 
-              stroke="#ef4444" 
-              strokeWidth={2} 
-              fillOpacity={1} 
+            <Area
+              type="monotone"
+              dataKey="dd"
+              stroke="#ef4444"
+              strokeWidth={2}
+              fillOpacity={1}
               fill="url(#ddGradient)"
               dot={{ r: 3, fill: '#ef4444', strokeWidth: 0 }}
               activeDot={{ r: 5, fill: '#ef4444', stroke: '#fff', strokeWidth: 2 }}

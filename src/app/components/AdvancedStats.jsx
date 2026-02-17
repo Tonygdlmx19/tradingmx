@@ -3,7 +3,7 @@ import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 
-export default function AdvancedStats({ trades, capitalInicial, balance }) {
+export default function AdvancedStats({ trades, capitalInicial, balance, currencySymbol = '$' }) {
   const { isDark } = useTheme();
   const { language, t: translations } = useLanguage();
 
@@ -215,10 +215,10 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
           </div>
           <div className="text-right">
             <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              {t.capital}: ${capitalInicial?.toLocaleString() || 0}
+              {t.capital}: {currencySymbol}{capitalInicial?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || 0}
             </p>
             <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
-              {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
+              {totalPnl >= 0 ? '+' : ''}{currencySymbol}{totalPnl.toFixed(2)}
             </p>
           </div>
         </div>
@@ -232,7 +232,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
             {t.avgWin}
           </p>
           <p className="text-lg font-bold text-green-500">
-            +${m.avgWin.toFixed(0)}
+            +{currencySymbol}{m.avgWin.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {m.winningTrades} trades
@@ -245,7 +245,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
             {t.avgLoss}
           </p>
           <p className="text-lg font-bold text-red-500">
-            -${Math.abs(m.avgLoss).toFixed(0)}
+            -{currencySymbol}{Math.abs(m.avgLoss).toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {m.losingTrades} trades
@@ -271,7 +271,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
             {t.expectancy}
           </p>
           <p className={`text-lg font-bold ${m.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            ${m.expectancy.toFixed(2)}
+            {currencySymbol}{m.expectancy.toFixed(2)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.perTrade}
@@ -284,7 +284,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
             {t.bestTrade}
           </p>
           <p className={`text-lg font-bold ${m.bestTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {m.bestTrade.amount >= 0 ? '+' : ''}${m.bestTrade.amount.toFixed(0)}
+            {m.bestTrade.amount >= 0 ? '+' : ''}{currencySymbol}{m.bestTrade.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {formatDate(m.bestTrade.date)}
@@ -297,7 +297,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance }) {
             {t.worstTrade}
           </p>
           <p className={`text-lg font-bold ${m.worstTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {m.worstTrade.amount >= 0 ? '+' : ''}${m.worstTrade.amount.toFixed(0)}
+            {m.worstTrade.amount >= 0 ? '+' : ''}{currencySymbol}{m.worstTrade.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {formatDate(m.worstTrade.date)}
