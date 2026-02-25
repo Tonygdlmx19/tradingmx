@@ -955,14 +955,15 @@ export default function TradeForm({
       <div className={`mb-4 rounded-xl border overflow-hidden ${
         isDark ? 'bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30' : 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200'
       }`}>
-        <button
-          type="button"
-          onClick={() => setShowPreTradeSection(!showPreTradeSection)}
+        <div
           className={`w-full p-3 flex items-center justify-between transition-colors ${
             isDark ? 'hover:bg-white/5' : 'hover:bg-white/50'
           }`}
         >
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2 flex-1 cursor-pointer"
+            onClick={() => setShowPreTradeSection(!showPreTradeSection)}
+          >
             <Bot size={24} className="text-purple-500" />
             <span className={`text-sm font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
               {t.showPreTrade}
@@ -972,8 +973,7 @@ export default function TradeForm({
             {preTradeHistory.length > 0 && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={() => {
                   setShowHistory(!showHistory);
                   if (!showPreTradeSection) setShowPreTradeSection(true);
                 }}
@@ -995,11 +995,14 @@ export default function TradeForm({
                 : `${aiQueriesLimit - aiQueriesUsed} ${t.queriesRemaining}`
               }
             </span>
-            <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span
+              className={`text-xs cursor-pointer ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+              onClick={() => setShowPreTradeSection(!showPreTradeSection)}
+            >
               {showPreTradeSection ? '▲' : '▼'}
             </span>
           </div>
-        </button>
+        </div>
 
         {showPreTradeSection && (
           <div className={`p-4 border-t ${isDark ? 'border-purple-500/20' : 'border-purple-200'}`}>
