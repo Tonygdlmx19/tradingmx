@@ -13,29 +13,36 @@ export default function EquityChart({ data, startBalance, currencySymbol = '$' }
       title: 'Curva de Capital',
       noData: 'Registra trades para ver la gráfica',
       balance: 'Balance',
+      pnl: 'P&L',
       date: 'Fecha',
       time: 'Hora',
       deposit: 'Deposito',
       withdrawal: 'Retiro',
       transferIn: 'Transferencia entrada',
       transferOut: 'Transferencia salida',
+      profit: 'Ganancia',
+      loss: 'Pérdida',
     },
     en: {
       title: 'Equity Curve',
       noData: 'Record trades to see the chart',
       balance: 'Balance',
+      pnl: 'P&L',
       date: 'Date',
       time: 'Time',
       deposit: 'Deposit',
       withdrawal: 'Withdrawal',
       transferIn: 'Transfer in',
       transferOut: 'Transfer out',
+      profit: 'Profit',
+      loss: 'Loss',
     },
   };
   const t = labels[language];
 
   const [mounted, setMounted] = useState(false);
   const [ChartComponents, setChartComponents] = useState(null);
+  const [viewMode, setViewMode] = useState('balance'); // 'balance' o 'pnl'
 
   useEffect(() => {
     setMounted(true);
@@ -91,13 +98,50 @@ export default function EquityChart({ data, startBalance, currencySymbol = '$' }
 
   const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } = ChartComponents;
 
-  // Calcular domain del eje Y
-  const balances = data.map(d => d.bal).filter(b => typeof b === 'number' && !isNaN(b));
-  const minBal = Math.min(...balances);
-  const maxBal = Math.max(...balances);
-  const range = maxBal - minBal;
-  const padding = range > 0 ? range * 0.15 : Math.abs(minBal) * 0.1 || 500;
-  const yDomain = [Math.floor(minBal - padding), Math.ceil(maxBal + padding)];
+  // Transformar datos para vista P&L (solo ganancias/pérdidas de trading)
+  const pnlData = data.reduce((acc, point, index) => {
+    if (index === 0) {
+      // Punto inicial siempre en 0 para P&L
+      acc.push({ ...point, pnl: 0, bal: point.bal });
+      return acc;
+    }
+
+    const prevPoint = acc[acc.length - 1];
+
+    if (point.isMovement) {
+      // Los movimientos no cambian el P&L, mantener el mismo valor
+      acc.push({ ...point, pnl: prevPoint.pnl, bal: point.bal });
+    } else {
+      // Es un trade: calcular el cambio en balance (excluyendo el movimiento anterior si lo hubo)
+      const balanceChange = point.bal - data[index - 1].bal;
+      acc.push({ ...point, pnl: prevPoint.pnl + balanceChange, bal: point.bal });
+    }
+
+    return acc;
+  }, []);
+
+  // Seleccionar datos según el modo de vista
+  const chartData = viewMode === 'pnl' ? pnlData : data;
+  const dataKey = viewMode === 'pnl' ? 'pnl' : 'bal';
+
+  // Determinar si el P&L final es positivo o negativo
+  const finalPnl = pnlData.length > 0 ? pnlData[pnlData.length - 1].pnl : 0;
+  const isPnlPositive = finalPnl >= 0;
+
+  // Calcular domain del eje Y según el modo
+  const values = chartData.map(d => viewMode === 'pnl' ? d.pnl : d.bal).filter(b => typeof b === 'number' && !isNaN(b));
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal;
+  const padding = range > 0 ? range * 0.15 : Math.abs(minVal) * 0.1 || 500;
+  const yDomain = [Math.floor(minVal - padding), Math.ceil(maxVal + padding)];
+
+  // Calcular posición del 0 en el gradiente (para P&L)
+  // El gradiente va de arriba (0%) a abajo (100%)
+  // Necesitamos saber dónde está el 0 en ese rango
+  const yMin = yDomain[0];
+  const yMax = yDomain[1];
+  const zeroPosition = yMax <= 0 ? 0 : yMin >= 0 ? 100 : ((yMax - 0) / (yMax - yMin)) * 100;
 
   // Formatear valores según la magnitud
   const formatYAxis = (val) => {
@@ -122,21 +166,53 @@ export default function EquityChart({ data, startBalance, currencySymbol = '$' }
         <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
           <TrendingUp size={18} className="text-blue-500"/> {t.title}
         </h3>
-        <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-          {data.filter(d => !d.isMovement && d.name !== 'Inicio').length} trades
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Toggle Balance / P&L */}
+          <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-slate-600' : 'border-slate-200'}`}>
+            <button
+              onClick={() => setViewMode('balance')}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${
+                viewMode === 'balance'
+                  ? 'bg-blue-500 text-white'
+                  : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+            >
+              {t.balance}
+            </button>
+            <button
+              onClick={() => setViewMode('pnl')}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${
+                viewMode === 'pnl'
+                  ? 'bg-blue-500 text-white'
+                  : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+            >
+              {t.pnl}
+            </button>
+          </div>
+          <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+            {data.filter(d => !d.isMovement && d.name !== 'Inicio').length} trades
+          </span>
+        </div>
       </div>
 
       <div style={{ width: '100%', height: 280, minWidth: 0 }}>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart
-            data={data}
+            data={chartData}
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
           >
             <defs>
               <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
+              </linearGradient>
+              {/* Gradiente que cambia de verde a rojo en la línea 0 */}
+              <linearGradient id="pnlSplitGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3}/>
+                <stop offset={`${zeroPosition}%`} stopColor="#22c55e" stopOpacity={0.1}/>
+                <stop offset={`${zeroPosition}%`} stopColor="#ef4444" stopOpacity={0.1}/>
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3}/>
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -170,6 +246,9 @@ export default function EquityChart({ data, startBalance, currencySymbol = '$' }
                 if (active && payload && payload.length) {
                   const d = payload[0].payload;
                   const isPositiveMovement = d.movementType === 'deposit' || d.movementType === 'transfer_in';
+                  const displayValue = viewMode === 'pnl' ? d.pnl : d.bal;
+                  const isPnlPositive = viewMode === 'pnl' && d.pnl >= 0;
+                  const isPnlNegative = viewMode === 'pnl' && d.pnl < 0;
                   return (
                     <div style={{
                       backgroundColor: isDark ? '#1e293b' : '#ffffff',
@@ -179,11 +258,15 @@ export default function EquityChart({ data, startBalance, currencySymbol = '$' }
                       fontSize: '12px',
                     }}>
                       <p style={{ color: isDark ? '#94a3b8' : '#64748b', marginBottom: '4px', fontWeight: 600 }}>
-                        {t.balance}: <span style={{ color: isDark ? '#fff' : '#1e293b' }}>
-                          {currencySymbol}{Number(d.bal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {viewMode === 'pnl' ? t.pnl : t.balance}: <span style={{
+                          color: viewMode === 'pnl'
+                            ? (isPnlPositive ? '#22c55e' : '#ef4444')
+                            : (isDark ? '#fff' : '#1e293b')
+                        }}>
+                          {viewMode === 'pnl' && displayValue >= 0 ? '+' : ''}{currencySymbol}{Number(displayValue).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                       </p>
-                      {d.isMovement && (
+                      {viewMode === 'balance' && d.isMovement && (
                         <p style={{
                           color: isPositiveMovement ? '#22c55e' : '#ef4444',
                           fontWeight: 600,
@@ -204,7 +287,7 @@ export default function EquityChart({ data, startBalance, currencySymbol = '$' }
               }}
             />
             <ReferenceLine
-              y={startBalance}
+              y={viewMode === 'pnl' ? 0 : startBalance}
               stroke={isDark ? '#64748b' : '#94a3b8'}
               strokeDasharray="5 5"
               strokeWidth={1}
@@ -229,17 +312,31 @@ export default function EquityChart({ data, startBalance, currencySymbol = '$' }
                 strokeWidth={2}
               />
             ))}
-            <Area
-              type="monotone"
-              dataKey="bal"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#equityGradient)"
-              dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }}
-              activeDot={{ r: 5, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
-              isAnimationActive={false}
-            />
+            {viewMode === 'pnl' ? (
+              <Area
+                type="monotone"
+                dataKey="pnl"
+                stroke="#ef4444"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#pnlSplitGradient)"
+                dot={{ r: 3, fill: '#ef4444', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#ef4444', stroke: '#fff', strokeWidth: 2 }}
+                isAnimationActive={false}
+              />
+            ) : (
+              <Area
+                type="monotone"
+                dataKey="bal"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#equityGradient)"
+                dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                isAnimationActive={false}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>
