@@ -843,6 +843,7 @@ export default function TradingJournalPRO() {
               reglasSetup={config.reglasSetup || []}
               cuentasBroker={config.cuentasBroker || []}
               userId={user?.uid}
+              userEmail={user?.email}
               userType={userType}
               userPlan={userPlan}
               trades={trades}

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { imageBase64, multipleImages, tradeData, userNotes, isPreTrade, assetHistory, language = 'es', userPreTradeNotes } = await request.json();
+    const { imageBase64, multipleImages, tradeData, userNotes, isPreTrade, assetHistory, language = 'es', userPreTradeNotes, preTradeEnhanced } = await request.json();
 
     if (!imageBase64 && (!multipleImages || multipleImages.length === 0)) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
@@ -15,7 +15,24 @@ export async function POST(request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    // Configure model with Google Search grounding if sentiment analysis is requested
+    const useSentimentSearch = isPreTrade && preTradeEnhanced?.includeSentiment;
+
+    const modelConfig = {
+      model: 'gemini-2.5-flash',
+    };
+
+    // Add Google Search tool for sentiment analysis
+    if (useSentimentSearch) {
+      modelConfig.tools = [
+        {
+          googleSearch: {},
+        },
+      ];
+    }
+
+    const model = genAI.getGenerativeModel(modelConfig);
 
     // Helper to clean base64 data
     const cleanBase64 = (data) => data.replace(/^data:image\/\w+;base64,/, '');
@@ -124,45 +141,118 @@ IMPORTANT: The trader is sharing their analysis and perspective. Evaluate if the
 
     const userPreTradeSection = isPreTrade ? buildUserPreTradeSection(userPreTradeNotes, language) : '';
 
-    // Pre-trade prompts (before entering a trade)
+    // Build market session and sentiment section
+    const buildMarketContextSection = (enhanced, lang) => {
+      if (!enhanced) return '';
+
+      const { asset, primaryTimeframe, marketSession, sessionLabel, includeSentiment, currentTime, currentDay, userTimezone } = enhanced;
+
+      if (lang === 'es') {
+        let section = `
+CONTEXTO DE MERCADO:
+- Activo: ${asset}
+- Temporalidad principal de análisis: ${primaryTimeframe}
+- Sesión de mercado activa: ${sessionLabel}
+- Hora actual del trader: ${currentTime} (${currentDay})
+- Zona horaria: ${userTimezone}
+
+`;
+        if (includeSentiment) {
+          section += `ANÁLISIS DE SENTIMIENTO REQUERIDO:
+Busca información reciente sobre ${asset}:
+- Noticias relevantes de las últimas 24-48 horas
+- Eventos económicos que puedan afectar el activo
+- Sentimiento general del mercado (alcista/bajista/neutral)
+- Niveles técnicos clave mencionados por analistas
+- Cualquier dato fundamental relevante (earnings, datos económicos, decisiones de bancos centrales, etc.)
+
+IMPORTANTE: Considera que la sesión ${sessionLabel} afecta la volatilidad y liquidez. Durante la sesión asiática hay menos volumen en pares USD, durante la americana hay más volatilidad en índices americanos, etc.
+`;
+        }
+        return section;
+      } else {
+        let section = `
+MARKET CONTEXT:
+- Asset: ${asset}
+- Primary analysis timeframe: ${primaryTimeframe}
+- Active market session: ${sessionLabel}
+- Trader's current time: ${currentTime} (${currentDay})
+- Timezone: ${userTimezone}
+
+`;
+        if (includeSentiment) {
+          section += `SENTIMENT ANALYSIS REQUIRED:
+Search for recent information about ${asset}:
+- Relevant news from the last 24-48 hours
+- Economic events that may affect the asset
+- General market sentiment (bullish/bearish/neutral)
+- Key technical levels mentioned by analysts
+- Any relevant fundamental data (earnings, economic data, central bank decisions, etc.)
+
+IMPORTANT: Consider that the ${sessionLabel} session affects volatility and liquidity. During the Asian session there's less volume in USD pairs, during the American session there's more volatility in US indices, etc.
+`;
+        }
+        return section;
+      }
+    };
+
+    const marketContextSection = isPreTrade && preTradeEnhanced ? buildMarketContextSection(preTradeEnhanced, language) : '';
+
+    // Pre-trade prompts (before entering a trade) - CONCISE VERSION
     const preTradePrompts = {
-      es: `Eres un mentor experto en trading. El trader está CONSIDERANDO entrar en un trade y quiere tu opinión ANTES de ejecutar.
+      es: `Eres un mentor de trading. Analiza ${multipleImages && multipleImages.length > 1 ? 'las imágenes' : 'la imagen'} y da tu opinión sobre el trade ${tradeData.dir?.toUpperCase() || ''} en ${tradeData.activo || 'este activo'}.
 
-Datos de la operación que planea:
-- Activo: ${tradeData.activo || 'No especificado'}
-- Dirección planeada: ${tradeData.dir || 'No especificada'}
-${timeframeInfo}${userPreTradeSection}${historySection}
-ANALIZA ${multipleImages && multipleImages.length > 1 ? 'LAS IMÁGENES' : 'LA IMAGEN'} Y RESPONDE:
+${marketContextSection}${userPreTradeSection}${historySection}
+RESPONDE DE FORMA CONCISA:
 
-1. **¿Es buen momento para entrar?** - Evalúa si el setup actual justifica la entrada
-2. **Señales a favor** - ¿Qué indica que podría funcionar?
-3. **Señales en contra** - ¿Qué riesgos identificas?
-${userPreTradeNotes ? `4. **Tu análisis vs el mío** - ¿Coincides con lo que el trader describe? ¿Qué está viendo bien y qué podría estar malinterpretando?` : ''}
-${userPreTradeNotes ? '5' : '4'}. **Nivel de entrada sugerido** - ¿Dónde sería óptimo entrar?
-${userPreTradeNotes ? '6' : '5'}. **Stop loss recomendado** - ¿Dónde colocar el stop?
-${userPreTradeNotes ? '7' : '6'}. **Take profit sugerido** - ¿Dónde tomar ganancias?
-${assetHistory && assetHistory.length > 0 ? `${userPreTradeNotes ? '8' : '7'}. **Basado en tu historial** - ¿Hay algo que debas recordar de trades anteriores similares?` : ''}
+## 🚦 VEREDICTO
+[✅ OPERAR / ⚠️ ESPERAR / ❌ NO OPERAR] - Explica en 1-2 líneas por qué.
 
-Sé directo y honesto. Si no es buen momento, dilo claramente. ${userPreTradeNotes ? 'Si el trader está malinterpretando el gráfico, explícale por qué de forma educativa.' : ''} Responde en español usando bullets.`,
+## 💡 IDEA DE TRADE ${tradeData.dir === 'Long' ? '📈' : '📉'}
 
-      en: `You are an expert trading mentor. The trader is CONSIDERING entering a trade and wants your opinion BEFORE executing.
+🚀 **Entrada:** [precio exacto]
+🛡️ **Stop Loss:** [precio] ([X] pips de riesgo)
+💰 **TP1:** [precio] (R:R [X:1]) - Cerrar 40%
+💎 **TP2:** [precio] (R:R [X:1]) - Cerrar 40%
+🏆 **TP3:** [precio] (R:R [X:1]) - Cerrar 20%
 
-Planned trade data:
-- Asset: ${tradeData.activo || 'Not specified'}
-- Planned direction: ${tradeData.dir || 'Not specified'}
-${timeframeInfo}${userPreTradeSection}${historySection}
-ANALYZE ${multipleImages && multipleImages.length > 1 ? 'THE IMAGES' : 'THE IMAGE'} AND RESPOND:
+## 📊 RESUMEN RÁPIDO
+- **A favor:** [2-3 puntos clave]
+- **En contra:** [2-3 riesgos]
+${preTradeEnhanced?.includeSentiment ? `- **Sentimiento:** [Alcista/Bajista/Neutral] - [razón breve]` : ''}
 
-1. **Is it a good time to enter?** - Evaluate if the current setup justifies entry
-2. **Signals in favor** - What indicates this could work?
-3. **Signals against** - What risks do you identify?
-${userPreTradeNotes ? `4. **Your analysis vs mine** - Do you agree with what the trader describes? What are they seeing correctly and what might they be misinterpreting?` : ''}
-${userPreTradeNotes ? '5' : '4'}. **Suggested entry level** - Where would be optimal to enter?
-${userPreTradeNotes ? '6' : '5'}. **Recommended stop loss** - Where to place the stop?
-${userPreTradeNotes ? '7' : '6'}. **Suggested take profit** - Where to take profits?
-${assetHistory && assetHistory.length > 0 ? `${userPreTradeNotes ? '8' : '7'}. **Based on your history** - Is there anything you should remember from similar past trades?` : ''}
+## 💡 TIP
+[Un consejo específico para este trade]
 
-Be direct and honest. If it's not a good time, say it clearly. ${userPreTradeNotes ? 'If the trader is misinterpreting the chart, explain why in an educational way.' : ''} Respond in English using bullets.`
+---
+⚠️ Análisis educativo. No es asesoría financiera.`,
+
+      en: `You are a trading mentor. Analyze ${multipleImages && multipleImages.length > 1 ? 'the images' : 'the image'} and give your opinion on the ${tradeData.dir?.toUpperCase() || ''} trade on ${tradeData.activo || 'this asset'}.
+
+${marketContextSection}${userPreTradeSection}${historySection}
+RESPOND CONCISELY:
+
+## 🚦 VERDICT
+[✅ TRADE / ⚠️ WAIT / ❌ DO NOT TRADE] - Explain in 1-2 lines why.
+
+## 💡 TRADE IDEA ${tradeData.dir === 'Long' ? '📈' : '📉'}
+
+🚀 **Entry:** [exact price]
+🛡️ **Stop Loss:** [price] ([X] pips at risk)
+💰 **TP1:** [price] (R:R [X:1]) - Close 40%
+💎 **TP2:** [price] (R:R [X:1]) - Close 40%
+🏆 **TP3:** [price] (R:R [X:1]) - Close 20%
+
+## 📊 QUICK SUMMARY
+- **In favor:** [2-3 key points]
+- **Against:** [2-3 risks]
+${preTradeEnhanced?.includeSentiment ? `- **Sentiment:** [Bullish/Bearish/Neutral] - [brief reason]` : ''}
+
+## 💡 TIP
+[One specific tip for this trade]
+
+---
+⚠️ Educational analysis. Not financial advice.`
     };
 
     const prompts = {

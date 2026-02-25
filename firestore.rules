@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users config - users can only access their own config
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Trades - users can only access their own trades
+    match /trades/{tradeId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    // Movements - users can only access their own movements
+    match /movements/{movementId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    // Pre-trade analyses - users can only access their own
+    match /pretrade_analyses/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // AI query tracking (post-trade)
+    match /ai_queries/{docId} {
+      allow read, write: if isAuthenticated() && docId.matches(request.auth.uid + '_.*');
+    }
+
+    // AI query tracking (pre-trade)
+    match /ai_queries_pretrade/{docId} {
+      allow read, write: if isAuthenticated() && docId.matches(request.auth.uid + '_.*');
+    }
+
+    // Funding challenges - users can only access their own
+    match /funding_challenges/{challengeId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Funding trades - users can only access their own
+    match /funding_trades/{tradeId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Academy progress - users can only access their own
+    match /academy_progress/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Authorized users - read for authentication check, write only for admins
+    match /authorized_users/{email} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && get(/databases/$(database)/documents/authorized_users/$(request.auth.token.email)).data.role == 'admin';
+    }
+
+    // Trial codes - read for code validation, write only for admins
+    match /trial_codes/{code} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && get(/databases/$(database)/documents/authorized_users/$(request.auth.token.email)).data.role == 'admin';
+    }
+  }
+}

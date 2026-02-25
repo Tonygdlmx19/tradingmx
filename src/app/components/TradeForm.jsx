@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Bot, Loader2, Eye, Trash2 } from 'lucide-react';
+import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Bot, Loader2, Eye, Trash2, Globe, Search, TrendingUp, TrendingDown, History, ChevronRight } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import TradeChecklist from './TradeChecklist';
+import PreTradeResultModal from './PreTradeResultModal';
 import { db } from '../../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, limit, getDocs, deleteDoc } from 'firebase/firestore';
 
 // AI Query limits by plan
 const AI_QUERY_LIMITS = {
@@ -137,6 +138,11 @@ const ACTIVOS_POR_CATEGORIA = {
   ],
 };
 
+// Admin emails with unlimited AI queries
+const UNLIMITED_AI_EMAILS = [
+  'tonytrader19@gmail.com',
+];
+
 export default function TradeForm({
   onSubmit,
   form,
@@ -145,6 +151,7 @@ export default function TradeForm({
   reglasSetup = [],
   cuentasBroker = [],
   userId,
+  userEmail,
   userType,
   userPlan,
   trades = [],
@@ -162,12 +169,31 @@ export default function TradeForm({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showPreTradeSection, setShowPreTradeSection] = useState(false);
 
+  // Pre-trade enhanced inputs
+  const [preTradeAsset, setPreTradeAsset] = useState('');
+  const [preTradeTimeframe, setPreTradeTimeframe] = useState('15M');
+  const [preTradeSession, setPreTradeSession] = useState('auto');
+  const [preTradeDirection, setPreTradeDirection] = useState('Long');
+  const [showPreTradeModal, setShowPreTradeModal] = useState(false);
+
+  // Pre-trade history
+  const [preTradeHistory, setPreTradeHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+
   // AI query tracking
   const [aiQueriesUsed, setAiQueriesUsed] = useState(0);
   const [aiQueriesLimit, setAiQueriesLimit] = useState(5);
 
+  // Check if user has unlimited AI queries
+  const hasUnlimitedQueries = () => {
+    if (!userEmail) return false;
+    return UNLIMITED_AI_EMAILS.includes(userEmail.toLowerCase());
+  };
+
   // Get AI query limit based on user plan
   const getQueryLimit = () => {
+    // Unlimited for admin emails
+    if (hasUnlimitedQueries()) return 999999;
     if (userType === 'lifetime' || userType === 'paid') return AI_QUERY_LIMITS.lifetime;
     if (userType === 'trial') return AI_QUERY_LIMITS.trial;
     if (userType === 'subscription' && userPlan) {
@@ -216,8 +242,95 @@ export default function TradeForm({
       setPreTradeDescription('');
       setPreTradeAnalysis(null);
       setShowPreTradeSection(false);
+      setPreTradeAsset('');
+      setPreTradeTimeframe('15M');
+      setPreTradeSession('auto');
+      setPreTradeDirection('Long');
     }
   }, [form.preTradeAnalysis, form.preTradeImages]);
+
+  // Sync preTradeAsset with form.activo when it changes (if preTradeAsset is empty)
+  useEffect(() => {
+    if (!preTradeAsset && form.activo) {
+      setPreTradeAsset(form.activo);
+    }
+  }, [form.activo]);
+
+  // Load pre-trade history
+  useEffect(() => {
+    const loadPreTradeHistory = async () => {
+      if (!userId) return;
+      try {
+        const q = query(
+          collection(db, 'pretrade_analyses'),
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc'),
+          limit(10)
+        );
+        const snapshot = await getDocs(q);
+        const history = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setPreTradeHistory(history);
+      } catch (error) {
+        console.error('Error loading pre-trade history:', error);
+      }
+    };
+    loadPreTradeHistory();
+  }, [userId]);
+
+  // Save pre-trade analysis to history
+  const savePreTradeToHistory = async (analysisData) => {
+    if (!userId) return;
+    try {
+      const docRef = await addDoc(collection(db, 'pretrade_analyses'), {
+        userId,
+        asset: analysisData.asset,
+        direction: analysisData.direction,
+        timeframe: analysisData.timeframe,
+        session: analysisData.session,
+        analysis: analysisData.analysis,
+        imagePreview: analysisData.imagePreview, // First image as thumbnail
+        createdAt: new Date().toISOString(),
+      });
+      // Refresh history
+      setPreTradeHistory(prev => [{
+        id: docRef.id,
+        userId,
+        asset: analysisData.asset,
+        direction: analysisData.direction,
+        timeframe: analysisData.timeframe,
+        session: analysisData.session,
+        analysis: analysisData.analysis,
+        imagePreview: analysisData.imagePreview,
+        createdAt: new Date().toISOString(),
+      }, ...prev.slice(0, 9)]);
+    } catch (error) {
+      console.error('Error saving pre-trade analysis:', error);
+    }
+  };
+
+  // Delete pre-trade analysis from history
+  const deletePreTradeFromHistory = async (analysisId) => {
+    if (!userId) return;
+    try {
+      await deleteDoc(doc(db, 'pretrade_analyses', analysisId));
+      setPreTradeHistory(prev => prev.filter(item => item.id !== analysisId));
+    } catch (error) {
+      console.error('Error deleting pre-trade analysis:', error);
+    }
+  };
+
+  // Load a previous analysis
+  const loadPreTradeFromHistory = (analysis) => {
+    setPreTradeAsset(analysis.asset);
+    setPreTradeDirection(analysis.direction);
+    setPreTradeTimeframe(analysis.timeframe);
+    setPreTradeAnalysis({ text: analysis.analysis });
+    setShowHistory(false);
+    setShowPreTradeModal(true);
+  };
 
   // Reset local imagenes state when form.imagenes is cleared (after saving a trade)
   useEffect(() => {
@@ -330,6 +443,16 @@ export default function TradeForm({
       preTradeDescHint: 'Cuanto más detallado, mejor retroalimentación recibirás',
       imagesCount: 'imágenes',
       selectTimeframe: 'Temporalidad',
+      preTradeAsset: 'Activo a analizar',
+      preTradeTimeframe: 'Temporalidad principal',
+      marketSession: 'Sesión de mercado',
+      sentimentSearch: 'Buscando sentimiento de mercado...',
+      analysisType: 'Tipo de análisis',
+      technicalOnly: 'Solo técnico',
+      withSentiment: 'Con sentimiento de mercado',
+      marketOpen: 'Mercado activo',
+      marketClosed: 'Mercado cerrado',
+      sessionInfo: 'La sesión afecta la volatilidad y liquidez del activo',
     },
     en: {
       title: 'Record Trade',
@@ -398,6 +521,16 @@ export default function TradeForm({
       preTradeDescHint: 'The more detailed, the better feedback you\'ll receive',
       imagesCount: 'images',
       selectTimeframe: 'Timeframe',
+      preTradeAsset: 'Asset to analyze',
+      preTradeTimeframe: 'Primary timeframe',
+      marketSession: 'Market session',
+      sentimentSearch: 'Searching market sentiment...',
+      analysisType: 'Analysis type',
+      technicalOnly: 'Technical only',
+      withSentiment: 'With market sentiment',
+      marketOpen: 'Market active',
+      marketClosed: 'Market closed',
+      sessionInfo: 'The session affects asset volatility and liquidity',
     },
   };
   const t = labels[language];
@@ -406,6 +539,59 @@ export default function TradeForm({
   const getCurrentTime = () => {
     const now = new Date();
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
+
+  // Detect current market session based on UTC time
+  const detectMarketSession = () => {
+    const now = new Date();
+    const utcHour = now.getUTCHours();
+
+    // Market sessions in UTC:
+    // Asian (Tokyo): 00:00 - 09:00 UTC
+    // European (London): 07:00 - 16:00 UTC
+    // American (NY): 13:00 - 22:00 UTC
+
+    // Overlaps:
+    // Asian-European: 07:00 - 09:00 UTC
+    // European-American: 13:00 - 16:00 UTC
+
+    if (utcHour >= 0 && utcHour < 7) return 'asian';
+    if (utcHour >= 7 && utcHour < 9) return 'asian-european';
+    if (utcHour >= 9 && utcHour < 13) return 'european';
+    if (utcHour >= 13 && utcHour < 16) return 'european-american';
+    if (utcHour >= 16 && utcHour < 22) return 'american';
+    return 'asian'; // 22:00-00:00 early Asian
+  };
+
+  // Get current session for display
+  const getCurrentSession = () => {
+    if (preTradeSession === 'auto') {
+      return detectMarketSession();
+    }
+    return preTradeSession;
+  };
+
+  // Session labels
+  const getSessionLabel = (session) => {
+    const sessionLabels = {
+      es: {
+        'asian': 'Asiática (Tokyo)',
+        'european': 'Europea (Londres)',
+        'american': 'Americana (NY)',
+        'asian-european': 'Asia-Europa (Overlap)',
+        'european-american': 'Europa-América (Overlap)',
+        'auto': 'Auto-detectar'
+      },
+      en: {
+        'asian': 'Asian (Tokyo)',
+        'european': 'European (London)',
+        'american': 'American (NY)',
+        'asian-european': 'Asia-Europe (Overlap)',
+        'european-american': 'Europe-America (Overlap)',
+        'auto': 'Auto-detect'
+      }
+    };
+    return sessionLabels[language][session] || session;
   };
 
   // Usar activos favoritos si existen, sino mostrar lista por defecto
@@ -576,7 +762,14 @@ export default function TradeForm({
 
   // Analyze pre-trade with AI (supports multiple images)
   const analyzePreTrade = async () => {
-    if (preTradeImages.length === 0 || aiQueriesUsed >= aiQueriesLimit) return;
+    if (preTradeImages.length === 0 || (!hasUnlimitedQueries() && aiQueriesUsed >= aiQueriesLimit)) return;
+
+    // Require asset selection for sentiment analysis
+    const assetForAnalysis = preTradeAsset || form.activo;
+    if (!assetForAnalysis) {
+      alert(language === 'es' ? 'Selecciona un activo para analizar' : 'Select an asset to analyze');
+      return;
+    }
 
     setIsAnalyzing(true);
     try {
@@ -588,6 +781,15 @@ export default function TradeForm({
         timeframe: img.timeframe
       }));
 
+      // Get current session info
+      const currentSession = getCurrentSession();
+      const sessionLabel = getSessionLabel(currentSession);
+
+      // Get current time info for market context
+      const now = new Date();
+      const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
+
       const response = await fetch('/api/analyze-trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -597,13 +799,24 @@ export default function TradeForm({
           // Send all images with timeframes
           multipleImages: imagesWithTimeframes,
           tradeData: {
-            activo: form.activo,
-            dir: form.dir,
+            activo: assetForAnalysis,
+            dir: preTradeDirection,
           },
           isPreTrade: true,
           assetHistory,
           language,
           userPreTradeNotes: preTradeDescription,
+          // New enhanced pre-trade data
+          preTradeEnhanced: {
+            asset: assetForAnalysis,
+            primaryTimeframe: preTradeTimeframe,
+            marketSession: currentSession,
+            sessionLabel: sessionLabel,
+            includeSentiment: true, // Always include sentiment
+            currentTime: currentTime,
+            currentDay: currentDay,
+            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
         }),
       });
 
@@ -622,6 +835,17 @@ export default function TradeForm({
         }));
         // Increment query count
         await incrementQueryCount();
+        // Save to history
+        await savePreTradeToHistory({
+          asset: assetForAnalysis,
+          direction: preTradeDirection,
+          timeframe: preTradeTimeframe,
+          session: getCurrentSession(),
+          analysis: data.analysis,
+          imagePreview: preTradeImages[0]?.base64 || null,
+        });
+        // Open the modal to show results
+        setShowPreTradeModal(true);
       }
     } catch (error) {
       setPreTradeAnalysis({ error: error.message });
@@ -630,7 +854,7 @@ export default function TradeForm({
     }
   };
 
-  const canAnalyze = preTradeImages.length > 0 && aiQueriesUsed < aiQueriesLimit && !isAnalyzing;
+  const canAnalyze = preTradeImages.length > 0 && (hasUnlimitedQueries() || aiQueriesUsed < aiQueriesLimit) && !isAnalyzing && (preTradeAsset || form.activo);
 
   const getChecklistSemaforo = () => {
     if (!form.checklist) return null;
@@ -745,10 +969,31 @@ export default function TradeForm({
             </span>
           </div>
           <div className="flex items-center gap-2">
+            {preTradeHistory.length > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowHistory(!showHistory);
+                  if (!showPreTradeSection) setShowPreTradeSection(true);
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  showHistory
+                    ? 'bg-purple-500 text-white'
+                    : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+                title={language === 'es' ? 'Historial' : 'History'}
+              >
+                <History size={14} />
+              </button>
+            )}
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${
               isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
             }`}>
-              {aiQueriesLimit - aiQueriesUsed} {t.queriesRemaining}
+              {hasUnlimitedQueries()
+                ? (language === 'es' ? '∞ Ilimitado' : '∞ Unlimited')
+                : `${aiQueriesLimit - aiQueriesUsed} ${t.queriesRemaining}`
+              }
             </span>
             <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
               {showPreTradeSection ? '▲' : '▼'}
@@ -758,9 +1003,219 @@ export default function TradeForm({
 
         {showPreTradeSection && (
           <div className={`p-4 border-t ${isDark ? 'border-purple-500/20' : 'border-purple-200'}`}>
-            <p className={`text-xs mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              {t.preTradeDesc}
-            </p>
+
+            {/* History list */}
+            {showHistory && preTradeHistory.length > 0 && (
+              <div className={`mb-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`px-3 py-2 border-b flex items-center justify-between ${isDark ? 'border-slate-600' : 'border-slate-200'}`}>
+                  <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <History size={12} className="inline mr-1" />
+                    {language === 'es' ? 'Análisis recientes' : 'Recent analyses'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowHistory(false)}
+                    className={`text-xs ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="max-h-48 overflow-y-auto">
+                  {preTradeHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`px-3 py-2 flex items-center gap-3 border-b last:border-0 cursor-pointer transition-colors ${
+                        isDark ? 'border-slate-600 hover:bg-slate-600/50' : 'border-slate-200 hover:bg-slate-100'
+                      }`}
+                      onClick={() => loadPreTradeFromHistory(item)}
+                    >
+                      {item.imagePreview && (
+                        <img
+                          src={item.imagePreview}
+                          alt=""
+                          className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                            {item.asset}
+                          </span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                            item.direction === 'Long'
+                              ? 'bg-green-500/20 text-green-500'
+                              : 'bg-red-500/20 text-red-500'
+                          }`}>
+                            {item.direction === 'Long' ? '↑' : '↓'} {item.direction}
+                          </span>
+                        </div>
+                        <p className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {item.timeframe} • {new Date(item.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deletePreTradeFromHistory(item.id);
+                        }}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isDark ? 'hover:bg-red-500/20 text-slate-500 hover:text-red-400' : 'hover:bg-red-100 text-slate-400 hover:text-red-500'
+                        }`}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                      <ChevronRight size={14} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!showHistory && (
+              <p className={`text-xs mb-3 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {t.preTradeDesc}
+              </p>
+            )}
+
+            {/* Asset selector for pre-trade */}
+            <div className="mb-3">
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                {t.preTradeAsset}
+              </label>
+              <select
+                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                  isDark
+                    ? 'bg-slate-700 border-purple-500/30 text-white'
+                    : 'bg-white border-purple-200 text-slate-600'
+                }`}
+                value={preTradeAsset}
+                onChange={e => setPreTradeAsset(e.target.value)}
+              >
+                <option value="">{language === 'es' ? 'Selecciona un activo' : 'Select an asset'}</option>
+                {/* Favoritos primero */}
+                {tieneActivosFavoritos && (
+                  <optgroup label={t.myAssets}>
+                    {activosFavoritos.map(symbol => (
+                      <option key={`fav-pre-${symbol}`} value={symbol}>
+                        {symbol}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {/* Lista completa */}
+                {Object.entries(ACTIVOS_POR_CATEGORIA).map(([categoria, activos]) => (
+                  <optgroup key={`pre-${categoria}`} label={`── ${categoria} ──`}>
+                    {activos.map(activo => (
+                      <option key={`pre-${activo.symbol}`} value={activo.symbol}>
+                        {activo.symbol} - {activo.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+
+            {/* Direction selector */}
+            <div className="mb-3">
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                {language === 'es' ? '¿Qué dirección tienes en mente?' : 'What direction do you have in mind?'}
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreTradeDirection('Long')}
+                  className={`p-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                    preTradeDirection === 'Long'
+                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                      : isDark
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-green-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-green-500'
+                  }`}
+                >
+                  <TrendingUp size={16} />
+                  LONG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreTradeDirection('Short')}
+                  className={`p-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                    preTradeDirection === 'Short'
+                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      : isDark
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-red-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-red-500'
+                  }`}
+                >
+                  <TrendingDown size={16} />
+                  SHORT
+                </button>
+              </div>
+            </div>
+
+            {/* Timeframe and Session in grid */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {/* Primary timeframe */}
+              <div>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                  {t.preTradeTimeframe}
+                </label>
+                <select
+                  className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                    isDark
+                      ? 'bg-slate-700 border-purple-500/30 text-white'
+                      : 'bg-white border-purple-200 text-slate-600'
+                  }`}
+                  value={preTradeTimeframe}
+                  onChange={e => setPreTradeTimeframe(e.target.value)}
+                >
+                  {TEMPORALIDADES.filter(tf => tf !== 'Ejecución').map(tf => (
+                    <option key={`pre-tf-${tf}`} value={tf}>{tf}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Market session */}
+              <div>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                  {t.marketSession}
+                </label>
+                <select
+                  className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                    isDark
+                      ? 'bg-slate-700 border-purple-500/30 text-white'
+                      : 'bg-white border-purple-200 text-slate-600'
+                  }`}
+                  value={preTradeSession}
+                  onChange={e => setPreTradeSession(e.target.value)}
+                >
+                  <option value="auto">{getSessionLabel('auto')}</option>
+                  <option value="asian">{getSessionLabel('asian')}</option>
+                  <option value="european">{getSessionLabel('european')}</option>
+                  <option value="american">{getSessionLabel('american')}</option>
+                  <option value="asian-european">{getSessionLabel('asian-european')}</option>
+                  <option value="european-american">{getSessionLabel('european-american')}</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Current session indicator */}
+            <div className={`mb-3 p-2 rounded-lg flex items-center justify-between ${
+              isDark ? 'bg-slate-700/50' : 'bg-purple-50'
+            }`}>
+              <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {t.sessionInfo}
+              </span>
+              <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                getCurrentSession().includes('american')
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : getCurrentSession().includes('european')
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'bg-purple-500/20 text-purple-400'
+              }`}>
+                {getSessionLabel(getCurrentSession())}
+              </span>
+            </div>
 
             {/* Pre-trade images upload (up to 3) */}
             <div className="space-y-3">
@@ -866,55 +1321,64 @@ export default function TradeForm({
                     disabled={!canAnalyze}
                     className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                       canAnalyze
-                        ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                        ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg'
                         : 'bg-slate-500/20 text-slate-400 cursor-not-allowed'
                     }`}
                   >
                     {isAnalyzing ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        {t.analyzing}
+                        {t.sentimentSearch}
                       </>
                     ) : (
                       <>
-                        <Bot size={20} />
+                        <Search size={18} />
                         {t.analyzeBeforeTrading}
                       </>
                     )}
                   </button>
                 )}
 
-                {/* Analysis result */}
+                {/* Analysis result - Show button to open modal */}
                 {preTradeAnalysis && (
                   <div className={`p-4 rounded-xl ${
                     preTradeAnalysis.error
                       ? isDark ? 'bg-red-500/10 border border-red-500/30' : 'bg-red-50 border border-red-200'
-                      : isDark ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-purple-50 border border-purple-200'
+                      : isDark ? 'bg-green-500/10 border border-green-500/30' : 'bg-green-50 border border-green-200'
                   }`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Bot size={18} className={preTradeAnalysis.error ? 'text-red-500' : 'text-purple-500'} />
-                      <span className={`text-xs font-bold ${
-                        preTradeAnalysis.error
-                          ? 'text-red-500'
-                          : isDark ? 'text-purple-400' : 'text-purple-600'
-                      }`}>
-                        {t.aiMentor}
-                      </span>
-                      {!preTradeAnalysis.error && getAssetHistory().length > 0 && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                          isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
-                        }`}>
-                          {t.basedOnHistory} ({getAssetHistory().length} trades)
-                        </span>
-                      )}
-                    </div>
                     {preTradeAnalysis.error ? (
-                      <p className="text-red-500 text-sm">{preTradeAnalysis.error}</p>
+                      <>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Bot size={18} className="text-red-500" />
+                          <span className="text-xs font-bold text-red-500">
+                            {t.aiMentor}
+                          </span>
+                        </div>
+                        <p className="text-red-500 text-sm">{preTradeAnalysis.error}</p>
+                      </>
                     ) : (
-                      <div className={`text-xs leading-relaxed whitespace-pre-wrap ${
-                        isDark ? 'text-slate-300' : 'text-slate-700'
-                      }`}>
-                        {preTradeAnalysis.text}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`p-2 rounded-lg ${isDark ? 'bg-green-500/20' : 'bg-green-100'}`}>
+                            <CheckCircle size={18} className="text-green-500" />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                              {language === 'es' ? 'Análisis completado' : 'Analysis complete'}
+                            </p>
+                            <p className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {language === 'es' ? 'Incluye idea de trade con niveles' : 'Includes trade idea with levels'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPreTradeModal(true)}
+                          className="px-3 py-2 rounded-xl text-xs font-bold bg-purple-500 hover:bg-purple-600 text-white transition-colors flex items-center gap-1.5"
+                        >
+                          <Eye size={14} />
+                          {language === 'es' ? 'Ver análisis' : 'View analysis'}
+                        </button>
                       </div>
                     )}
                   </div>
@@ -922,7 +1386,7 @@ export default function TradeForm({
               </div>
             )}
 
-            {aiQueriesUsed >= aiQueriesLimit && (
+            {!hasUnlimitedQueries() && aiQueriesUsed >= aiQueriesLimit && (
               <p className="text-amber-500 text-xs text-center mt-2 font-medium">
                 {t.noQueriesLeft}
               </p>
@@ -1496,6 +1960,18 @@ export default function TradeForm({
         isOpen={showChecklist}
         onClose={() => setShowChecklist(false)}
         onConfirm={handleChecklistConfirm}
+      />
+
+      {/* Modal Pre-Trade Result */}
+      <PreTradeResultModal
+        isOpen={showPreTradeModal}
+        onClose={() => setShowPreTradeModal(false)}
+        analysis={preTradeAnalysis?.text}
+        asset={preTradeAsset || form.activo}
+        direction={preTradeDirection}
+        session={getSessionLabel(getCurrentSession())}
+        timeframe={preTradeTimeframe}
+        preTradeImages={preTradeImages}
       />
     </div>
   );
