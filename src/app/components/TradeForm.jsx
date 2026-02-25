@@ -180,6 +180,12 @@ export default function TradeForm({
   const [preTradeHistory, setPreTradeHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Pre-trade analysis mode (quick vs detailed)
+  const [preTradeAnalysisMode, setPreTradeAnalysisMode] = useState('detailed');
+
+  // Pre-trade current price (reference for CFD brokers)
+  const [preTradeCurrentPrice, setPreTradeCurrentPrice] = useState('');
+
   // AI query tracking
   const [aiQueriesUsed, setAiQueriesUsed] = useState(0);
   const [aiQueriesLimit, setAiQueriesLimit] = useState(5);
@@ -246,6 +252,7 @@ export default function TradeForm({
       setPreTradeTimeframe('15M');
       setPreTradeSession('auto');
       setPreTradeDirection('Long');
+      setPreTradeCurrentPrice('');
     }
   }, [form.preTradeAnalysis, form.preTradeImages]);
 
@@ -453,6 +460,12 @@ export default function TradeForm({
       marketOpen: 'Mercado activo',
       marketClosed: 'Mercado cerrado',
       sessionInfo: 'La sesión afecta la volatilidad y liquidez del activo',
+      analysisMode: 'Modo de análisis',
+      quickMode: 'Rápido',
+      detailedMode: 'Detallado',
+      currentPrice: 'Precio actual en tu gráfico',
+      currentPricePlaceholder: 'Ej: 21850.50',
+      currentPriceHint: 'Ingresa el precio actual visible para niveles precisos',
     },
     en: {
       title: 'Record Trade',
@@ -531,6 +544,12 @@ export default function TradeForm({
       marketOpen: 'Market active',
       marketClosed: 'Market closed',
       sessionInfo: 'The session affects asset volatility and liquidity',
+      analysisMode: 'Analysis mode',
+      quickMode: 'Quick',
+      detailedMode: 'Detailed',
+      currentPrice: 'Current price on your chart',
+      currentPricePlaceholder: 'Ex: 21850.50',
+      currentPriceHint: 'Enter the visible current price for precise levels',
     },
   };
   const t = labels[language];
@@ -816,6 +835,8 @@ export default function TradeForm({
             currentTime: currentTime,
             currentDay: currentDay,
             userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            analysisMode: preTradeAnalysisMode, // quick or detailed
+            currentPrice: preTradeCurrentPrice, // Reference price from user's chart
           },
         }),
       });
@@ -1218,6 +1239,63 @@ export default function TradeForm({
               }`}>
                 {getSessionLabel(getCurrentSession())}
               </span>
+            </div>
+
+            {/* Analysis mode selector */}
+            <div className="mb-3">
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                {t.analysisMode}
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreTradeAnalysisMode('quick')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    preTradeAnalysisMode === 'quick'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
+                      : isDark
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-amber-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-amber-500'
+                  }`}
+                >
+                  ⚡ {t.quickMode}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreTradeAnalysisMode('detailed')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    preTradeAnalysisMode === 'detailed'
+                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
+                      : isDark
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-purple-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-purple-500'
+                  }`}
+                >
+                  📊 {t.detailedMode}
+                </button>
+              </div>
+            </div>
+
+            {/* Current price input for CFD reference */}
+            <div className="mb-3">
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                📍 {t.currentPrice}
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder={t.currentPricePlaceholder}
+                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                  isDark
+                    ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500'
+                    : 'bg-white border-purple-200 text-slate-600 placeholder-slate-400'
+                }`}
+                value={preTradeCurrentPrice}
+                onChange={e => setPreTradeCurrentPrice(e.target.value)}
+              />
+              <p className={`text-[9px] mt-1 ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {t.currentPriceHint}
+              </p>
             </div>
 
             {/* Pre-trade images upload (up to 3) */}

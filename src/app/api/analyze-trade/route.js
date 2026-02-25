@@ -145,7 +145,7 @@ IMPORTANT: The trader is sharing their analysis and perspective. Evaluate if the
     const buildMarketContextSection = (enhanced, lang) => {
       if (!enhanced) return '';
 
-      const { asset, primaryTimeframe, marketSession, sessionLabel, includeSentiment, currentTime, currentDay, userTimezone } = enhanced;
+      const { asset, primaryTimeframe, marketSession, sessionLabel, includeSentiment, currentTime, currentDay, userTimezone, currentPrice } = enhanced;
 
       if (lang === 'es') {
         let section = `
@@ -155,6 +155,7 @@ CONTEXTO DE MERCADO:
 - Sesión de mercado activa: ${sessionLabel}
 - Hora actual del trader: ${currentTime} (${currentDay})
 - Zona horaria: ${userTimezone}
+${currentPrice ? `- **PRECIO ACTUAL DE REFERENCIA: ${currentPrice}** (Este es el precio actual en el gráfico del trader - USAR ESTE COMO BASE para calcular niveles)` : ''}
 
 `;
         if (includeSentiment) {
@@ -178,6 +179,7 @@ MARKET CONTEXT:
 - Active market session: ${sessionLabel}
 - Trader's current time: ${currentTime} (${currentDay})
 - Timezone: ${userTimezone}
+${currentPrice ? `- **CURRENT REFERENCE PRICE: ${currentPrice}** (This is the current price on the trader's chart - USE THIS AS BASE to calculate levels)` : ''}
 
 `;
         if (includeSentiment) {
@@ -197,63 +199,234 @@ IMPORTANT: Consider that the ${sessionLabel} session affects volatility and liqu
     };
 
     const marketContextSection = isPreTrade && preTradeEnhanced ? buildMarketContextSection(preTradeEnhanced, language) : '';
+    const analysisMode = preTradeEnhanced?.analysisMode || 'detailed';
 
-    // Pre-trade prompts (before entering a trade) - CONCISE VERSION
-    const preTradePrompts = {
+    // Pre-trade QUICK prompts (before entering a trade) - CONCISE VERSION
+    const preTradePromptsQuick = {
       es: `Eres un mentor de trading. Analiza ${multipleImages && multipleImages.length > 1 ? 'las imágenes' : 'la imagen'} y da tu opinión sobre el trade ${tradeData.dir?.toUpperCase() || ''} en ${tradeData.activo || 'este activo'}.
 
+⚠️ CRÍTICO - PRECIOS DEL GRÁFICO:
+El trader usa un broker CFD con precios DIFERENTES al mercado de futuros.
+${preTradeEnhanced?.currentPrice ? `El PRECIO ACTUAL en su gráfico es: **${preTradeEnhanced.currentPrice}**
+USA ESTE PRECIO como referencia para calcular Entry, SL y TPs.` : 'Observa el eje Y del gráfico para obtener los precios exactos.'}
+NO uses precios de futuros externos. TODOS los niveles deben ser coherentes con los precios del gráfico CFD.
+
 ${marketContextSection}${userPreTradeSection}${historySection}
-RESPONDE DE FORMA CONCISA:
+RESPONDE DE FORMA MUY CONCISA:
 
 ## 🚦 VEREDICTO
-[✅ OPERAR / ⚠️ ESPERAR / ❌ NO OPERAR] - Explica en 1-2 líneas por qué.
+[✅ OPERAR / ⚠️ ESPERAR / ❌ NO OPERAR] - Explica en 1 línea.
 
 ## 💡 IDEA DE TRADE ${tradeData.dir === 'Long' ? '📈' : '📉'}
 
 🚀 **Entrada:** [precio exacto]
-🛡️ **Stop Loss:** [precio] ([X] pips de riesgo)
-💰 **TP1:** [precio] (R:R [X:1]) - Cerrar 40%
-💎 **TP2:** [precio] (R:R [X:1]) - Cerrar 40%
-🏆 **TP3:** [precio] (R:R [X:1]) - Cerrar 20%
+🛡️ **Stop Loss:** [precio] ([X] pips)
+✅ **TP1:** [precio] (R:R [X:1])
+✅ **TP2:** [precio] (R:R [X:1])
+✅ **TP3:** [precio] (R:R [X:1])
 
-## 📊 RESUMEN RÁPIDO
-- **A favor:** [2-3 puntos clave]
-- **En contra:** [2-3 riesgos]
-${preTradeEnhanced?.includeSentiment ? `- **Sentimiento:** [Alcista/Bajista/Neutral] - [razón breve]` : ''}
-
-## 💡 TIP
-[Un consejo específico para este trade]
+## 📊 RESUMEN
+- **A favor:** [2 puntos]
+- **En contra:** [2 riesgos]
+${preTradeEnhanced?.includeSentiment ? `- **Sentimiento:** [Alcista/Bajista/Neutral]` : ''}
 
 ---
 ⚠️ Análisis educativo. No es asesoría financiera.`,
 
       en: `You are a trading mentor. Analyze ${multipleImages && multipleImages.length > 1 ? 'the images' : 'the image'} and give your opinion on the ${tradeData.dir?.toUpperCase() || ''} trade on ${tradeData.activo || 'this asset'}.
 
+⚠️ CRITICAL - CHART PRICES:
+The trader uses a CFD broker with DIFFERENT prices than the futures market.
+${preTradeEnhanced?.currentPrice ? `The CURRENT PRICE on their chart is: **${preTradeEnhanced.currentPrice}**
+USE THIS PRICE as reference to calculate Entry, SL and TPs.` : 'Look at the Y-axis of the chart to get exact prices.'}
+DO NOT use external futures prices. ALL levels must be consistent with the CFD chart prices.
+
 ${marketContextSection}${userPreTradeSection}${historySection}
-RESPOND CONCISELY:
+RESPOND VERY CONCISELY:
 
 ## 🚦 VERDICT
-[✅ TRADE / ⚠️ WAIT / ❌ DO NOT TRADE] - Explain in 1-2 lines why.
+[✅ TRADE / ⚠️ WAIT / ❌ DO NOT TRADE] - Explain in 1 line.
 
 ## 💡 TRADE IDEA ${tradeData.dir === 'Long' ? '📈' : '📉'}
 
 🚀 **Entry:** [exact price]
-🛡️ **Stop Loss:** [price] ([X] pips at risk)
-💰 **TP1:** [price] (R:R [X:1]) - Close 40%
-💎 **TP2:** [price] (R:R [X:1]) - Close 40%
-🏆 **TP3:** [price] (R:R [X:1]) - Close 20%
+🛡️ **Stop Loss:** [price] ([X] pips)
+✅ **TP1:** [price] (R:R [X:1])
+✅ **TP2:** [price] (R:R [X:1])
+✅ **TP3:** [price] (R:R [X:1])
 
-## 📊 QUICK SUMMARY
-- **In favor:** [2-3 key points]
-- **Against:** [2-3 risks]
-${preTradeEnhanced?.includeSentiment ? `- **Sentiment:** [Bullish/Bearish/Neutral] - [brief reason]` : ''}
-
-## 💡 TIP
-[One specific tip for this trade]
+## 📊 SUMMARY
+- **In favor:** [2 points]
+- **Against:** [2 risks]
+${preTradeEnhanced?.includeSentiment ? `- **Sentiment:** [Bullish/Bearish/Neutral]` : ''}
 
 ---
 ⚠️ Educational analysis. Not financial advice.`
     };
+
+    // Pre-trade DETAILED prompts (before entering a trade) - COMPREHENSIVE VERSION
+    const preTradePromptsDetailed = {
+      es: `Eres un mentor experto de trading. Analiza ${multipleImages && multipleImages.length > 1 ? 'las imágenes' : 'la imagen'} de forma DETALLADA y da tu opinión profesional sobre el trade ${tradeData.dir?.toUpperCase() || ''} en ${tradeData.activo || 'este activo'}.
+
+⚠️ CRÍTICO - PRECIOS DEL GRÁFICO CFD:
+El trader usa un broker CFD con precios DIFERENTES al mercado de futuros.
+${preTradeEnhanced?.currentPrice ? `📍 PRECIO ACTUAL DE REFERENCIA: **${preTradeEnhanced.currentPrice}**
+TODOS los niveles (Entry, SL, TPs, soportes, resistencias) deben calcularse usando este precio como referencia.` : 'Observa el eje Y del gráfico para obtener los precios exactos.'}
+NO uses precios de futuros externos. Los niveles deben ser coherentes con el gráfico CFD del trader.
+
+${marketContextSection}${userPreTradeSection}${historySection}
+PROPORCIONA UN ANÁLISIS COMPLETO:
+
+## 🚦 VEREDICTO
+[✅ OPERAR / ⚠️ ESPERAR / ❌ NO OPERAR]
+**Razón principal:** [explicación clara de 2-3 oraciones]
+
+## 📈 ANÁLISIS TÉCNICO
+
+### Estructura de mercado
+- **Tendencia:** [Alcista/Bajista/Lateral] - [explicación]
+- **Estructura:** [HH/HL para alcista, LH/LL para bajista, rango]
+- **Fase actual:** [Impulso/Corrección/Consolidación]
+
+### Niveles clave identificados
+- **Resistencias:** [niveles con contexto]
+- **Soportes:** [niveles con contexto]
+- **Zonas de interés:** [áreas de supply/demand, OB, FVG, etc.]
+
+### Patrones y confirmaciones
+- [Lista de patrones técnicos observados]
+- [Confluencias identificadas]
+- [Divergencias si las hay]
+
+## 💡 IDEA DE TRADE ${tradeData.dir === 'Long' ? '📈' : '📉'}
+
+🚀 **Entrada:** [precio exacto]
+**Justificación:** [por qué este nivel es óptimo]
+
+🛡️ **Stop Loss:** [precio] ([X] pips de riesgo)
+**Ubicación:** [por qué aquí - estructura invalidada]
+
+✅ **TP1:** [precio] (R:R [X:1]) - Cerrar 40%
+**Nivel:** [qué hay en este nivel - resistencia, supply, etc.]
+
+✅ **TP2:** [precio] (R:R [X:1]) - Cerrar 40%
+**Nivel:** [qué hay en este nivel]
+
+✅ **TP3:** [precio] (R:R [X:1]) - Cerrar 20%
+**Nivel:** [target extendido - swing high/low anterior]
+
+## 📊 GESTIÓN DEL TRADE
+- **Riesgo sugerido:** [% del capital]
+- **Mejor momento para entrar:** [condiciones específicas]
+- **Señales de invalidación:** [cuándo NO entrar]
+- **Trailing stop:** [cómo mover el SL si el trade va a favor]
+
+${preTradeEnhanced?.includeSentiment ? `## 🌍 SENTIMIENTO DE MERCADO
+- **Sentimiento general:** [Alcista/Bajista/Neutral]
+- **Noticias relevantes:** [eventos que afectan el activo]
+- **Contexto macro:** [situación general del mercado]
+- **Precauciones:** [eventos próximos a considerar]` : ''}
+
+## ⚡ FACTORES A FAVOR
+1. [Factor positivo con explicación]
+2. [Factor positivo con explicación]
+3. [Factor positivo con explicación]
+
+## ⚠️ RIESGOS Y PRECAUCIONES
+1. [Riesgo con mitigación sugerida]
+2. [Riesgo con mitigación sugerida]
+3. [Riesgo con mitigación sugerida]
+
+## 💡 TIPS PARA ESTE TRADE
+- [Consejo específico 1]
+- [Consejo específico 2]
+- [Consejo de gestión emocional]
+
+---
+⚠️ **DISCLAIMER:** Este análisis es únicamente con fines educativos. No constituye asesoría financiera ni recomendación de inversión. Opera bajo tu propio riesgo y siempre gestiona tu capital de manera responsable.`,
+
+      en: `You are an expert trading mentor. Analyze ${multipleImages && multipleImages.length > 1 ? 'the images' : 'the image'} in DETAIL and give your professional opinion on the ${tradeData.dir?.toUpperCase() || ''} trade on ${tradeData.activo || 'this asset'}.
+
+⚠️ CRITICAL - CFD CHART PRICES:
+The trader uses a CFD broker with DIFFERENT prices than the futures market.
+${preTradeEnhanced?.currentPrice ? `📍 CURRENT REFERENCE PRICE: **${preTradeEnhanced.currentPrice}**
+ALL levels (Entry, SL, TPs, supports, resistances) must be calculated using this price as reference.` : 'Look at the Y-axis of the chart to get exact prices.'}
+DO NOT use external futures prices. Levels must be consistent with the trader's CFD chart.
+
+${marketContextSection}${userPreTradeSection}${historySection}
+PROVIDE A COMPREHENSIVE ANALYSIS:
+
+## 🚦 VERDICT
+[✅ TRADE / ⚠️ WAIT / ❌ DO NOT TRADE]
+**Main reason:** [clear explanation of 2-3 sentences]
+
+## 📈 TECHNICAL ANALYSIS
+
+### Market structure
+- **Trend:** [Bullish/Bearish/Sideways] - [explanation]
+- **Structure:** [HH/HL for bullish, LH/LL for bearish, range]
+- **Current phase:** [Impulse/Correction/Consolidation]
+
+### Key levels identified
+- **Resistances:** [levels with context]
+- **Supports:** [levels with context]
+- **Zones of interest:** [supply/demand areas, OB, FVG, etc.]
+
+### Patterns and confirmations
+- [List of technical patterns observed]
+- [Identified confluences]
+- [Divergences if any]
+
+## 💡 TRADE IDEA ${tradeData.dir === 'Long' ? '📈' : '📉'}
+
+🚀 **Entry:** [exact price]
+**Justification:** [why this level is optimal]
+
+🛡️ **Stop Loss:** [price] ([X] pips at risk)
+**Location:** [why here - invalidated structure]
+
+✅ **TP1:** [price] (R:R [X:1]) - Close 40%
+**Level:** [what's at this level - resistance, supply, etc.]
+
+✅ **TP2:** [price] (R:R [X:1]) - Close 40%
+**Level:** [what's at this level]
+
+✅ **TP3:** [price] (R:R [X:1]) - Close 20%
+**Level:** [extended target - previous swing high/low]
+
+## 📊 TRADE MANAGEMENT
+- **Suggested risk:** [% of capital]
+- **Best time to enter:** [specific conditions]
+- **Invalidation signals:** [when NOT to enter]
+- **Trailing stop:** [how to move SL if trade goes in favor]
+
+${preTradeEnhanced?.includeSentiment ? `## 🌍 MARKET SENTIMENT
+- **General sentiment:** [Bullish/Bearish/Neutral]
+- **Relevant news:** [events affecting the asset]
+- **Macro context:** [general market situation]
+- **Precautions:** [upcoming events to consider]` : ''}
+
+## ⚡ FACTORS IN FAVOR
+1. [Positive factor with explanation]
+2. [Positive factor with explanation]
+3. [Positive factor with explanation]
+
+## ⚠️ RISKS AND PRECAUTIONS
+1. [Risk with suggested mitigation]
+2. [Risk with suggested mitigation]
+3. [Risk with suggested mitigation]
+
+## 💡 TIPS FOR THIS TRADE
+- [Specific tip 1]
+- [Specific tip 2]
+- [Emotional management tip]
+
+---
+⚠️ **DISCLAIMER:** This analysis is for educational purposes only. It does not constitute financial advice or investment recommendation. Trade at your own risk and always manage your capital responsibly.`
+    };
+
+    // Select prompt based on analysis mode
+    const preTradePrompts = analysisMode === 'quick' ? preTradePromptsQuick : preTradePromptsDetailed;
 
     const prompts = {
       es: `Eres un mentor experto en trading. Analiza este gráfico de trading y proporciona retroalimentación constructiva.
