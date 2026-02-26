@@ -28,6 +28,7 @@ import UnauthorizedScreen from './components/UnauthorizedScreen';
 import AdminPanel from './components/AdminPanel';
 import TrialExpiringAlert from './components/TrialExpiringAlert';
 import OnboardingTour from './components/OnboardingTour';
+import { celebrateWin, celebrateStreak, celebrateGoal, triggerFlash } from './utils/animations';
 import { FundingSimulator } from './components/funding';
 
 const ADMIN_EMAIL = 'tonytrader19@gmail.com';
@@ -61,6 +62,7 @@ export default function TradingJournalPRO() {
   const [forceTourStart, setForceTourStart] = useState(false);
   const [diasNoOperativos, setDiasNoOperativos] = useState([]); // Array de fechas 'YYYY-MM-DD'
   const [selectedAccountId, setSelectedAccountId] = useState(null); // Se auto-selecciona la primera cuenta
+  const [goalCelebratedToday, setGoalCelebratedToday] = useState(false); // Track if goal was celebrated today
 
   const [form, setForm] = useState({
     res: '',
@@ -288,7 +290,35 @@ export default function TradingJournalPRO() {
     };
     
     await addDoc(collection(db, "trades"), tradeData);
-    
+
+    // Trigger animations based on trade result
+    if (resultadoFinal >= 0) {
+      // Calculate current winning streak
+      let currentStreak = 1;
+      const sortedTrades = [...trades].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      for (const t of sortedTrades) {
+        if (t.res >= 0) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+
+      // Winning trade - celebrate!
+      celebrateWin(Math.abs(resultadoFinal));
+      triggerFlash('trade-form', 'success');
+
+      // Extra celebration for streaks
+      if (currentStreak >= 3) {
+        setTimeout(() => {
+          celebrateStreak(currentStreak);
+        }, 1500);
+      }
+    } else {
+      // Losing trade - subtle feedback
+      triggerFlash('trade-form', 'error');
+    }
+
     setForm({
       ...form,
       res: '',
@@ -677,6 +707,25 @@ export default function TradingJournalPRO() {
     return config.capitalInicial > 0 ? ((config.metaDiaria / config.capitalInicial) * 100).toFixed(1) : '0';
   }, [config.metaDiariaMode, config.metaDiariaPct, config.metaDiaria, config.capitalInicial, selectedAccount, stats.balance, metaDiaria]);
 
+  // Reset goal celebration flag when day changes
+  useEffect(() => {
+    setGoalCelebratedToday(false);
+  }, [todayStr]);
+
+  // Celebrate when daily goal is reached
+  useEffect(() => {
+    if (
+      metaDiaria > 0 &&
+      pnlHoy >= metaDiaria &&
+      !goalCelebratedToday &&
+      !loading
+    ) {
+      // Goal reached! Celebrate!
+      setGoalCelebratedToday(true);
+      celebrateGoal();
+    }
+  }, [pnlHoy, metaDiaria, goalCelebratedToday, loading]);
+
   if (loading || checkingAuth) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center">
@@ -750,6 +799,7 @@ export default function TradingJournalPRO() {
         onDelete={deleteTrade}
         cuentasBroker={config.cuentasBroker || []}
         userId={user?.uid}
+        userEmail={user?.email}
         userType={userType}
         userPlan={userPlan}
       />

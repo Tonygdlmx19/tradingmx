@@ -23,7 +23,8 @@
       "Bash(npm install:*)",
       "Bash(ls:*)",
       "Bash(code:*)",
-      "WebFetch(domain:ai.google.dev)"
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(firebase deploy:*)"
     ]
   }
 }

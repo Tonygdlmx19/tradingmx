@@ -898,7 +898,7 @@ export default function TradeForm({
   };
   
   return (
-    <div data-tour="trade-form" className={`p-4 sm:p-6 rounded-2xl shadow-xl border transition-colors ${
+    <div id="trade-form" data-tour="trade-form" className={`p-4 sm:p-6 rounded-2xl shadow-xl border transition-colors ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
     }`}>
       <h3 className={`font-bold mb-4 sm:mb-5 flex items-center text-sm uppercase tracking-wide ${isDark ? 'text-white' : 'text-slate-800'}`}>

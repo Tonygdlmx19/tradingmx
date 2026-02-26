@@ -296,13 +296,14 @@ export default function Header({
                   <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
                     {language === 'es' ? 'Progreso' : 'Progress'}
                   </span>
-                  <span className={`font-bold ${pnlHoy >= metaDiaria ? 'text-green-500' : 'text-blue-500'}`}>
+                  <span className={`font-bold flex items-center gap-1 ${pnlHoy >= metaDiaria ? 'text-green-500 animate-pulse' : 'text-blue-500'}`}>
+                    {pnlHoy >= metaDiaria && <span className="text-sm">🏆</span>}
                     {Math.max(0, Math.min(100, progresoMeta)).toFixed(0)}%
                   </span>
                 </div>
                 <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
                   <div
-                    className={`h-full transition-all duration-500 rounded-full ${pnlHoy >= metaDiaria ? 'bg-green-500' : 'bg-blue-500'}`}
+                    className={`h-full transition-all duration-500 rounded-full ${pnlHoy >= metaDiaria ? 'bg-gradient-to-r from-green-500 to-emerald-400 animate-pulse' : 'bg-blue-500'}`}
                     style={{ width: `${Math.max(0, Math.min(100, progresoMeta))}%` }}
                   />
                 </div>

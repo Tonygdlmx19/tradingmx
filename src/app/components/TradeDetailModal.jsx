@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Clock, ArrowRight, ZoomIn, ZoomOut, RotateCcw, Briefcase, Edit3, TrendingUp, TrendingDown, Crosshair, DollarSign, BarChart3, Loader2, Bot } from 'lucide-react';
+import { X, Calendar, FileText, Save, Trash2, Image, PlusCircle, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Clock, ArrowRight, ZoomIn, ZoomOut, RotateCcw, Briefcase, Edit3, TrendingUp, TrendingDown, Crosshair, DollarSign, BarChart3, Loader2, Bot, Eye } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import PostTradeResultModal from './PostTradeResultModal';
 import { db } from '../../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -16,10 +17,13 @@ const AI_QUERY_LIMITS = {
   paid: 30, // backwards compat - treat as lifetime
 };
 
+// Users with unlimited AI queries
+const UNLIMITED_AI_EMAILS = ['tonytrader19@gmail.com'];
+
 const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
 const EMOCIONES = ['Neutral', 'Calmado', 'Ansioso', 'Venganza', 'Miedo', 'Eufórico', 'Frustrado'];
 
-export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onDelete, cuentasBroker = [], userId, userType, userPlan }) {
+export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onDelete, cuentasBroker = [], userId, userEmail, userType, userPlan }) {
   const { isDark } = useTheme();
   const { language } = useLanguage();
 
@@ -37,6 +41,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
   const [analyzingIndex, setAnalyzingIndex] = useState(null);
   const [aiQueriesUsed, setAiQueriesUsed] = useState(0);
   const [aiQueriesLimit, setAiQueriesLimit] = useState(5);
+  const [showPostTradeModal, setShowPostTradeModal] = useState(false);
 
   // Zoom state
   const [zoom, setZoom] = useState(1);
@@ -149,8 +154,15 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
   };
   const getEmotionLabel = (emo) => emotionLabels[language]?.[emo] || emo;
 
+  // Check if user has unlimited AI queries
+  const hasUnlimitedQueries = () => {
+    if (!userEmail) return false;
+    return UNLIMITED_AI_EMAILS.includes(userEmail.toLowerCase());
+  };
+
   // Get AI query limit based on user plan
   const getQueryLimit = () => {
+    if (hasUnlimitedQueries()) return 999999;
     if (userType === 'lifetime' || userType === 'paid') return AI_QUERY_LIMITS.lifetime;
     if (userType === 'trial') return AI_QUERY_LIMITS.trial;
     if (userType === 'subscription' && userPlan) {
@@ -475,14 +487,18 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
       if (data.error) {
         setAiAnalysis(prev => ({ ...prev, [imageIndex]: { error: data.error } }));
       } else {
-        // Increment query count on successful analysis
-        const incremented = await incrementQueryCount();
-        if (!incremented) {
-          console.warn('Failed to increment query count, but analysis was successful');
+        // Increment query count on successful analysis (only if not unlimited)
+        if (!hasUnlimitedQueries()) {
+          const incremented = await incrementQueryCount();
+          if (!incremented) {
+            console.warn('Failed to increment query count, but analysis was successful');
+          }
         }
         setAiAnalysis(prev => ({ ...prev, [imageIndex]: { text: data.analysis, expanded: true } }));
         // Mark as having changes so user can save the analysis
         setHasChanges(true);
+        // Open the result modal
+        setShowPostTradeModal(true);
       }
     } catch (error) {
       setAiAnalysis(prev => ({ ...prev, [imageIndex]: { error: error.message } }));
@@ -1169,9 +1185,23 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                             {aiAnalysis[index]?.error ? (
                               <p className="text-red-500 text-sm">{t.aiError}: {aiAnalysis[index].error}</p>
                             ) : (
-                              <div className="text-xs leading-relaxed whitespace-pre-wrap">
-                                {aiAnalysis[index]?.text}
-                              </div>
+                              <>
+                                <div className="text-xs leading-relaxed whitespace-pre-wrap line-clamp-6">
+                                  {aiAnalysis[index]?.text}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPostTradeModal(true)}
+                                  className={`mt-2 w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors ${
+                                    isDark
+                                      ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400'
+                                      : 'bg-purple-100 hover:bg-purple-200 text-purple-600'
+                                  }`}
+                                >
+                                  <Eye size={14} />
+                                  {language === 'es' ? 'Ver análisis completo' : 'View full analysis'}
+                                </button>
+                              </>
                             )}
                           </div>
                         )}
@@ -1346,6 +1376,21 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
           </div>
         </div>
       )}
+
+      {/* Post-Trade Analysis Result Modal */}
+      <PostTradeResultModal
+        isOpen={showPostTradeModal}
+        onClose={() => setShowPostTradeModal(false)}
+        analysis={Object.values(aiAnalysis).find(a => a?.text)?.text || ''}
+        trade={{
+          activo: editData.activo,
+          dir: editData.dir,
+          res: editData.esGanancia ? Math.abs(editData.res) : -Math.abs(editData.res),
+          entrada: editData.entrada,
+          salida: editData.salida,
+        }}
+        image={imagenes[0]}
+      />
     </div>
   );
 }

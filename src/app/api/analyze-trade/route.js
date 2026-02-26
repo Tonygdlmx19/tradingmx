@@ -429,43 +429,103 @@ ${preTradeEnhanced?.includeSentiment ? `## 🌍 MARKET SENTIMENT
     const preTradePrompts = analysisMode === 'quick' ? preTradePromptsQuick : preTradePromptsDetailed;
 
     const prompts = {
-      es: `Eres un mentor experto en trading. Analiza este gráfico de trading y proporciona retroalimentación constructiva.
+      es: `Eres un mentor experto en trading que califica y analiza trades completados.
 
-Datos del trade:
+📊 DATOS DEL TRADE:
 - Activo: ${tradeData.activo || 'No especificado'}
 - Dirección: ${tradeData.dir || 'No especificada'}
-- Resultado: ${tradeData.res >= 0 ? 'Ganancia' : 'Pérdida'} de $${Math.abs(tradeData.res || 0).toFixed(2)}
+- Resultado: ${tradeData.res >= 0 ? '✅ Ganancia' : '❌ Pérdida'} de $${Math.abs(tradeData.res || 0).toFixed(2)}
 - Precio entrada: ${tradeData.entrada || 'No especificado'}
 - Precio salida: ${tradeData.salida || 'No especificado'}
 - Puntos: ${tradeData.puntos?.toFixed(2) || 'No calculados'}
 ${notesSection.es}
-Por favor analiza:
-1. **Entrada**: ¿Fue un buen punto de entrada? ¿Qué señales técnicas justifican la entrada?
-2. **Salida**: ¿Se salió en buen momento? ¿Se pudo haber optimizado?
-3. **Gestión de riesgo**: ¿Se ve un stop loss apropiado?
-4. **Patrones**: ¿Qué patrones técnicos identificas en el gráfico?
-5. **Mejoras**: Basándote en el gráfico${userNotes ? ' y las notas del trader' : ''}, ¿qué podría mejorar para futuros trades similares?
 
-Sé conciso pero útil. Responde en español. Usa formato con bullets para facilitar la lectura.${userNotes ? ' Si el trader mencionó algo específico en sus notas, comenta al respecto.' : ''}`,
+IMPORTANTE: Califica la CALIDAD DE EJECUCIÓN, no solo el resultado. Un trade perdedor puede tener buena ejecución (A/B) si se siguió el plan. Un trade ganador puede tener mala ejecución (C/D) si fue por suerte.
 
-      en: `You are an expert trading mentor. Analyze this trading chart and provide constructive feedback.
+RESPONDE CON ESTE FORMATO:
 
-Trade data:
+## 📊 CALIFICACIÓN: [A/B/C/D]
+
+${tradeData.res >= 0 ? '🏆' : '📉'} **[Mensaje según calificación]**
+- A = "¡Ejecución excelente! Trade de manual."
+- B = "Buena ejecución. Pequeños detalles a mejorar."
+- C = "Ejecución regular. Hay aspectos importantes que revisar."
+- D = "Necesita mejora. Analicemos qué salió mal."
+
+## 🎯 ANÁLISIS DE ENTRADA
+- **Calidad:** [Excelente/Buena/Regular/Mala]
+- **Observación:** [¿Entró en zona óptima? ¿Esperó confirmación?]
+
+## 🚪 ANÁLISIS DE SALIDA
+- **Calidad:** [Excelente/Buena/Regular/Mala]
+- **Observación:** [¿Salió en buen momento? ¿Dejó dinero en la mesa?]
+
+## 🛡️ GESTIÓN DE RIESGO
+- **Stop Loss:** [¿Bien ubicado? ¿Respetó el plan?]
+- **Tamaño de posición:** [¿Apropiado para el setup?]
+
+## 📈 LO QUE HICISTE BIEN
+1. [Punto positivo específico]
+2. [Punto positivo específico]
+
+## ⚠️ ÁREAS DE MEJORA
+1. [Área a mejorar con sugerencia concreta]
+2. [Área a mejorar con sugerencia concreta]
+
+## 💡 LECCIÓN CLAVE
+[Una lección específica que el trader debe recordar de este trade]
+
+---
+📚 Usa este análisis para mejorar tu próximo trade.`,
+
+      en: `You are an expert trading mentor who grades and analyzes completed trades.
+
+📊 TRADE DATA:
 - Asset: ${tradeData.activo || 'Not specified'}
 - Direction: ${tradeData.dir || 'Not specified'}
-- Result: ${tradeData.res >= 0 ? 'Profit' : 'Loss'} of $${Math.abs(tradeData.res || 0).toFixed(2)}
+- Result: ${tradeData.res >= 0 ? '✅ Profit' : '❌ Loss'} of $${Math.abs(tradeData.res || 0).toFixed(2)}
 - Entry price: ${tradeData.entrada || 'Not specified'}
 - Exit price: ${tradeData.salida || 'Not specified'}
 - Points: ${tradeData.puntos?.toFixed(2) || 'Not calculated'}
 ${notesSection.en}
-Please analyze:
-1. **Entry**: Was it a good entry point? What technical signals justify the entry?
-2. **Exit**: Was the exit well-timed? Could it have been optimized?
-3. **Risk management**: Is there an appropriate stop loss visible?
-4. **Patterns**: What technical patterns do you identify in the chart?
-5. **Improvements**: Based on the chart${userNotes ? ' and the trader\'s notes' : ''}, what could be improved for similar future trades?
 
-Be concise but helpful. Respond in English. Use bullet points for easy reading.${userNotes ? ' If the trader mentioned something specific in their notes, comment on it.' : ''}`
+IMPORTANT: Grade the EXECUTION QUALITY, not just the result. A losing trade can have good execution (A/B) if the plan was followed. A winning trade can have poor execution (C/D) if it was luck.
+
+RESPOND WITH THIS FORMAT:
+
+## 📊 GRADE: [A/B/C/D]
+
+${tradeData.res >= 0 ? '🏆' : '📉'} **[Message based on grade]**
+- A = "Excellent execution! Textbook trade."
+- B = "Good execution. Small details to improve."
+- C = "Average execution. Important aspects to review."
+- D = "Needs improvement. Let's analyze what went wrong."
+
+## 🎯 ENTRY ANALYSIS
+- **Quality:** [Excellent/Good/Average/Poor]
+- **Observation:** [Did they enter in optimal zone? Waited for confirmation?]
+
+## 🚪 EXIT ANALYSIS
+- **Quality:** [Excellent/Good/Average/Poor]
+- **Observation:** [Good timing? Left money on the table?]
+
+## 🛡️ RISK MANAGEMENT
+- **Stop Loss:** [Well placed? Followed the plan?]
+- **Position size:** [Appropriate for the setup?]
+
+## 📈 WHAT YOU DID WELL
+1. [Specific positive point]
+2. [Specific positive point]
+
+## ⚠️ AREAS FOR IMPROVEMENT
+1. [Area to improve with concrete suggestion]
+2. [Area to improve with concrete suggestion]
+
+## 💡 KEY LESSON
+[One specific lesson the trader should remember from this trade]
+
+---
+📚 Use this analysis to improve your next trade.`
     };
 
     // Select the appropriate prompt based on whether it's pre-trade or post-trade

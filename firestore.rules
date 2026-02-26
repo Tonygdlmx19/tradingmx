@@ -50,16 +50,16 @@ service cloud.firestore {
 
     // Funding challenges - users can only access their own
     match /funding_challenges/{challengeId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
     // Funding trades - users can only access their own
     match /funding_trades/{tradeId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
     // Academy progress - users can only access their own
@@ -67,16 +67,47 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
-    // Authorized users - read for authentication check, write only for admins
+    // Authorized users - read for authentication check
     match /authorized_users/{email} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && get(/databases/$(database)/documents/authorized_users/$(request.auth.token.email)).data.role == 'admin';
+
+      // Admin emails list
+      function isAdmin() {
+        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
+      }
+
+      // Allow user to create their own trial entry OR admin can create any entry
+      allow create: if isAuthenticated() && (
+        request.auth.token.email.lower() == email ||
+        isAdmin()
+      );
+
+      // Allow user to update their own trial entry OR admin can update any entry
+      allow update: if isAuthenticated() && (
+        (request.auth.token.email.lower() == email && request.resource.data.type == 'trial') ||
+        isAdmin()
+      );
+
+      // Only admins can delete
+      allow delete: if isAuthenticated() && isAdmin();
     }
 
-    // Trial codes - read for code validation, write only for admins
+    // Trial codes - read for code validation
     match /trial_codes/{code} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && get(/databases/$(database)/documents/authorized_users/$(request.auth.token.email)).data.role == 'admin';
+
+      // Admin emails list for trial codes
+      function isTrialCodeAdmin() {
+        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
+      }
+
+      // Allow users to mark a code as used (for their own email)
+      allow update: if isAuthenticated() && (
+        request.resource.data.usedBy == request.auth.token.email.lower() ||
+        isTrialCodeAdmin()
+      );
+      // Only admins can create/delete codes
+      allow create, delete: if isAuthenticated() && isTrialCodeAdmin();
     }
   }
 }
