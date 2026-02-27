@@ -67,6 +67,13 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Diary entries - users can only access their own
+    match /diary_entries/{entryId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
     // Authorized users - read for authentication check
     match /authorized_users/{email} {
       allow read: if isAuthenticated();
