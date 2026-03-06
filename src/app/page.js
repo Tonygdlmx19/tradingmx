@@ -222,7 +222,9 @@ export default function TradingJournalPRO() {
 
   const saveSettingsToCloud = useCallback(async () => {
     if (!user) return;
-    await setDoc(doc(db, "users", user.uid), { config }, { merge: true });
+    // Clean config to remove undefined values (Firestore doesn't accept undefined)
+    const cleanConfig = JSON.parse(JSON.stringify(config, (key, value) => value === undefined ? null : value));
+    await setDoc(doc(db, "users", user.uid), { config: cleanConfig }, { merge: true });
   }, [user, config]);
 
   const addTrade = useCallback(async (e, opciones = {}) => {
@@ -892,6 +894,7 @@ export default function TradingJournalPRO() {
               form={form}
               setForm={setForm}
               activosFavoritos={config.activosFavoritos}
+              estrategias={config.estrategias || []}
               reglasSetup={config.reglasSetup || []}
               cuentasBroker={config.cuentasBroker || []}
               userId={user?.uid}

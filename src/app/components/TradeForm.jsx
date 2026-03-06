@@ -148,6 +148,7 @@ export default function TradeForm({
   form,
   setForm,
   activosFavoritos = [],
+  estrategias = [],
   reglasSetup = [],
   cuentasBroker = [],
   userId,
@@ -161,6 +162,34 @@ export default function TradeForm({
   const [imagenes, setImagenes] = useState([]);
   const [isBinaryOptions, setIsBinaryOptions] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
+  const [selectedStrategyId, setSelectedStrategyId] = useState(null);
+  const [showStrategySelector, setShowStrategySelector] = useState(false);
+
+  // Get available strategies (migrate from old format if needed)
+  const getAvailableStrategies = () => {
+    if (estrategias && estrategias.length > 0) {
+      return estrategias;
+    }
+    // Migrate from old reglasSetup format
+    if (reglasSetup && reglasSetup.length > 0) {
+      const migratedRules = reglasSetup.map(rule => {
+        if (typeof rule === 'string') {
+          return { texto: rule, descripcion: '', imagen: null };
+        }
+        return { ...rule, descripcion: rule.descripcion || '' };
+      });
+      return [{
+        id: 'default',
+        nombre: language === 'es' ? 'Mi Estrategia' : 'My Strategy',
+        reglas: migratedRules
+      }];
+    }
+    return [];
+  };
+
+  const availableStrategies = getAvailableStrategies();
+  const selectedStrategy = availableStrategies.find(s => s.id === selectedStrategyId) || availableStrategies[0];
+  const currentRules = selectedStrategy?.reglas || [];
 
   // Pre-trade AI analysis state (up to 3 images for different timeframes)
   const [preTradeImages, setPreTradeImages] = useState([]);
@@ -906,36 +935,66 @@ export default function TradeForm({
       </h3>
 
       {/* Botón Checklist de Setup */}
-      {reglasSetup.length > 0 && (() => {
+      {availableStrategies.length > 0 && (() => {
         const semaforo = getChecklistSemaforo();
         return (
-          <button
-            type="button"
-            onClick={() => setShowChecklist(true)}
-            className={`w-full mb-4 p-3 rounded-xl border font-bold text-sm flex items-center justify-between transition-all ${
-              form.checklist
-                ? semaforo?.color === 'green'
-                  ? 'bg-green-500/10 border-green-500/30 text-green-500'
-                  : semaforo?.color === 'amber'
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
-                    : 'bg-red-500/10 border-red-500/30 text-red-500'
-                : isDark
-                  ? 'bg-slate-700/50 border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-400'
-                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-amber-500 hover:text-amber-500'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <ClipboardCheck size={18}/>
-              {form.checklist ? semaforo?.label : t.checklist}
-            </div>
-            {form.checklist ? (
-              <span className="text-lg font-black">{form.checklist.porcentaje}%</span>
-            ) : (
-              <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                {reglasSetup.length} {t.rules}
-              </span>
+          <div className="mb-4 space-y-2">
+            {/* Strategy selector (if multiple strategies) */}
+            {availableStrategies.length > 1 && (
+              <div className="flex flex-wrap gap-1">
+                {availableStrategies.map(strategy => (
+                  <button
+                    key={strategy.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedStrategyId(strategy.id);
+                      setForm({ ...form, checklist: null }); // Reset checklist when changing strategy
+                    }}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      selectedStrategy?.id === strategy.id
+                        ? 'bg-amber-500 text-white'
+                        : isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {strategy.nombre}
+                  </button>
+                ))}
+              </div>
             )}
-          </button>
+            {/* Checklist button */}
+            <button
+              type="button"
+              onClick={() => setShowChecklist(true)}
+              className={`w-full p-3 rounded-xl border font-bold text-sm flex items-center justify-between transition-all ${
+                form.checklist
+                  ? semaforo?.color === 'green'
+                    ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                    : semaforo?.color === 'amber'
+                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+                      : 'bg-red-500/10 border-red-500/30 text-red-500'
+                  : isDark
+                    ? 'bg-slate-700/50 border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-400'
+                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-amber-500 hover:text-amber-500'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <ClipboardCheck size={18}/>
+                <span>{form.checklist ? semaforo?.label : t.checklist}</span>
+                {selectedStrategy && availableStrategies.length > 1 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-slate-600 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
+                    {selectedStrategy.nombre}
+                  </span>
+                )}
+              </div>
+              {form.checklist ? (
+                <span className="text-lg font-black">{form.checklist.porcentaje}%</span>
+              ) : (
+                <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {currentRules.length} {t.rules}
+                </span>
+              )}
+            </button>
+          </div>
         );
       })()}
 
@@ -2037,10 +2096,11 @@ export default function TradeForm({
 
       {/* Modal Checklist */}
       <TradeChecklist
-        reglas={reglasSetup}
+        reglas={currentRules}
         isOpen={showChecklist}
         onClose={() => setShowChecklist(false)}
         onConfirm={handleChecklistConfirm}
+        strategyName={selectedStrategy?.nombre}
       />
 
       {/* Modal Pre-Trade Result */}

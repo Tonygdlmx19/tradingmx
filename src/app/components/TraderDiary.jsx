@@ -218,11 +218,13 @@ export default function TraderDiary({
     }
   }, [userId]);
 
-  // Get recent trades with notes for context
+  // Get recent trades with notes for context (last 10, most recent first)
   const getRecentTradesContext = () => {
     if (!trades || trades.length === 0) return [];
-    return trades
-      .slice(0, 30)
+    // Sort by date descending (most recent first) and take last 10
+    return [...trades]
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+      .slice(0, 10)
       .map(t => ({
         fecha: t.fecha,
         activo: t.activo,
@@ -407,7 +409,10 @@ export default function TraderDiary({
 
   if (!isOpen) return null;
 
-  const recentTrades = trades.slice(0, 5);
+  // Get last 10 trades sorted by most recent first for display
+  const recentTrades = [...trades]
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    .slice(0, 10);
   const remaining = getRemainingQueries();
   const monthEntries = getEntriesForMonth();
 
