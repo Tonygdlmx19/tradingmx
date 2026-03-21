@@ -39,6 +39,14 @@
         { "fieldPath": "challengeId", "order": "ASCENDING" },
         { "fieldPath": "fecha", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "tracker_analyses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "asset", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

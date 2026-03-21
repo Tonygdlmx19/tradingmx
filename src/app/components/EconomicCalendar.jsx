@@ -13,7 +13,7 @@ export default function EconomicCalendar({ isOpen, onClose }) {
 
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -34,7 +34,6 @@ export default function EconomicCalendar({ isOpen, onClose }) {
     widgetContainer.appendChild(widgetDiv);
     container.appendChild(widgetContainer);
 
-    // Crear script del widget
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
     script.async = true;
@@ -45,7 +44,7 @@ export default function EconomicCalendar({ isOpen, onClose }) {
       "height": "100%",
       "locale": language === 'en' ? "en" : "es",
       "importanceFilter": "-1,0,1",
-      "countryFilter": "us,eu,de,gb,jp,cn,mx,ca,au,ch"
+      "countryFilter": "us,eu,de,gb,jp,cn,mx,ca,au,ch,br,nz"
     });
 
     widgetContainer.appendChild(script);
@@ -61,8 +60,8 @@ export default function EconomicCalendar({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div 
-        className={`rounded-2xl shadow-2xl border overflow-hidden transition-colors w-full max-w-3xl ${
+      <div
+        className={`rounded-2xl shadow-2xl border overflow-hidden transition-colors w-full max-w-5xl ${
           isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
         }`}
       >
@@ -75,8 +74,11 @@ export default function EconomicCalendar({ isOpen, onClose }) {
             <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               {title}
             </h3>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+              TradingView
+            </span>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className={`p-2 rounded-full transition-colors ${
               isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-400'
@@ -85,11 +87,11 @@ export default function EconomicCalendar({ isOpen, onClose }) {
             <X size={20} />
           </button>
         </div>
-        
-        {/* Widget Container */}
-        <div 
-          ref={containerRef} 
-          className="h-[500px] overflow-hidden"
+
+        {/* Widget Container - más grande para mejor experiencia */}
+        <div
+          ref={containerRef}
+          className="h-[70vh] overflow-hidden"
         />
       </div>
     </div>

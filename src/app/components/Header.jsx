@@ -1,7 +1,7 @@
 "use client";
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Trophy, ShieldCheck, GraduationCap } from 'lucide-react';
+import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Trophy, ShieldCheck, GraduationCap, BarChart3 } from 'lucide-react';
 import SessionBar from './SessionBar';
 
 export default function Header({
@@ -19,6 +19,8 @@ export default function Header({
   onCalendar,
   onFundingSimulator,
   onAcademy,
+  onESTracker,
+  hasTrackerAccess,
   isAdmin,
   onAdmin,
   onLogout,
@@ -157,6 +159,16 @@ export default function Header({
             >
               <Trophy size={18}/>
             </button>
+
+            {(isAdmin || hasTrackerAccess) && (
+              <button
+                onClick={onESTracker}
+                className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-cyan-400' : 'hover:bg-slate-100 text-cyan-600'}`}
+                title="Market Tracker"
+              >
+                <BarChart3 size={18}/>
+              </button>
+            )}
 
             {userType !== 'trial' && (
               <button

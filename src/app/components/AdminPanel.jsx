@@ -28,6 +28,7 @@ import {
   Star,
   Crown,
   Infinity,
+  BarChart3,
 } from 'lucide-react';
 
 // Plan definitions for activation
@@ -222,6 +223,19 @@ export default function AdminPanel({ user, onClose }) {
       document.body.removeChild(el);
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 2000);
+    }
+  };
+
+  // Toggle tracker access for a user
+  const toggleTrackerAccess = async (email) => {
+    try {
+      const userData = users.find(u => u.email === email);
+      const currentAccess = userData?.hasTrackerAccess === true;
+      await updateDoc(doc(db, 'authorized_users', email), {
+        hasTrackerAccess: !currentAccess,
+      });
+    } catch (err) {
+      console.error('Error toggling tracker:', err);
     }
   };
 
@@ -452,6 +466,17 @@ export default function AdminPanel({ user, onClose }) {
                         </div>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => toggleTrackerAccess(u.email)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            u.hasTrackerAccess
+                              ? 'text-cyan-500 bg-cyan-500/10 hover:bg-cyan-500/20'
+                              : isDark ? 'text-slate-600 hover:bg-slate-700' : 'text-slate-300 hover:bg-slate-100'
+                          }`}
+                          title={u.hasTrackerAccess ? 'Tracker: Activado' : 'Tracker: Desactivado'}
+                        >
+                          <BarChart3 size={16} />
+                        </button>
                         <button
                           onClick={() => activateTrial(u.email)}
                           className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"

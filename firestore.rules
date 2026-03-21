@@ -99,6 +99,26 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && isAdmin();
     }
 
+    // Market tracker - shared data, admin writes, all authenticated read
+    match /market_tracker/{docId} {
+      allow read: if isAuthenticated();
+
+      function isTrackerAdmin() {
+        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
+      }
+      allow write: if isAuthenticated() && isTrackerAdmin();
+    }
+
+    // Tracker AI analyses - shared, admin writes, all authenticated read
+    match /tracker_analyses/{docId} {
+      allow read: if isAuthenticated();
+
+      function isAnalysisAdmin() {
+        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
+      }
+      allow write: if isAuthenticated() && isAnalysisAdmin();
+    }
+
     // Trial codes - read for code validation
     match /trial_codes/{code} {
       allow read: if isAuthenticated();

@@ -31,6 +31,7 @@ import OnboardingTour from './components/OnboardingTour';
 import { celebrateWin, celebrateStreak, celebrateGoal, triggerFlash } from './utils/animations';
 import { FundingSimulator } from './components/funding';
 import TraderDiary from './components/TraderDiary';
+import ESTracker from './components/ESTracker';
 
 const ADMIN_EMAIL = 'tonytrader19@gmail.com';
 
@@ -49,11 +50,13 @@ export default function TradingJournalPRO() {
   const [showAcademy, setShowAcademy] = useState(false);
   const [showMovements, setShowMovements] = useState(false);
   const [showDiary, setShowDiary] = useState(false);
+  const [showESTracker, setShowESTracker] = useState(false);
   const [movements, setMovements] = useState([]);
   const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'active' | 'expired' | 'unauthorized'
   const [userTrialEnd, setUserTrialEnd] = useState(null);
   const [userType, setUserType] = useState(null);
   const [userPlan, setUserPlan] = useState(null);
+  const [hasTrackerAccess, setHasTrackerAccess] = useState(false);
   const [config, setConfig] = useState({ capitalInicial: 10000, metaDiaria: 200 });
   const [trades, setTrades] = useState([]);
   const [viewMode] = useState('mensual'); // Siempre mensual para coincidir con el calendario
@@ -98,6 +101,7 @@ export default function TradingJournalPRO() {
             const currentUserType = data.type || 'paid'; // backwards compat
             setUserType(currentUserType);
             setUserPlan(data.subscriptionPlan || null);
+            setHasTrackerAccess(data.hasTrackerAccess === true);
 
             if (data.status === 'active') {
               const now = new Date();
@@ -174,6 +178,20 @@ export default function TradingJournalPRO() {
       setSelectedAccountId(cuentas[0].id);
     }
   }, [config.cuentasBroker, selectedAccountId]);
+
+  // Escuchar cambios en authorized_users en tiempo real (para tracker access, plan, etc.)
+  useEffect(() => {
+    if (!user) return;
+    const email = user.email?.toLowerCase();
+    if (!email) return;
+    const unsubAuth = onSnapshot(doc(db, "authorized_users", email), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setHasTrackerAccess(data.hasTrackerAccess === true);
+      }
+    });
+    return () => unsubAuth();
+  }, [user]);
 
   useEffect(() => {
     if (!user || !isAuthorized) return;
@@ -823,6 +841,8 @@ export default function TradingJournalPRO() {
         onCalendar={() => setShowCalendar(true)}
         onFundingSimulator={() => setShowFundingSimulator(true)}
         onAcademy={() => setShowAcademy(true)}
+        onESTracker={() => setShowESTracker(true)}
+        hasTrackerAccess={hasTrackerAccess}
         isAdmin={isAdmin}
         onAdmin={() => setShowAdminPanel(true)}
         onLogout={handleLogout}
@@ -906,6 +926,13 @@ export default function TradingJournalPRO() {
           </div>
         </div>
       </main>
+
+      {/* ES Tracker Modal */}
+      <ESTracker
+        isOpen={showESTracker}
+        onClose={() => setShowESTracker(false)}
+        isAdmin={isAdmin}
+      />
 
       {/* Trader Diary Modal */}
       <TraderDiary
