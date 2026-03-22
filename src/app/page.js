@@ -32,6 +32,7 @@ import { celebrateWin, celebrateStreak, celebrateGoal, triggerFlash } from './ut
 import { FundingSimulator } from './components/funding';
 import TraderDiary from './components/TraderDiary';
 import ESTracker from './components/ESTracker';
+import PatternAnalysis from './components/PatternAnalysis';
 
 const ADMIN_EMAIL = 'tonytrader19@gmail.com';
 
@@ -906,6 +907,7 @@ export default function TradingJournalPRO() {
             <div data-tour="drawdown">
               <DrawdownChart data={stats.data} />
             </div>
+            <PatternAnalysis trades={accountFilteredTrades} currencySymbol={currencySymbol} />
             <CalendarView
               trades={filteredTrades}
               selectedMonth={selectedMonth}

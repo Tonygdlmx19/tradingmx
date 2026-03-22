@@ -139,6 +139,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
   const [newsSentimentCount, setNewsSentimentCount] = useState(null);
   const fileInputRef = useRef(null);
   const [crosshair, setCrosshair] = useState({ x: 0, y: 0, visible: false, chartId: null });
+  const [sentiment, setSentiment] = useState(null);
 
   const asset = ASSET_PRESETS.find(a => a.id === selectedAsset) || ASSET_PRESETS[0];
   const ph = asset.placeholders;
@@ -174,6 +175,14 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
     const interval = setInterval(loadNews, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [selectedAsset]);
+
+  // ── Load market sentiment (Fear & Greed + VIX) ──
+  useEffect(() => {
+    fetch('/api/market-sentiment')
+      .then(r => r.json())
+      .then(d => setSentiment(d))
+      .catch(() => {});
+  }, []);
 
   // ── Firestore: real-time listener on shared document ──
   useEffect(() => {
@@ -747,6 +756,27 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
       }
       y += 3;
 
+      // ── SECCIÓN: SENTIMIENTO DE MERCADO ──
+      if (sentiment && (sentiment.fearGreed || sentiment.vix)) {
+        y = sectionTitle(es ? 'Sentimiento de mercado' : 'Market Sentiment', y);
+        if (sentiment.fearGreed) {
+          const fg = sentiment.fearGreed;
+          const fgLabel = fg.score < 20 ? (es ? 'Miedo Extremo' : 'Extreme Fear') : fg.score < 40 ? (es ? 'Miedo' : 'Fear') : fg.score < 60 ? 'Neutral' : fg.score < 80 ? (es ? 'Codicia' : 'Greed') : (es ? 'Codicia Extrema' : 'Extreme Greed');
+          const fgColor = fg.score < 20 ? [239,68,68] : fg.score < 40 ? [249,115,22] : fg.score < 60 ? [234,179,8] : fg.score < 80 ? [132,204,22] : [34,197,94];
+          y = kvRow('Fear & Greed Index', `${fg.score}/100  (${fgLabel})`, y, fgColor);
+          if (fg.previousClose != null) y = kvRow(es ? '  Cierre anterior' : '  Previous close', `${fg.previousClose}`, y);
+          if (fg.oneWeekAgo != null) y = kvRow(es ? '  Hace 1 semana' : '  1 week ago', `${fg.oneWeekAgo}`, y);
+          if (fg.oneMonthAgo != null) y = kvRow(es ? '  Hace 1 mes' : '  1 month ago', `${fg.oneMonthAgo}`, y);
+        }
+        if (sentiment.vix) {
+          const vx = sentiment.vix;
+          const vxLabel = vx.current < 15 ? (es ? 'Baja' : 'Low') : vx.current < 20 ? 'Normal' : vx.current < 25 ? (es ? 'Elevada' : 'Elevated') : (es ? 'Alta' : 'High');
+          const vxColor = vx.current < 15 ? [34,197,94] : vx.current < 20 ? [132,204,22] : vx.current < 25 ? [234,179,8] : vx.current < 30 ? [249,115,22] : [239,68,68];
+          y = kvRow('VIX', `${vx.current.toFixed(2)}  (${vxLabel})  ${vx.change >= 0 ? '+' : ''}${vx.change.toFixed(2)}`, y, vxColor);
+        }
+        y += 3;
+      }
+
       // ── SECCIÓN: ESTADÍSTICAS ──
       y = sectionTitle(es ? 'Estadísticas clave' : 'Key Statistics', y);
       y = kvRow(es ? 'Cambio semanal (5d)' : 'Weekly change (5d)', `${weekChange >= 0 ? '+' : ''}${weekChange.toFixed(dec)} (${weekChangePct >= 0 ? '+' : ''}${weekChangePct.toFixed(2)}%)`, y, weekChange >= 0 ? [34,197,94] : [239,68,68]);
@@ -1116,6 +1146,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             nombre: s.nombre,
             reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
           })),
+          marketSentiment: sentiment,
         }),
       });
 
@@ -1421,6 +1452,79 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                   })}
                 </div>
               </div>
+
+              {/* ── Market Sentiment Bar ──────────────────────── */}
+              {sentiment && (sentiment.fearGreed || sentiment.vix) && (
+                <div className={`flex flex-wrap items-center gap-3 p-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  {/* Fear & Greed */}
+                  {sentiment.fearGreed && (() => {
+                    const s = sentiment.fearGreed.score;
+                    const pct = s;
+                    const getColor = (v) => v < 20 ? '#ef4444' : v < 40 ? '#f97316' : v < 60 ? '#eab308' : v < 80 ? '#84cc16' : '#22c55e';
+                    const getLabel = (v) => {
+                      const map = { es: { ef: 'Miedo Extremo', f: 'Miedo', n: 'Neutral', g: 'Codicia', eg: 'Codicia Extrema' }, en: { ef: 'Extreme Fear', f: 'Fear', n: 'Neutral', g: 'Greed', eg: 'Extreme Greed' } };
+                      const l = map[language] || map.es;
+                      return v < 20 ? l.ef : v < 40 ? l.f : v < 60 ? l.n : v < 80 ? l.g : l.eg;
+                    };
+                    const color = getColor(s);
+                    return (
+                      <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Fear & Greed</span>
+                        <div className="flex-1 flex items-center gap-2">
+                          <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #ef4444, #f97316, #eab308, #84cc16, #22c55e)` }} />
+                          </div>
+                          <span className="text-sm font-black" style={{ color }}>{s}</span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ color, backgroundColor: color + '15' }}>
+                          {getLabel(s)}
+                        </span>
+                        {sentiment.fearGreed.previousClose != null && (
+                          <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {language === 'es' ? 'ant' : 'prev'}: {sentiment.fearGreed.previousClose}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Separator */}
+                  {sentiment.fearGreed && sentiment.vix && (
+                    <div className={`w-px h-6 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
+                  )}
+
+                  {/* VIX */}
+                  {sentiment.vix && (() => {
+                    const v = sentiment.vix.current;
+                    const getColor = (x) => x < 15 ? '#22c55e' : x < 20 ? '#84cc16' : x < 25 ? '#eab308' : x < 30 ? '#f97316' : '#ef4444';
+                    const getLabel = (x) => {
+                      const l = language === 'es'
+                        ? (x < 15 ? 'Baja' : x < 20 ? 'Normal' : x < 25 ? 'Elevada' : 'Alta')
+                        : (x < 15 ? 'Low' : x < 20 ? 'Normal' : x < 25 ? 'Elevated' : 'High');
+                      return l;
+                    };
+                    const color = getColor(v);
+                    const pct = Math.min((v / 50) * 100, 100);
+                    return (
+                      <div className="flex items-center gap-3 flex-1 min-w-[180px]">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>VIX</span>
+                        <div className="flex-1 flex items-center gap-2">
+                          <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
+                          </div>
+                          <span className="text-sm font-black" style={{ color }}>{v.toFixed(1)}</span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ color, backgroundColor: color + '15' }}>
+                          {getLabel(v)}
+                        </span>
+                        <span className={`text-[10px] font-bold ${sentiment.vix.change >= 0 ? 'text-red-400' : 'text-green-400'}`}>
+                          {sentiment.vix.change >= 0 ? '+' : ''}{sentiment.vix.change.toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               {/* ── Metrics ──────────────────────────────────── */}
               {metrics && (
