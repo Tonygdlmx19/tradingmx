@@ -119,6 +119,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
   const [formVah, setFormVah] = useState('');
   const [formVal, setFormVal] = useState('');
   const [formDelta, setFormDelta] = useState('');
+  const [formVwap, setFormVwap] = useState('');
   const [importing, setImporting] = useState(false);
   const [chartRange, setChartRange] = useState(60); // days to show in charts
   const [tablePage, setTablePage] = useState(0);
@@ -216,15 +217,16 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     const vah = formVah !== '' ? parseFloat(formVah) : null;
     const val = formVal !== '' ? parseFloat(formVal) : null;
     const dlt = formDelta !== '' ? parseInt(formDelta) : null;
+    const vwapVal = formVwap !== '' ? parseFloat(formVwap) : null;
 
     setRecords(prev => {
       const filtered = prev.filter(r => r.date !== formDate);
-      return [...filtered, { date: formDate, open, high, low, close, vol, oi, foi, poc, vah, val, delta: dlt }];
+      return [...filtered, { date: formDate, open, high, low, close, vol, oi, foi, poc, vah, val, delta: dlt, vwap: vwapVal }];
     });
     setFormOpen(''); setFormHigh(''); setFormLow(''); setFormClose('');
     setFormVol(''); setFormOi(''); setFormFoi('');
-    setFormPoc(''); setFormVah(''); setFormVal(''); setFormDelta('');
-  }, [isAdmin, formDate, formOpen, formHigh, formLow, formClose, formVol, formOi, formFoi, formPoc, formVah, formVal, language, setRecords]);
+    setFormPoc(''); setFormVah(''); setFormVal(''); setFormDelta(''); setFormVwap('');
+  }, [isAdmin, formDate, formOpen, formHigh, formLow, formClose, formVol, formOi, formFoi, formPoc, formVah, formVal, formDelta, formVwap, language, setRecords]);
 
   const deleteEntry = useCallback((date) => {
     if (!isAdmin) return;
@@ -245,6 +247,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     setFormVah(record.vah != null ? String(record.vah) : '');
     setFormVal(record.val != null ? String(record.val) : '');
     setFormDelta(record.delta != null ? String(record.delta) : '');
+    setFormVwap(record.vwap != null ? String(record.vwap) : '');
     // Scroll to form
     document.getElementById('tracker-entry-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [isAdmin]);
@@ -428,8 +431,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     if (withDelta.length === 0) return null;
     return chartSorted.map(r => ({
       name: r.date.slice(5),
-      delta: r.delta != null ? r.delta : null,
-      bullish: r.close >= r.open,
+      delta: r.delta != null ? Math.abs(r.delta) : null,
+      rawDelta: r.delta != null ? r.delta : null,
+      isPositive: r.delta != null ? r.delta >= 0 : null,
     }));
   }, [chartSorted]);
 
@@ -468,46 +472,22 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     return counts;
   }, [allData]);
 
-  // ── VWAP + Deviations (calculated from chart range) ─────
+  // ── VWAP (manual from ATAS — session VWAP per day) ─────
   const vwapData = useMemo(() => {
     if (chartSorted.length < 2) return null;
 
-    let cumTPV = 0; // cumulative (typical price × volume)
-    let cumVol = 0;
-    const points = [];
+    const hasAny = chartSorted.some(r => r.vwap != null);
+    if (!hasAny) return null;
 
-    for (let i = 0; i < chartSorted.length; i++) {
-      const r = chartSorted[i];
-      const tp = (r.high + r.low + r.close) / 3;
-      cumTPV += tp * r.vol;
-      cumVol += r.vol;
-      const vwap = cumVol > 0 ? cumTPV / cumVol : tp;
+    const points = chartSorted.map(r => ({
+      name: r.date.slice(5),
+      vwap: r.vwap != null ? parseFloat(r.vwap.toFixed(2)) : null,
+    }));
 
-      // Standard deviation for bands
-      let sumSqDiff = 0;
-      let tempCumTPV = 0, tempCumVol = 0;
-      for (let j = 0; j <= i; j++) {
-        const rj = chartSorted[j];
-        const tpj = (rj.high + rj.low + rj.close) / 3;
-        tempCumTPV += tpj * rj.vol;
-        tempCumVol += rj.vol;
-        sumSqDiff += rj.vol * Math.pow(tpj - vwap, 2);
-      }
-      const variance = cumVol > 0 ? sumSqDiff / cumVol : 0;
-      const stdDev = Math.sqrt(variance);
+    const lastWithVwap = [...chartSorted].reverse().find(r => r.vwap != null);
+    const last = lastWithVwap ? { vwap: parseFloat(lastWithVwap.vwap.toFixed(2)) } : null;
 
-      points.push({
-        name: r.date.slice(5),
-        vwap: parseFloat(vwap.toFixed(2)),
-        upper1: parseFloat((vwap + stdDev).toFixed(2)),
-        lower1: parseFloat((vwap - stdDev).toFixed(2)),
-        upper2: parseFloat((vwap + 2 * stdDev).toFixed(2)),
-        lower2: parseFloat((vwap - 2 * stdDev).toFixed(2)),
-      });
-    }
-
-    const lastPoint = points[points.length - 1];
-    return { points, last: lastPoint };
+    return { points, last };
   }, [chartSorted]);
 
   const priceChartData = useMemo(() =>
@@ -526,11 +506,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       vah: r.vah || null,
       val: r.val || null,
       delta: r.delta != null ? r.delta : null,
+      deltaAbs: r.delta != null ? Math.abs(r.delta) : null,
+      deltaPositive: r.delta != null ? r.delta >= 0 : null,
       vwap: vwapData?.points[i]?.vwap || null,
-      vwapU1: vwapData?.points[i]?.upper1 || null,
-      vwapL1: vwapData?.points[i]?.lower1 || null,
-      vwapU2: vwapData?.points[i]?.upper2 || null,
-      vwapL2: vwapData?.points[i]?.lower2 || null,
     })), [chartSorted, vwapData]
   );
 
@@ -808,11 +786,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
 
         const vw = vwapData.last;
         const vwapRows = [
-          { label: 'VWAP', value: vw.vwap.toFixed(dec) },
-          { label: '+1 Desv', value: vw.upper1.toFixed(dec) },
-          { label: '-1 Desv', value: vw.lower1.toFixed(dec) },
-          { label: '+2 Desv', value: vw.upper2.toFixed(dec) },
-          { label: '-2 Desv', value: vw.lower2.toFixed(dec) },
+          { label: 'VWAP (ATAS)', value: vw.vwap.toFixed(dec) },
           { label: es ? 'Precio vs VWAP' : 'Price vs VWAP', value: last.close > vw.vwap ? `+${(last.close - vw.vwap).toFixed(dec)} ${es ? 'arriba' : 'above'}` : `${(last.close - vw.vwap).toFixed(dec)} ${es ? 'abajo' : 'below'}` },
         ];
 
@@ -1072,16 +1046,12 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          assetData: sorted.slice(-60),
+          assetData: chartSorted,
           totalSessions: sorted.length,
           assetTicker: asset.ticker,
           language,
           calculatedVwap: vwapData?.last ? {
             vwap: vwapData.last.vwap,
-            upper1: vwapData.last.upper1,
-            lower1: vwapData.last.lower1,
-            upper2: vwapData.last.upper2,
-            lower2: vwapData.last.lower2,
             chartPeriod: chartRange || sorted.length,
           } : null,
           calculatedLevels: techLevels ? {
@@ -1133,7 +1103,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       setAiAnalysis(`Error: ${err.message}`);
     }
     setAiLoading(false);
-  }, [sorted, asset, selectedAsset, language]);
+  }, [sorted, chartSorted, chartRange, vwapData, techLevels, asset, selectedAsset, language]);
 
   const loadAnalysis = useCallback((item) => {
     setAiAnalysis(item.analysis);
@@ -1617,9 +1587,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                   >
                     <p className={`text-[9px] font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.priceChart}</p>
                     <ResponsiveContainer width="100%" height={300}>
-                      <ComposedChart data={priceChartData}>
+                      <ComposedChart data={priceChartData} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
                         <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
-                        <YAxis orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} domain={['dataMin','dataMax']} tickFormatter={v=>v.toFixed(0)} padding={{ top: 10, bottom: 10 }} tickCount={12} />
+                        <YAxis yAxisId="price" orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} domain={['dataMin','dataMax']} tickFormatter={v=>v.toFixed(0)} padding={{ top: 10, bottom: 10 }} tickCount={12} />
                         <Tooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
                           const d = payload[0]?.payload;
@@ -1639,7 +1609,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                         }} cursor={false} />
                         {/* Candlesticks (up to 90d) or Line (6m+) */}
                         {chartSorted.length <= 90 ? (
-                        <Bar dataKey="wick" isAnimationActive={false} shape={(props) => {
+                        <Bar yAxisId="price" dataKey="wick" isAnimationActive={false} shape={(props) => {
                           const { x, y, width, height, payload } = props;
                           if (!payload?.wick || !payload?.body) return null;
                           const color = payload.bullish ? '#22c55e' : '#ef4444';
@@ -1672,32 +1642,26 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                           );
                         }} />
                         ) : (
-                          <Line type="monotone" dataKey="close" name={t.close} stroke={asset.color} strokeWidth={1.5} dot={false} activeDot={{ r:3 }} />
+                          <Line yAxisId="price" type="monotone" dataKey="close" name={t.close} stroke={asset.color} strokeWidth={1.5} dot={false} activeDot={{ r:3 }} />
                         )}
                         {/* Fibonacci levels */}
                         {showFib && techLevels && techLevels.fib.map(f => (
-                          <ReferenceLine key={`fib-${f.pct}`} y={f.level} stroke={f.color} strokeDasharray="10 5" strokeWidth={0.8} strokeOpacity={0.65}
+                          <ReferenceLine yAxisId="price" key={`fib-${f.pct}`} y={f.level} stroke={f.color} strokeDasharray="10 5" strokeWidth={0.8} strokeOpacity={0.65}
                             label={{ value: `F ${f.label}  ${f.level.toFixed(0)}`, position: 'insideTopLeft', fontSize: 7, fill: f.color, fontWeight: 700 }} />
                         ))}
                         {/* Pivot S/R levels */}
                         {showPivots && techLevels && techLevels.pivots.map(p => (
-                          <ReferenceLine key={`pv-${p.label}`} y={p.level} stroke={p.color} strokeDasharray="4 3" strokeWidth={1} strokeOpacity={0.75}
+                          <ReferenceLine yAxisId="price" key={`pv-${p.label}`} y={p.level} stroke={p.color} strokeDasharray="4 3" strokeWidth={1} strokeOpacity={0.75}
                             label={{ value: `${p.label}  ${p.level.toFixed(0)}`, position: 'insideTopRight', fontSize: 7, fill: p.color, fontWeight: 700 }} />
                         ))}
-                        {/* VWAP + Deviations */}
+                        {/* VWAP */}
                         {showVwap && (
-                          <>
-                            <Line type="monotone" dataKey="vwap" name="VWAP" stroke="#f59e0b" strokeWidth={2} dot={false} strokeOpacity={0.9} />
-                            <Line type="monotone" dataKey="vwapU1" name="+1σ" stroke="#f59e0b" strokeWidth={0.8} dot={false} strokeDasharray="4 2" strokeOpacity={0.4} />
-                            <Line type="monotone" dataKey="vwapL1" name="-1σ" stroke="#f59e0b" strokeWidth={0.8} dot={false} strokeDasharray="4 2" strokeOpacity={0.4} />
-                            <Line type="monotone" dataKey="vwapU2" name="+2σ" stroke="#f59e0b" strokeWidth={0.6} dot={false} strokeDasharray="2 3" strokeOpacity={0.25} />
-                            <Line type="monotone" dataKey="vwapL2" name="-2σ" stroke="#f59e0b" strokeWidth={0.6} dot={false} strokeDasharray="2 3" strokeOpacity={0.25} />
-                          </>
+                          <Line yAxisId="price" type="monotone" dataKey="vwap" name="VWAP" stroke="#f59e0b" strokeWidth={2} dot={false} strokeOpacity={0.9} />
                         )}
                         {/* POC / VAH / VAL */}
-                        <Line type="stepAfter" dataKey="poc" name="POC" stroke="#e879f9" strokeWidth={1.5} dot={false} connectNulls={false} strokeOpacity={0.8} />
-                        <Line type="stepAfter" dataKey="vah" name="VAH" stroke="#fb7185" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
-                        <Line type="stepAfter" dataKey="val" name="VAL" stroke="#34d399" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
+                        <Line yAxisId="price" type="stepAfter" dataKey="poc" name="POC" stroke="#e879f9" strokeWidth={1.5} dot={false} connectNulls={false} strokeOpacity={0.8} />
+                        <Line yAxisId="price" type="stepAfter" dataKey="vah" name="VAH" stroke="#fb7185" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
+                        <Line yAxisId="price" type="stepAfter" dataKey="val" name="VAL" stroke="#34d399" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
                       </ComposedChart>
                     </ResponsiveContainer>
                     {crosshair.visible && crosshair.chartId === 'price' && (
@@ -1707,8 +1671,8 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       </>
                     )}
                   </div>
-                  {/* Delta Chart (only if data exists) */}
-                  {deltaChartData && (
+                  {/* Delta Chart — disabled, data only in PDF/AI */}
+                  {false && deltaChartData && (
                     <div
                       className={`p-4 rounded-xl border relative ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
                       style={{ cursor:'crosshair' }}
@@ -1719,30 +1683,28 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       <ResponsiveContainer width="100%" height={120}>
                         <ComposedChart data={deltaChartData}>
                           <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
-                          <YAxis tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v <= -1000 ? (v/1000).toFixed(0)+'K' : v} />
+                          <YAxis tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v} domain={[0, 'auto']} />
                           <Tooltip content={({ active, payload, label }) => {
                             if (!active || !payload?.length) return null;
-                            const d = payload[0]?.value;
-                            if (d == null) return null;
+                            const raw = payload[0]?.payload?.rawDelta;
+                            if (raw == null) return null;
                             return (
                               <div className={`px-3 py-2 rounded-lg border shadow-lg text-xs ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
                                 <p className="font-bold mb-1">{label}</p>
-                                <p style={{ color: d >= 0 ? '#22c55e' : '#ef4444' }}>Delta: {d?.toLocaleString()}</p>
+                                <p style={{ color: raw >= 0 ? '#22c55e' : '#ef4444' }}>Delta: {raw?.toLocaleString()}</p>
                               </div>
                             );
                           }} cursor={false} />
-                          <ReferenceLine y={0} stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
                           <Bar dataKey="delta" isAnimationActive={false} shape={(props) => {
                             const { x, y, width, height, payload } = props;
                             if (payload?.delta == null) return null;
-                            const isPos = payload.delta >= 0;
-                            const color = isPos ? '#22c55e' : '#ef4444';
+                            const color = payload.isPositive ? '#22c55e' : '#ef4444';
                             const n = chartSorted.length;
                             const barW = n > 200 ? 1.5 : n > 120 ? 3 : n > 60 ? 5 : 7;
                             return (
                               <rect
                                 x={x + width / 2 - barW / 2}
-                                y={isPos ? y : y}
+                                y={y}
                                 width={barW}
                                 height={Math.abs(height) || 1}
                                 fill={color}
@@ -1979,6 +1941,10 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       <div>
                         <label className={`text-[10px] font-bold uppercase block mb-1 text-sky-400`}>DELTA</label>
                         <input type="number" value={formDelta} onChange={e => setFormDelta(e.target.value)} placeholder="-25000" className={inputBase} />
+                      </div>
+                      <div>
+                        <label className={`text-[10px] font-bold uppercase block mb-1 text-amber-400`}>VWAP</label>
+                        <input type="number" value={formVwap} onChange={e => setFormVwap(e.target.value)} placeholder={ph.c} step={asset.step} className={inputBase} />
                       </div>
                     </div>
                   </div>

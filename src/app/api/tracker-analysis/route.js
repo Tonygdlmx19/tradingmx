@@ -22,12 +22,8 @@ export async function POST(request) {
     const last5 = sorted.slice(-5);
     const last10 = sorted.slice(-10);
 
-    // ── Use pre-calculated VWAP from client (same as PDF/chart) ──
+    // ── Use VWAP from ATAS (manual input per session) ──
     const currentVwap = calculatedVwap?.vwap || 0;
-    const vwapU1 = calculatedVwap?.upper1 || 0;
-    const vwapL1 = calculatedVwap?.lower1 || 0;
-    const vwapU2 = calculatedVwap?.upper2 || 0;
-    const vwapL2 = calculatedVwap?.lower2 || 0;
     const vwapPeriod = calculatedVwap?.chartPeriod || sorted.length;
 
     // Build data table with POC/VAH/VAL
@@ -77,20 +73,20 @@ export async function POST(request) {
 
     const systemPrompt = es
       ? `Eres un analista institucional de futuros con experiencia en flujo de órdenes, estructura de mercado, Volume Profile (POC, VAH, VAL), VWAP y análisis de volumen/open interest. Respondes siempre en español.
+NOTA: El campo "Delta" en los datos es el delta diario de sesión (diferencia entre volumen de compra y venta agresiva del día). Un delta positivo indica presión compradora neta, un delta negativo indica presión vendedora neta.
 
 REGLAS DE FORMATO:
 - Usa emojis para hacer el texto visual y facil de escanear
 - NO uses caracteres especiales como triangulos, flechas Unicode, sigma, plusminus
-- Para desviaciones VWAP escribe: VWAP +1 Desv, VWAP -1 Desv, VWAP +2 Desv, VWAP -2 Desv
 - Usa guiones (-) para listas
 - Escribe los titulos de seccion en MAYUSCULAS
 - Se profesional, conciso y accionable para un trader activo de futuros.`
       : `You are an institutional futures analyst with expertise in order flow, market structure, Volume Profile (POC, VAH, VAL), VWAP and volume/open interest analysis. You always respond in English.
+NOTE: The "Delta" field in the data is the daily session delta (difference between aggressive buy volume and aggressive sell volume for the day). Positive delta indicates net buying pressure, negative delta indicates net selling pressure.
 
 FORMAT RULES:
 - Use emojis to make text visual and easy to scan
 - DO NOT use special characters like triangles, Unicode arrows, sigma, plusminus
-- For VWAP deviations write: VWAP +1 Dev, VWAP -1 Dev, VWAP +2 Dev, VWAP -2 Dev
 - Use dashes (-) for lists
 - Write section titles in UPPERCASE
 - Be professional, concise and actionable for an active futures trader.`;
@@ -101,11 +97,9 @@ FORMAT RULES:
 ## DATOS DE ${assetTicker} (últimas 30 sesiones de ${sorted.length} totales)
 ${dataTable}
 
-## VWAP (Volume Weighted Average Price) - Periodo: ${vwapPeriod} sesiones
-- VWAP actual: ${currentVwap.toFixed(2)}
-- VWAP +1 Desv: ${vwapU1.toFixed(2)}  |  VWAP -1 Desv: ${vwapL1.toFixed(2)}
-- VWAP +2 Desv: ${vwapU2.toFixed(2)}  |  VWAP -2 Desv: ${vwapL2.toFixed(2)}
-- Precio vs VWAP: ${last.close > currentVwap ? 'POR ENCIMA (+' + (last.close - currentVwap).toFixed(2) + ')' : 'POR DEBAJO (' + (last.close - currentVwap).toFixed(2) + ')'}
+## VWAP (Session VWAP from ATAS)
+- VWAP última sesión: ${currentVwap > 0 ? currentVwap.toFixed(2) : 'No disponible'}
+${currentVwap > 0 ? `- Precio vs VWAP: ${last.close > currentVwap ? 'POR ENCIMA (+' + (last.close - currentVwap).toFixed(2) + ')' : 'POR DEBAJO (' + (last.close - currentVwap).toFixed(2) + ')'}` : ''}
 
 ## VOLUME PROFILE (POC, VAH, VAL)
 ${vpSummary}
@@ -139,8 +133,7 @@ Contexto general del período analizado (2-3 frases).
 - Relación del precio con los retrocesos de Fibonacci
 
 ### 3. VWAP Y VOLUME PROFILE
-- Posición del precio respecto al VWAP y sus desviaciones
-- Interpretación de las bandas VWAP (+1/-1 Desv, +2/-2 Desv) — zonas de valor/sobreprecio
+- Posición del precio respecto al VWAP de sesión (dato de ATAS)
 - Análisis de POC, VAH y VAL: ¿dónde se concentra el volumen institucional?
 - ¿El precio está dentro o fuera del Value Area?
 - Confluencias entre VWAP, POC y niveles de Fibonacci
@@ -168,11 +161,9 @@ Analiza las últimas 3-5 sesiones: tipo de día, eficiencia, señales.
 ## ${assetTicker} DATA (last 30 sessions of ${sorted.length} total)
 ${dataTable}
 
-## VWAP (Volume Weighted Average Price) - Period: ${vwapPeriod} sessions
-- Current VWAP: ${currentVwap.toFixed(2)}
-- VWAP +1 Dev: ${vwapU1.toFixed(2)}  |  VWAP -1 Dev: ${vwapL1.toFixed(2)}
-- VWAP +2 Dev: ${vwapU2.toFixed(2)}  |  VWAP -2 Dev: ${vwapL2.toFixed(2)}
-- Price vs VWAP: ${last.close > currentVwap ? 'ABOVE (+' + (last.close - currentVwap).toFixed(2) + ')' : 'BELOW (' + (last.close - currentVwap).toFixed(2) + ')'}
+## VWAP (Session VWAP from ATAS)
+- Last session VWAP: ${currentVwap > 0 ? currentVwap.toFixed(2) : 'Not available'}
+${currentVwap > 0 ? `- Price vs VWAP: ${last.close > currentVwap ? 'ABOVE (+' + (last.close - currentVwap).toFixed(2) + ')' : 'BELOW (' + (last.close - currentVwap).toFixed(2) + ')'}` : ''}
 
 ## VOLUME PROFILE (POC, VAH, VAL)
 ${vpSummary}
@@ -206,8 +197,7 @@ General context (2-3 sentences).
 - Price relationship with Fibonacci retracements
 
 ### 3. VWAP AND VOLUME PROFILE
-- Price position relative to VWAP and its deviations
-- VWAP bands interpretation (+1/-1 Desv, +2/-2 Desv) — value/overpriced zones
+- Price position relative to session VWAP (ATAS data)
 - POC, VAH, VAL analysis: where is institutional volume concentrated?
 - Is price inside or outside the Value Area?
 - Confluences between VWAP, POC and Fibonacci levels
