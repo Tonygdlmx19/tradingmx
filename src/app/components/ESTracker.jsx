@@ -446,7 +446,16 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
       const day = classifyDay(r, prev5);
       const sig = getSignal(r, prev, language);
       const foiPct = r.foi && r.oi ? r.foi / r.oi * 100 : null;
-      return { r, prev, day, sig, foiPct };
+      // Delta acumulado 5d
+      const delta5dSlice = sorted.slice(Math.max(0, idx - 4), idx + 1);
+      const delta5d = delta5dSlice.some(d => d.delta != null)
+        ? delta5dSlice.reduce((s, d) => s + (d.delta || 0), 0)
+        : null;
+      // Divergencia: precio y delta en direcciones opuestas
+      const priceDir = r.close >= r.open; // true = up
+      const deltaDir = r.delta != null ? r.delta >= 0 : null; // true = positive
+      const divergence = r.delta != null ? priceDir !== deltaDir : null;
+      return { r, prev, day, sig, foiPct, delta5d, divergence };
     });
   }, [sorted, language]);
 
@@ -1995,16 +2004,16 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                     <table className="w-full text-xs min-w-[900px]">
                       <thead>
                         <tr className={isDark ? 'bg-slate-800/80' : 'bg-slate-50'}>
-                          {[t.date,t.open,t.high,t.low,t.close,t.body,t.range,t.effShort,t.dayType,t.volume,'Vol Δ','OI','OI Δ','Front%',t.signal, ...(isAdmin ? [''] : [])].map((h,i) => (
+                          {[t.date,t.open,t.high,t.low,t.close,t.body,t.range,t.effShort,t.dayType,t.volume,'Vol Δ','OI','OI Δ','Front%','Delta','Δ5d','Div',t.signal, ...(isAdmin ? [''] : [])].map((h,i) => (
                             <th key={i} className={`text-left ${i===0?'px-3':'px-2'} py-2.5 text-[9px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {pagedRows.length === 0 ? (
-                          <tr><td colSpan={isAdmin ? 16 : 15} className={`text-center py-8 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{t.noData}</td></tr>
+                          <tr><td colSpan={isAdmin ? 19 : 18} className={`text-center py-8 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{t.noData}</td></tr>
                         ) : (
-                          pagedRows.map(({ r, prev, day, sig, foiPct }) => {
+                          pagedRows.map(({ r, prev, day, sig, foiPct, delta5d, divergence }) => {
                             const dir = r.close >= r.open;
                             const sc = sig ? sigStyles[sig.type] : sigStyles.neutral;
                             const dc = dayColorMap[day.color] || dayColorMap.blue;
@@ -2027,6 +2036,19 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                                 <td className={`px-2 py-2 tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{fmtVol(r.oi)}</td>
                                 <td className={`px-2 py-2 tabular-nums ${deltaIsUp(r.oi,prev?.oi)===null?(isDark?'text-slate-500':'text-slate-400'):deltaIsUp(r.oi,prev?.oi)?'text-green-500':'text-red-500'}`}>{delta(r.oi,prev?.oi)}</td>
                                 <td className={`px-2 py-2 tabular-nums ${foiColor}`}>{foiPct != null ? pct(foiPct) : '—'}</td>
+                                <td className={`px-2 py-2 tabular-nums text-center ${r.delta != null ? (r.delta >= 0 ? 'text-green-500' : 'text-red-500') : isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                                  {r.delta != null ? (r.delta >= 0 ? '+' : '') + (Math.abs(r.delta) >= 1000 ? (r.delta/1000).toFixed(0)+'K' : r.delta) : '—'}
+                                </td>
+                                <td className={`px-2 py-2 tabular-nums text-center ${delta5d != null ? (delta5d >= 0 ? 'text-green-500' : 'text-red-500') : isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                                  {delta5d != null ? (delta5d >= 0 ? '+' : '') + (Math.abs(delta5d) >= 1000 ? (delta5d/1000).toFixed(0)+'K' : delta5d) : '—'}
+                                </td>
+                                <td className="px-2 py-2 text-center">
+                                  {divergence != null ? (
+                                    <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-bold ${divergence ? 'bg-amber-500/15 text-amber-500' : isDark ? 'text-slate-600' : 'text-slate-300'}`}>
+                                      {divergence ? (es ? 'DIV' : 'DIV') : '—'}
+                                    </span>
+                                  ) : '—'}
+                                </td>
                                 <td className="px-2 py-2"><span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold ${sc.badge}`}>{sig ? `${sig.icon} ${sig.label}` : '—'}</span></td>
                                 {isAdmin && (
                                   <td className="px-2 py-2">

@@ -26,21 +26,32 @@ export async function POST(request) {
     const currentVwap = calculatedVwap?.vwap || 0;
     const vwapPeriod = calculatedVwap?.chartPeriod || sorted.length;
 
-    // Build data table with POC/VAH/VAL
-    const dataTable = sorted.slice(-30).map((r, i, arr) => {
+    // Build data table with POC/VAH/VAL/Delta/Divergence
+    const last30 = sorted.slice(-30);
+    const dataTable = last30.map((r, i, arr) => {
       const prevR = i > 0 ? arr[i - 1] : null;
       const body = Math.abs(r.close - r.open);
       const range = r.high - r.low;
       const eff = range > 0 ? ((body / range) * 100).toFixed(1) : '0';
       const dir = r.close >= r.open ? 'UP' : 'DOWN';
-      const volDelta = prevR ? (((r.vol - prevR.vol) / prevR.vol) * 100).toFixed(1) + '%' : '—';
-      const oiDelta = prevR ? (((r.oi - prevR.oi) / prevR.oi) * 100).toFixed(1) + '%' : '—';
-      const foiPct = r.foi && r.oi ? ((r.foi / r.oi) * 100).toFixed(1) + '%' : '—';
+      const volDelta = prevR ? (((r.vol - prevR.vol) / prevR.vol) * 100).toFixed(1) + '%' : '-';
+      const oiDelta = prevR ? (((r.oi - prevR.oi) / prevR.oi) * 100).toFixed(1) + '%' : '-';
+      const foiPct = r.foi && r.oi ? ((r.foi / r.oi) * 100).toFixed(1) + '%' : '-';
+      // Delta acumulado 5d
+      const idx5 = Math.max(0, i - 4);
+      const d5d = arr.slice(idx5, i + 1).reduce((s, d) => s + (d.delta || 0), 0);
+      const hasD5d = arr.slice(idx5, i + 1).some(d => d.delta != null);
+      // Divergencia precio vs delta
+      const priceUp = r.close >= r.open;
+      const deltaUp = r.delta != null ? r.delta >= 0 : null;
+      const div = r.delta != null ? (priceUp !== deltaUp ? 'DIVERGENCIA' : 'OK') : '-';
       const vpData = [
         r.poc ? `POC:${r.poc}` : null,
         r.vah ? `VAH:${r.vah}` : null,
         r.val ? `VAL:${r.val}` : null,
         r.delta != null ? `Delta:${r.delta}` : null,
+        hasD5d ? `D5d:${d5d}` : null,
+        r.delta != null ? `Div:${div}` : null,
       ].filter(Boolean).join(' ');
       return `${r.date} | O:${r.open} H:${r.high} L:${r.low} C:${r.close} | Dir:${dir} Body:${body.toFixed(2)} Range:${range.toFixed(2)} Eff:${eff}% | Vol:${r.vol} (${volDelta}) OI:${r.oi} (${oiDelta}) FOI:${foiPct}${vpData ? ' | ' + vpData : ''}`;
     }).join('\n');
@@ -95,7 +106,11 @@ REGLAS DE FORMATO:
 - NO uses caracteres especiales como triangulos, flechas Unicode, sigma, plusminus
 - Usa guiones (-) para listas
 - Escribe los titulos de seccion en MAYUSCULAS
-- NUNCA uses las palabras "probabilidad", "probable", "probablemente" ni "confianza" - en su lugar usa "favorabilidad", "escenario favorable/desfavorable", "condiciones favorables"
+- NUNCA uses porcentajes de probabilidad (60%, 40%, etc.) ni la palabra "probabilidad", "probable", "confianza"
+- En lugar de "60% alcista / 40% bajista" usa "Escenario primario: alcista" y "Escenario alternativo: bajista" SIN porcentajes
+- Cuando menciones niveles de precio consecutivos, SIEMPRE separa con espacios y flechas de texto: "6755 a 6637 a 6598", NUNCA concatenes numeros juntos
+- Los horarios SIEMPRE en hora CST (Centro de Mexico/Guadalajara). Apertura NY = 8:30 CST, Cierre London = 10:00 CST, Cierre NY = 15:00 CST
+- Cuando el analisis macro (1D) difiera del setup intraday, EXPLICA claramente: "La estructura de fondo es X, pero en ${tradingTimeframe} el setup es Y porque Z". No dejes contradicciones sin resolver
 - Se profesional, conciso y accionable.`
       : `You are an institutional futures analyst with expertise in order flow, market structure, Volume Profile (POC, VAH, VAL), VWAP and volume/open interest analysis. You always respond in English.
 
@@ -112,7 +127,11 @@ FORMAT RULES:
 - DO NOT use special characters like triangles, Unicode arrows, sigma, plusminus
 - Use dashes (-) for lists
 - Write section titles in UPPERCASE
-- NEVER use the words "probability", "probable", "probably" or "confidence" - instead use "favorability", "favorable/unfavorable scenario", "favorable conditions"
+- NEVER use probability percentages (60%, 40%, etc.) or the words "probability", "probable", "confidence"
+- Instead of "60% bullish / 40% bearish" use "Primary scenario: bullish" and "Alternative scenario: bearish" WITHOUT percentages
+- When mentioning consecutive price levels, ALWAYS separate with spaces and text arrows: "6755 to 6637 to 6598", NEVER concatenate numbers together
+- All times ALWAYS in CST (Central Mexico/Guadalajara). NY open = 8:30 CST, London close = 10:00 CST, NY close = 15:00 CST
+- When macro analysis (1D) differs from intraday setup, EXPLAIN clearly: "The background structure is X, but on ${tradingTimeframe} the setup is Y because Z". Do not leave contradictions unresolved
 - Be professional, concise and actionable.`;
 
     const userPrompt = es
@@ -184,12 +203,13 @@ Para CADA estrategia del trader:
 - Si no es buen momento, explica por que y que condiciones necesita ver
 ` : ''}
 ### ${strategiesText ? '7' : '6'}. SESGO OPERATIVO PARA ${tradingTimeframe}
-- Sesgo direccional para la proxima sesion (alcista/bajista/neutral)
-- Escenario ALCISTA: nivel de entrada especifico, stop loss, target 1, target 2 (para chart de ${tradingTimeframe})
-- Escenario BAJISTA: nivel de entrada especifico, stop loss, target 1, target 2 (para chart de ${tradingTimeframe})
+- Sesgo direccional (alcista/bajista/neutral)
+- Si el macro (1D) y el intraday (${tradingTimeframe}) difieren, explica la relacion claramente
+- ESCENARIO PRIMARIO: direccion, nivel de entrada, stop loss, target 1, target 2 (para chart de ${tradingTimeframe})
+- ESCENARIO ALTERNATIVO: direccion, nivel de entrada, stop loss, target 1, target 2 (para chart de ${tradingTimeframe})
 - Zonas de reaccion: donde esperar confirmacion en ${tradingTimeframe} antes de entrar (POC, VAH, VAL, VWAP, Pivots)
 - Que buscar en el chart de ${tradingTimeframe}: patrones de confirmacion (rechazo, absorcion, delta shift)
-- Horarios recomendados para operar (apertura NY, London close, etc.)
+- Horarios recomendados en CST (Centro Mexico): apertura NY 8:30, London close 10:00, cierre NY 15:00
 
 ### ${strategiesText ? '8' : '7'}. ALERTAS Y RIESGOS
 - Senales de alerta activas
@@ -264,12 +284,13 @@ For EACH trader strategy:
 - If not a good time, explain why and what conditions need to be seen
 ` : ''}
 ### ${strategiesText ? '7' : '6'}. TRADING BIAS FOR ${tradingTimeframe}
-- Directional bias for next session (bullish/bearish/neutral)
-- BULLISH scenario: specific entry level, stop loss, target 1, target 2 (for ${tradingTimeframe} chart)
-- BEARISH scenario: specific entry level, stop loss, target 1, target 2 (for ${tradingTimeframe} chart)
+- Directional bias (bullish/bearish/neutral)
+- If macro (1D) and intraday (${tradingTimeframe}) differ, explain the relationship clearly
+- PRIMARY SCENARIO: direction, entry level, stop loss, target 1, target 2 (for ${tradingTimeframe} chart)
+- ALTERNATIVE SCENARIO: direction, entry level, stop loss, target 1, target 2 (for ${tradingTimeframe} chart)
 - Reaction zones: where to wait for confirmation on ${tradingTimeframe} (POC, VAH, VAL, VWAP, Pivots)
 - What to look for on ${tradingTimeframe} chart: confirmation patterns (rejection, absorption, delta shift)
-- Recommended trading hours (NY open, London close, etc.)
+- Recommended hours in CST (Central Mexico): NY open 8:30, London close 10:00, NY close 15:00
 
 ### ${strategiesText ? '8' : '7'}. ALERTS AND RISKS
 - Active alert signals
