@@ -800,6 +800,7 @@ export default function TradingJournalPRO() {
       <ESTracker
         onClose={() => setShowESTracker(false)}
         isAdmin={isAdmin}
+        estrategias={config.estrategias || []}
       />
     );
   }

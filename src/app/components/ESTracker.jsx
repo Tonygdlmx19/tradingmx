@@ -100,7 +100,7 @@ function delta(curr, prev) {
 function deltaIsUp(curr, prev) { return prev == null ? null : curr >= prev; }
 
 // ── Component ──────────────────────────────────────────────────
-export default function ESTracker({ onClose, isAdmin }) {
+export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
   const { isDark } = useTheme();
   const { language } = useLanguage();
 
@@ -1063,6 +1063,10 @@ export default function ESTracker({ onClose, isAdmin }) {
             pivots: techLevels.pivots.map(p => ({ label: p.label, level: p.level })),
             techPeriodDays: techLevels.periodDays,
           } : null,
+          userStrategies: estrategias.map(s => ({
+            nombre: s.nombre,
+            reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
+          })),
         }),
       });
 

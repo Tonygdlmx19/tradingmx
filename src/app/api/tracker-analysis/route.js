@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels } = await request.json();
+    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies } = await request.json();
 
     if (!assetData || !assetData.length) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 });
@@ -69,6 +69,14 @@ export async function POST(request) {
       ? vpSessions.map(r => `${r.date}: POC=${r.poc}${r.vah ? ' VAH=' + r.vah : ''}${r.val ? ' VAL=' + r.val : ''}${r.delta != null ? ' Delta=' + r.delta : ''}`).join('\n')
       : 'No volume profile data available';
 
+    // Build user strategies text
+    const strategiesText = userStrategies && userStrategies.length > 0
+      ? userStrategies.map(s => {
+          const rules = (s.reglas || []).map(r => `  - ${r.texto}${r.descripcion ? ': ' + r.descripcion : ''}`).join('\n');
+          return `Estrategia: ${s.nombre}\n${rules}`;
+        }).join('\n\n')
+      : null;
+
     const es = language === 'es';
 
     const systemPrompt = es
@@ -119,7 +127,12 @@ PP: ${pp.toFixed(2)}
 - Cambio total período: ${totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)} (${totalChangePct}%)
 - Último cierre: ${last.close} (${last.close >= last.open ? 'alcista' : 'bajista'})
 - 52w High: ${high52.toFixed(2)} | 52w Low: ${low52.toFixed(2)}
+${strategiesText ? `
+## ESTRATEGIAS DEL TRADER
+El trader utiliza las siguientes estrategias. Analiza los datos actuales del mercado y evalua como aplicar cada estrategia en el contexto actual:
 
+${strategiesText}
+` : ''}
 ## INSTRUCCIONES DE ANÁLISIS
 Proporciona tu análisis en las siguientes secciones. Usa formato Markdown:
 
@@ -133,9 +146,9 @@ Contexto general del período analizado (2-3 frases).
 - Relación del precio con los retrocesos de Fibonacci
 
 ### 3. VWAP Y VOLUME PROFILE
-- Posición del precio respecto al VWAP de sesión (dato de ATAS)
-- Análisis de POC, VAH y VAL: ¿dónde se concentra el volumen institucional?
-- ¿El precio está dentro o fuera del Value Area?
+- Posición del precio respecto al VWAP y sus desviaciones
+- Análisis de POC, VAH y VAL: donde se concentra el volumen institucional
+- El precio esta dentro o fuera del Value Area
 - Confluencias entre VWAP, POC y niveles de Fibonacci
 
 ### 4. FLUJO INSTITUCIONAL (Volumen & OI)
@@ -145,14 +158,22 @@ Contexto general del período analizado (2-3 frases).
 
 ### 5. CLASIFICACIÓN DE SESIONES RECIENTES
 Analiza las últimas 3-5 sesiones: tipo de día, eficiencia, señales.
-
-### 6. SESGO OPERATIVO
+${strategiesText ? `
+### 6. APLICACION DE ESTRATEGIAS DEL TRADER
+Para CADA estrategia del trader:
+- Evalua si las condiciones actuales del mercado son favorables para aplicarla
+- Identifica niveles especificos de entrada, stop loss y take profit basados en los datos
+- Indica si se cumplen las reglas de la estrategia con los datos actuales (VWAP, POC, Fibonacci, Pivots)
+- Da una calificacion de confianza: ALTA, MEDIA o BAJA para operar hoy con esa estrategia
+- Si no es buen momento, explica por que y que condiciones necesita ver
+` : ''}
+### ${strategiesText ? '7' : '6'}. SESGO OPERATIVO
 - Sesgo direccional para la próxima sesión (alcista/bajista/neutral)
 - Escenarios probables con niveles específicos
 - Niveles clave a vigilar: Pivot Points, VWAP, POC, Fibonacci
 - Zonas de entrada potencial basadas en confluencias
 
-### 7. ALERTAS Y RIESGOS
+### ${strategiesText ? '8' : '7'}. ALERTAS Y RIESGOS
 - Señales de alerta activas
 - Factores de riesgo
 - Roll de contrato si aplica`
@@ -183,7 +204,12 @@ PP: ${pp.toFixed(2)}
 - Total period change: ${totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)} (${totalChangePct}%)
 - Last close: ${last.close} (${last.close >= last.open ? 'bullish' : 'bearish'})
 - 52w High: ${high52.toFixed(2)} | 52w Low: ${low52.toFixed(2)}
+${strategiesText ? `
+## TRADER STRATEGIES
+The trader uses the following strategies. Analyze current market data and evaluate how to apply each strategy in the current context:
 
+${strategiesText}
+` : ''}
 ## ANALYSIS INSTRUCTIONS
 Provide your analysis in the following sections. Use Markdown format:
 
@@ -197,7 +223,7 @@ General context (2-3 sentences).
 - Price relationship with Fibonacci retracements
 
 ### 3. VWAP AND VOLUME PROFILE
-- Price position relative to session VWAP (ATAS data)
+- Price position relative to VWAP and its deviations
 - POC, VAH, VAL analysis: where is institutional volume concentrated?
 - Is price inside or outside the Value Area?
 - Confluences between VWAP, POC and Fibonacci levels
@@ -209,14 +235,22 @@ General context (2-3 sentences).
 
 ### 5. RECENT SESSION CLASSIFICATION
 Analyze last 3-5 sessions: day type, efficiency, signals.
-
-### 6. TRADING BIAS
+${strategiesText ? `
+### 6. STRATEGY APPLICATION
+For EACH trader strategy:
+- Evaluate if current market conditions are favorable to apply it
+- Identify specific entry, stop loss and take profit levels based on data
+- Indicate if strategy rules are met with current data (VWAP, POC, Fibonacci, Pivots)
+- Give a confidence rating: HIGH, MEDIUM or LOW for trading today with that strategy
+- If not a good time, explain why and what conditions need to be seen
+` : ''}
+### ${strategiesText ? '7' : '6'}. TRADING BIAS
 - Directional bias for next session (bullish/bearish/neutral)
 - Probable scenarios with specific levels
 - Key levels to watch: Pivot Points, VWAP, POC, Fibonacci
 - Potential entry zones based on confluences
 
-### 7. ALERTS AND RISKS
+### ${strategiesText ? '8' : '7'}. ALERTS AND RISKS
 - Active alert signals
 - Risk factors
 - Contract roll if applicable`;
