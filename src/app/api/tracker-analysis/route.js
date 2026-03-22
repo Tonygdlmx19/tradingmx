@@ -1,9 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies, tradingTimeframe = '5m', marketNews } = await request.json();
+    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies, tradingTimeframe = '5m', marketNews, marketSentiment } = await request.json();
 
     if (!assetData || !assetData.length) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 });
@@ -13,8 +12,6 @@ export async function POST(request) {
     if (!apiKey) {
       return NextResponse.json({ error: 'Anthropic API key not configured. Add ANTHROPIC_API_KEY to .env.local' }, { status: 500 });
     }
-
-    const client = new Anthropic({ apiKey });
 
     const sorted = [...assetData].sort((a, b) => a.date.localeCompare(b.date));
     const last = sorted[sorted.length - 1];
@@ -95,6 +92,22 @@ export async function POST(request) {
           return `${time ? '[' + time + '] ' : ''}${n.source}: ${n.headline}${sent}`;
         }).join('\n')
       : null;
+
+    // Build market sentiment text
+    let sentimentText = null;
+    if (marketSentiment) {
+      const parts = [];
+      if (marketSentiment.fearGreed) {
+        const fg = marketSentiment.fearGreed;
+        parts.push(`Fear & Greed Index: ${fg.score}/100 (${fg.rating})${fg.previousClose != null ? ` | Prev: ${fg.previousClose}` : ''}${fg.oneWeekAgo != null ? ` | 1w ago: ${fg.oneWeekAgo}` : ''}${fg.oneMonthAgo != null ? ` | 1m ago: ${fg.oneMonthAgo}` : ''}`);
+      }
+      if (marketSentiment.vix) {
+        const vx = marketSentiment.vix;
+        const level = vx.current < 15 ? 'Low' : vx.current < 20 ? 'Normal' : vx.current < 25 ? 'Elevated' : 'High';
+        parts.push(`VIX: ${vx.current.toFixed(2)} (${level}) | Change: ${vx.change >= 0 ? '+' : ''}${vx.change.toFixed(2)} (${vx.changePercent.toFixed(1)}%)`);
+      }
+      if (parts.length > 0) sentimentText = parts.join('\n');
+    }
 
     // Build user strategies text
     const strategiesText = userStrategies && userStrategies.length > 0
@@ -188,6 +201,11 @@ ${strategiesText}
 Considera estas noticias en tu analisis, especialmente si afectan directamente a ${assetTicker} o al sentimiento general del mercado:
 
 ${newsText}
+` : ''}${sentimentText ? `
+## SENTIMIENTO DE MERCADO
+Usa estos datos para evaluar el animo general del mercado. Fear & Greed por debajo de 25 = miedo extremo (zona potencial de rebote). VIX por encima de 25 = alta volatilidad (stops mas amplios, posiciones mas chicas). Incorpora esto en tus recomendaciones de gestion de riesgo.
+
+${sentimentText}
 ` : ''}
 ## INSTRUCCIONES DE ANÁLISIS
 Proporciona tu análisis en las siguientes secciones. Usa formato Markdown:
@@ -279,6 +297,11 @@ ${strategiesText}
 Consider these news items in your analysis, especially if they directly affect ${assetTicker} or general market sentiment:
 
 ${newsText}
+` : ''}${sentimentText ? `
+## MARKET SENTIMENT
+Use this data to gauge overall market mood. Fear & Greed below 25 = extreme fear (potential reversal/bounce zone). VIX above 25 = high volatility (wider stops, smaller size). Factor this into your risk management recommendations.
+
+${sentimentText}
 ` : ''}
 ## ANALYSIS INSTRUCTIONS
 Provide your analysis in the following sections. Use Markdown format:
@@ -334,16 +357,29 @@ ${newsText ? `### ${strategiesText ? '8' : '7'}. NEWS CONTEXT
 - Contract roll if applicable
 - Upcoming economic events that may affect trading`;
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [
-        { role: 'user', content: userPrompt }
-      ],
-      system: systemPrompt,
+    // ── Call Anthropic API directly via fetch (no SDK, faster cold start) ──
+    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
     });
 
-    const analysis = message.content[0]?.text || '';
+    if (!anthropicRes.ok) {
+      const errBody = await anthropicRes.text();
+      return NextResponse.json({ error: `Anthropic API ${anthropicRes.status}: ${errBody}` }, { status: 500 });
+    }
+
+    const result = await anthropicRes.json();
+    const analysis = result.content?.[0]?.text || '';
 
     return NextResponse.json({ analysis });
   } catch (error) {

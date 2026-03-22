@@ -1146,6 +1146,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             nombre: s.nombre,
             reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
           })),
+          marketSentiment: sentiment || null,
         }),
       });
 
