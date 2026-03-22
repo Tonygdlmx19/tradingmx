@@ -788,10 +788,10 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         const vw = vwapData.last;
         const vwapRows = [
           { label: 'VWAP', value: vw.vwap.toFixed(dec) },
-          { label: '+1σ', value: vw.upper1.toFixed(dec) },
-          { label: '-1σ', value: vw.lower1.toFixed(dec) },
-          { label: '+2σ', value: vw.upper2.toFixed(dec) },
-          { label: '-2σ', value: vw.lower2.toFixed(dec) },
+          { label: '+1 Desv', value: vw.upper1.toFixed(dec) },
+          { label: '-1 Desv', value: vw.lower1.toFixed(dec) },
+          { label: '+2 Desv', value: vw.upper2.toFixed(dec) },
+          { label: '-2 Desv', value: vw.lower2.toFixed(dec) },
           { label: es ? 'Precio vs VWAP' : 'Price vs VWAP', value: last.close > vw.vwap ? `+${(last.close - vw.vwap).toFixed(dec)} ${es ? 'arriba' : 'above'}` : `${(last.close - vw.vwap).toFixed(dec)} ${es ? 'abajo' : 'below'}` },
         ];
 
@@ -927,8 +927,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         startY: y,
         head: recentHeaders,
         body: recentData,
-        styles: { fontSize: 7, cellPadding: 1.8, font: 'courier' },
-        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 6.5, font: 'helvetica' },
+        styles: { fontSize: 6.5, cellPadding: 1.5, font: 'helvetica', halign: 'center' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 6, halign: 'center' },
+        columnStyles: { 0: { halign: 'left' }, 7: { halign: 'left' }, 15: { halign: 'left' } },
         alternateRowStyles: { fillColor: [245, 247, 250] },
         margin: { left: margin, right: margin },
       });
@@ -951,11 +952,13 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         const currentContentW = currentPageW - margin * 2;
         const currentPageH = pdf.internal.pageSize.getHeight();
 
+        // Strip emojis and any non-Latin1 characters for jsPDF compatibility
         const cleanText = aiAnalysis
           .replace(/\*\*(.*?)\*\*/g, '$1')
           .replace(/^#{1,3}\s*/gm, '')
           .replace(/\n{3,}/g, '\n\n')
-          .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '');
+          .replace(/[^\x00-\xFF]/g, '')
+          .replace(/  +/g, ' ');
 
         const lines = pdf.splitTextToSize(cleanText, currentContentW);
         for (const line of lines) {
