@@ -890,7 +890,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`${asset.ticker} · ${es ? 'Análisis AI (Claude)' : 'AI Analysis (Claude)'}`, margin, 13);
+        pdf.text(`${asset.ticker} · ${es ? 'Análisis Técnico IA' : 'AI Technical Analysis'}`, margin, 13);
 
         pdf.setTextColor(40, 40, 40);
         pdf.setFontSize(8);
@@ -981,7 +981,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     if (selectedAsset) loadHistory();
   }, [selectedAsset]);
 
-  // ── AI Analysis (Claude) ──────────────────────────────────
+  // ── AI Technical Analysis ──────────────────────────────────
   const requestAiAnalysis = useCallback(async () => {
     if (!sorted.length) return;
     setAiLoading(true);
@@ -1172,7 +1172,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
               className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Brain size={12} />}
-              {es ? 'Análisis AI' : 'AI Analysis'}
+              {es ? 'Análisis IA' : 'AI Analysis'}
             </button>
             {/* Export PDF */}
             <button
@@ -1338,7 +1338,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                   <div className={`flex items-center justify-between px-4 py-3 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
                     <span className={`flex items-center gap-2 font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
                       <Brain size={16} className="text-purple-500" />
-                      {es ? 'Análisis AI (Claude)' : 'AI Analysis (Claude)'} — {asset.ticker}
+                      {es ? 'Análisis Técnico IA' : 'AI Technical Analysis'} — {asset.ticker}
                       {aiAnalysisDate && (
                         <span className={`text-[10px] font-normal px-2 py-0.5 rounded-full ${isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
                           {aiAnalysisDate}
@@ -1411,7 +1411,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                         <div className="flex items-center gap-3 py-6 justify-center">
                           <Loader2 size={20} className="animate-spin text-purple-500" />
                           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {es ? 'Claude está analizando los datos...' : 'Claude is analyzing the data...'}
+                            {es ? 'Analizando datos del mercado...' : 'Analyzing market data...'}
                           </p>
                         </div>
                       ) : aiAnalysis ? (
