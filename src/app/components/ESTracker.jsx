@@ -1604,8 +1604,8 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                             </div>
                           );
                         }} cursor={false} />
-                        {/* Candlesticks (< 200 data points) or Line (200+) */}
-                        {chartSorted.length <= 200 ? (
+                        {/* Candlesticks (up to 90d) or Line (6m+) */}
+                        {chartSorted.length <= 90 ? (
                         <Bar dataKey="wick" isAnimationActive={false} shape={(props) => {
                           const { x, y, width, height, payload } = props;
                           if (!payload?.wick || !payload?.body) return null;
