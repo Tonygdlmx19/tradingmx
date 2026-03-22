@@ -882,7 +882,8 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       // Price chart — top half
       const chartH = (pageH - y - 20) / 2;
       if (priceImg) {
-        y = sectionTitle(es ? 'Precio (Velas japonesas)' : 'Price (Candlesticks)', y);
+        const chartPeriodLabel = chartRange === 0 ? (es ? 'Todo' : 'All') : chartRange <= 30 ? '30d' : chartRange <= 60 ? '60d' : chartRange <= 90 ? '90d' : chartRange <= 130 ? '6m' : chartRange <= 195 ? '9m' : chartRange <= 260 ? '1y' : chartRange <= 520 ? '2y' : chartRange <= 780 ? '3y' : '5y';
+        y = sectionTitle(`${asset.ticker} · 1D · ${chartPeriodLabel} (${chartSorted.length} ${es ? 'sesiones' : 'sessions'})`, y);
         pdf.addImage(priceImg, 'PNG', margin, y, contentW, chartH - 14);
         y += chartH - 10;
       }
