@@ -1654,11 +1654,13 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                           const bodyH = Math.max(bodyBottom - bodyTop, 1);
                           const n = chartSorted.length;
                           const bodyW = n > 120 ? 3 : n > 60 ? 5 : 8;
-                          // POC marker on the candle
-                          const pocY = payload.poc && payload.poc >= payload.wick[0] && payload.poc <= payload.wick[1]
-                            ? wickTop + (payload.wick[1] - payload.poc) * pxPerUnit
-                            : null;
-                          const pocW = bodyW + 4;
+                          // Volume Profile markers on candle
+                          const markW = bodyW + 4;
+                          const calcMarkY = (price) => price && price >= payload.wick[0] && price <= payload.wick[1]
+                            ? wickTop + (payload.wick[1] - price) * pxPerUnit : null;
+                          const pocY = calcMarkY(payload.poc);
+                          const vahY = calcMarkY(payload.vah);
+                          const valY = calcMarkY(payload.val);
                           return (
                             <g>
                               <line x1={wickX} y1={wickTop} x2={wickX} y2={wickBottom} stroke={color} strokeWidth={1} />
@@ -1672,12 +1674,17 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                                 strokeWidth={0.5}
                                 rx={0.5}
                               />
+                              {vahY != null && (
+                                <line x1={wickX - markW / 2} y1={vahY} x2={wickX + markW / 2} y2={vahY}
+                                  stroke="#f97316" strokeWidth={1.5} strokeLinecap="round" />
+                              )}
+                              {valY != null && (
+                                <line x1={wickX - markW / 2} y1={valY} x2={wickX + markW / 2} y2={valY}
+                                  stroke="#8b5cf6" strokeWidth={1.5} strokeLinecap="round" />
+                              )}
                               {pocY != null && (
-                                <line
-                                  x1={wickX - pocW / 2} y1={pocY}
-                                  x2={wickX + pocW / 2} y2={pocY}
-                                  stroke="#3b82f6" strokeWidth={2} strokeLinecap="round"
-                                />
+                                <line x1={wickX - markW / 2} y1={pocY} x2={wickX + markW / 2} y2={pocY}
+                                  stroke="#3b82f6" strokeWidth={2} strokeLinecap="round" />
                               )}
                             </g>
                           );

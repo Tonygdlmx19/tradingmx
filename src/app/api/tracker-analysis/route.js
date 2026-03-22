@@ -95,6 +95,7 @@ REGLAS DE FORMATO:
 - NO uses caracteres especiales como triangulos, flechas Unicode, sigma, plusminus
 - Usa guiones (-) para listas
 - Escribe los titulos de seccion en MAYUSCULAS
+- NUNCA uses las palabras "probabilidad", "probable", "probablemente" ni "confianza" - en su lugar usa "favorabilidad", "escenario favorable/desfavorable", "condiciones favorables"
 - Se profesional, conciso y accionable.`
       : `You are an institutional futures analyst with expertise in order flow, market structure, Volume Profile (POC, VAH, VAL), VWAP and volume/open interest analysis. You always respond in English.
 
@@ -111,6 +112,7 @@ FORMAT RULES:
 - DO NOT use special characters like triangles, Unicode arrows, sigma, plusminus
 - Use dashes (-) for lists
 - Write section titles in UPPERCASE
+- NEVER use the words "probability", "probable", "probably" or "confidence" - instead use "favorability", "favorable/unfavorable scenario", "favorable conditions"
 - Be professional, concise and actionable.`;
 
     const userPrompt = es
@@ -178,7 +180,7 @@ Para CADA estrategia del trader:
 - Evalua si las condiciones actuales del mercado son favorables para aplicarla
 - Identifica niveles especificos de entrada, stop loss y take profit basados en los datos
 - Indica si se cumplen las reglas de la estrategia con los datos actuales (VWAP, POC, Fibonacci, Pivots)
-- Da una calificacion de confianza: ALTA, MEDIA o BAJA para operar hoy con esa estrategia
+- Da una calificacion de favorabilidad: FAVORABLE, NEUTRAL o DESFAVORABLE para operar hoy con esa estrategia
 - Si no es buen momento, explica por que y que condiciones necesita ver
 ` : ''}
 ### ${strategiesText ? '7' : '6'}. SESGO OPERATIVO PARA ${tradingTimeframe}
@@ -258,7 +260,7 @@ For EACH trader strategy:
 - Evaluate if current market conditions are favorable to apply it
 - Identify specific entry, stop loss and take profit levels based on data
 - Indicate if strategy rules are met with current data (VWAP, POC, Fibonacci, Pivots)
-- Give a confidence rating: HIGH, MEDIUM or LOW for trading today with that strategy
+- Give a favorability rating: FAVORABLE, NEUTRAL or UNFAVORABLE for trading today with that strategy
 - If not a good time, explain why and what conditions need to be seen
 ` : ''}
 ### ${strategiesText ? '7' : '6'}. TRADING BIAS FOR ${tradingTimeframe}
