@@ -423,6 +423,16 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     chartSorted.map(r => ({ name: r.date.slice(5), vol: r.vol, oi: r.oi })), [chartSorted]
   );
 
+  const deltaChartData = useMemo(() => {
+    const withDelta = chartSorted.filter(r => r.delta != null);
+    if (withDelta.length === 0) return null;
+    return chartSorted.map(r => ({
+      name: r.date.slice(5),
+      delta: r.delta != null ? r.delta : null,
+      bullish: r.close >= r.open,
+    }));
+  }, [chartSorted]);
+
   // Table rows (all, reversed) + pagination
   const tableRows = useMemo(() => {
     return [...sorted].reverse().map((r, revIdx) => {
@@ -1696,6 +1706,60 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       </>
                     )}
                   </div>
+                  {/* Delta Chart (only if data exists) */}
+                  {deltaChartData && (
+                    <div
+                      className={`p-4 rounded-xl border relative ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                      style={{ cursor:'crosshair' }}
+                      onMouseMove={handleChartMouseMove('delta')}
+                      onMouseLeave={handleChartMouseLeave}
+                    >
+                      <p className={`text-[9px] font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Delta</p>
+                      <ResponsiveContainer width="100%" height={120}>
+                        <ComposedChart data={deltaChartData}>
+                          <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
+                          <YAxis tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v <= -1000 ? (v/1000).toFixed(0)+'K' : v} />
+                          <Tooltip content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            const d = payload[0]?.value;
+                            if (d == null) return null;
+                            return (
+                              <div className={`px-3 py-2 rounded-lg border shadow-lg text-xs ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
+                                <p className="font-bold mb-1">{label}</p>
+                                <p style={{ color: d >= 0 ? '#22c55e' : '#ef4444' }}>Delta: {d?.toLocaleString()}</p>
+                              </div>
+                            );
+                          }} cursor={false} />
+                          <ReferenceLine y={0} stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
+                          <Bar dataKey="delta" isAnimationActive={false} shape={(props) => {
+                            const { x, y, width, height, payload } = props;
+                            if (payload?.delta == null) return null;
+                            const isPos = payload.delta >= 0;
+                            const color = isPos ? '#22c55e' : '#ef4444';
+                            const n = chartSorted.length;
+                            const barW = n > 200 ? 1.5 : n > 120 ? 3 : n > 60 ? 5 : 7;
+                            return (
+                              <rect
+                                x={x + width / 2 - barW / 2}
+                                y={isPos ? y : y}
+                                width={barW}
+                                height={Math.abs(height) || 1}
+                                fill={color}
+                                opacity={0.75}
+                                rx={0.5}
+                              />
+                            );
+                          }} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                      {crosshair.visible && crosshair.chartId === 'delta' && (
+                        <>
+                          <div className="absolute pointer-events-none" style={{ left: crosshair.x, top: 0, bottom: 0, width: 1, borderLeft: `1px dashed ${isDark ? 'rgba(148,163,184,0.4)' : 'rgba(100,116,139,0.35)'}` }} />
+                          <div className="absolute pointer-events-none" style={{ top: crosshair.y, left: 0, right: 0, height: 1, borderTop: `1px dashed ${isDark ? 'rgba(148,163,184,0.4)' : 'rgba(100,116,139,0.35)'}` }} />
+                        </>
+                      )}
+                    </div>
+                  )}
                   {/* Volume Chart */}
                   <div
                     id="tracker-vol-chart"
