@@ -649,51 +649,41 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       const lastDay = classifyDay(last, sorted.slice(-6, -1));
       const lastSig = getSignal(last, prev, language);
 
-      // ══════════════════════════════════════════════════════
-      // PAGE 1: REPORTE DE INTELIGENCIA
-      // ══════════════════════════════════════════════════════
-
-      // Header (white background)
-      // ── Header row: [Logo]  [Title centered]  [URL right] ──
-      const headerH = 16;
-      const headerY = 8;
-
-      // Logo (left)
+      // ── Helper: page header ──
+      let logoImgCache = null;
       try {
         const logoImg = new Image();
         logoImg.src = '/iconoapp.png';
-        await new Promise((resolve) => {
-          logoImg.onload = resolve;
-          logoImg.onerror = resolve;
-          setTimeout(resolve, 2000);
-        });
-        if (logoImg.complete && logoImg.naturalWidth > 0) {
-          const logoH = 14;
-          const logoW = logoH * (logoImg.naturalWidth / logoImg.naturalHeight);
-          pdf.addImage(logoImg, 'PNG', margin, headerY, logoW, logoH);
+        await new Promise((resolve) => { logoImg.onload = resolve; logoImg.onerror = resolve; setTimeout(resolve, 2000); });
+        if (logoImg.complete && logoImg.naturalWidth > 0) logoImgCache = logoImg;
+      } catch (_) {}
+
+      const addPageHeader = (pageTitle) => {
+        const hY = 8;
+        if (logoImgCache) {
+          const lH = 14, lW = lH * (logoImgCache.naturalWidth / logoImgCache.naturalHeight);
+          pdf.addImage(logoImgCache, 'PNG', margin, hY, lW, lH);
         }
-      } catch (_) { /* logo failed */ }
+        pdf.setTextColor(30, 30, 30);
+        pdf.setFontSize(13);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${asset.ticker}  ·  ${pageTitle}`, pageW / 2, hY + 6, { align: 'center' });
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(120);
+        pdf.text(`${asset.exchange}  |  ${new Date().toLocaleDateString(es ? 'es-MX' : 'en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}  |  ${sorted.length} ${es ? 'sesiones' : 'sessions'}`, pageW / 2, hY + 12, { align: 'center' });
+        pdf.setFontSize(7);
+        pdf.setTextColor(130);
+        pdf.text('www.tjpromx.app', pageW - margin, hY + 6, { align: 'right' });
+        pdf.setDrawColor(200);
+        pdf.line(margin, hY + 16, pageW - margin, hY + 16);
+        return hY + 21;
+      };
 
-      // Title (center, same row)
-      pdf.setTextColor(30, 30, 30);
-      pdf.setFontSize(13);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${asset.ticker}  ·  ${es ? 'Reporte Institucional' : 'Institutional Report'}`, pageW / 2, headerY + 6, { align: 'center' });
-      pdf.setFontSize(7);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(120);
-      pdf.text(`${asset.exchange}  |  ${new Date().toLocaleDateString(es ? 'es-MX' : 'en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}  |  ${sorted.length} ${es ? 'sesiones' : 'sessions'}`, pageW / 2, headerY + 12, { align: 'center' });
-
-      // Website URL (right, same row)
-      pdf.setFontSize(7);
-      pdf.setTextColor(130);
-      pdf.text('www.tjpromx.app', pageW - margin, headerY + 6, { align: 'right' });
-
-      // Separator line
-      pdf.setDrawColor(200);
-      pdf.line(margin, headerY + headerH, pageW - margin, headerY + headerH);
-
-      let y = headerY + headerH + 5;
+      // ══════════════════════════════════════════════════════
+      // PAGE 1: INFORMACIÓN TÉCNICA
+      // ══════════════════════════════════════════════════════
+      let y = addPageHeader(es ? 'Reporte Institucional' : 'Institutional Report');
 
       // ── SECCIÓN: SNAPSHOT ──
       y = sectionTitle(es ? 'Snapshot del mercado' : 'Market Snapshot', y);
@@ -845,31 +835,30 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         y += 3;
       }
 
-      // ── SECCIÓN: GRÁFICAS ──
+      // ══════════════════════════════════════════════════════
+      // PAGE 2: GRÁFICAS
+      // ══════════════════════════════════════════════════════
+      pdf.addPage();
+      y = addPageHeader(es ? 'Gráficas' : 'Charts');
+
       const captureChart = (elementId) => {
         return new Promise((resolve) => {
           const container = document.getElementById(elementId);
           if (!container) { resolve(null); return; }
           const svg = container.querySelector('svg');
           if (!svg) { resolve(null); return; }
-
-          // Clone SVG and set explicit dimensions
           const clone = svg.cloneNode(true);
           const rect = svg.getBoundingClientRect();
           clone.setAttribute('width', rect.width);
           clone.setAttribute('height', rect.height);
-
-          // Add background
           const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
           bg.setAttribute('width', '100%');
           bg.setAttribute('height', '100%');
           bg.setAttribute('fill', isDark ? '#1e293b' : '#ffffff');
           clone.insertBefore(bg, clone.firstChild);
-
           const svgData = new XMLSerializer().serializeToString(clone);
           const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
           const url = URL.createObjectURL(svgBlob);
-
           const img = new Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
@@ -890,33 +879,24 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       const priceImg = await captureChart('tracker-price-chart');
       const volImg = await captureChart('tracker-vol-chart');
 
-      if (priceImg || volImg) {
-        // Check if we need a new page
-        if (y > pageH - 100) {
-          pdf.addPage();
-          y = 15;
-        }
-        y = sectionTitle(es ? 'Gráficas' : 'Charts', y);
-
-        if (priceImg) {
-          const imgW = contentW;
-          const imgH = imgW * 0.35;
-          if (y + imgH > pageH - 15) { pdf.addPage(); y = 15; }
-          pdf.addImage(priceImg, 'PNG', margin, y, imgW, imgH);
-          y += imgH + 4;
-        }
-        if (volImg) {
-          const imgW = contentW;
-          const imgH = imgW * 0.28;
-          if (y + imgH > pageH - 15) { pdf.addPage(); y = 15; }
-          pdf.addImage(volImg, 'PNG', margin, y, imgW, imgH);
-          y += imgH + 4;
-        }
+      // Price chart — top half
+      const chartH = (pageH - y - 20) / 2;
+      if (priceImg) {
+        y = sectionTitle(es ? 'Precio (Velas japonesas)' : 'Price (Candlesticks)', y);
+        pdf.addImage(priceImg, 'PNG', margin, y, contentW, chartH - 14);
+        y += chartH - 10;
+      }
+      // Volume chart — bottom half
+      if (volImg) {
+        y = sectionTitle(es ? 'Volumen & Open Interest' : 'Volume & Open Interest', y);
+        pdf.addImage(volImg, 'PNG', margin, y, contentW, chartH - 14);
       }
 
-      // ── SECCIÓN: ÚLTIMAS 30 SESIONES ──
-      if (y > pageH - 60) { pdf.addPage(); y = 15; }
-      y = sectionTitle(es ? 'Últimas 30 sesiones' : 'Last 30 Sessions', y);
+      // ══════════════════════════════════════════════════════
+      // PAGE 3: ÚLTIMAS 30 SESIONES (landscape)
+      // ══════════════════════════════════════════════════════
+      pdf.addPage('landscape');
+      y = addPageHeader(es ? 'Últimas 30 sesiones' : 'Last 30 Sessions');
 
       const recentHeaders = [
         [es ? 'Fecha' : 'Date', 'Open', 'High', 'Low', 'Close',
@@ -955,32 +935,32 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       // ══════════════════════════════════════════════════════
       // PAGE 2: AI ANALYSIS (si disponible)
       // ══════════════════════════════════════════════════════
+      // ══════════════════════════════════════════════════════
+      // PAGE 4: ANÁLISIS TÉCNICO IA
+      // ══════════════════════════════════════════════════════
       if (aiAnalysis) {
-        pdf.addPage();
-        pdf.setFillColor(15, 23, 42);
-        pdf.rect(0, 0, pageW, 20, 'F');
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(`${asset.ticker} · ${es ? 'Análisis Técnico IA' : 'AI Technical Analysis'}`, margin, 13);
+        pdf.addPage('portrait');
+        let ay = addPageHeader(es ? 'Análisis Técnico IA' : 'AI Technical Analysis');
 
         pdf.setTextColor(40, 40, 40);
         pdf.setFontSize(8);
         pdf.setFont('helvetica', 'normal');
+
+        const currentPageW = pdf.internal.pageSize.getWidth();
+        const currentContentW = currentPageW - margin * 2;
+        const currentPageH = pdf.internal.pageSize.getHeight();
 
         const cleanText = aiAnalysis
           .replace(/\*\*(.*?)\*\*/g, '$1')
           .replace(/^#{1,3}\s*/gm, '')
           .replace(/\n{3,}/g, '\n\n');
 
-        const lines = pdf.splitTextToSize(cleanText, contentW);
-        let ay = 28;
+        const lines = pdf.splitTextToSize(cleanText, currentContentW);
         for (const line of lines) {
-          if (ay > pageH - 15) {
-            pdf.addPage();
+          if (ay > currentPageH - 15) {
+            pdf.addPage('portrait');
             ay = 15;
           }
-          // Detect section headers (all caps lines)
           if (/^[A-ZÁÉÍÓÚÑ0-9\s.,:()\/&]{10,}$/.test(line.trim()) || /^\d+\.\s+[A-ZÁÉÍÓÚÑ]/.test(line.trim())) {
             pdf.setFont('helvetica', 'bold');
             pdf.setFontSize(9);
