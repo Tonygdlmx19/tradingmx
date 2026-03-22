@@ -118,6 +118,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
   const [formPoc, setFormPoc] = useState('');
   const [formVah, setFormVah] = useState('');
   const [formVal, setFormVal] = useState('');
+  const [formDelta, setFormDelta] = useState('');
   const [importing, setImporting] = useState(false);
   const [chartRange, setChartRange] = useState(60); // days to show in charts
   const [tablePage, setTablePage] = useState(0);
@@ -214,14 +215,15 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     const poc = formPoc ? parseFloat(formPoc) : null;
     const vah = formVah ? parseFloat(formVah) : null;
     const val = formVal ? parseFloat(formVal) : null;
+    const dlt = formDelta ? parseInt(formDelta) : null;
 
     setRecords(prev => {
       const filtered = prev.filter(r => r.date !== formDate);
-      return [...filtered, { date: formDate, open, high, low, close, vol, oi, foi, poc, vah, val }];
+      return [...filtered, { date: formDate, open, high, low, close, vol, oi, foi, poc, vah, val, delta: dlt }];
     });
     setFormOpen(''); setFormHigh(''); setFormLow(''); setFormClose('');
     setFormVol(''); setFormOi(''); setFormFoi('');
-    setFormPoc(''); setFormVah(''); setFormVal('');
+    setFormPoc(''); setFormVah(''); setFormVal(''); setFormDelta('');
   }, [isAdmin, formDate, formOpen, formHigh, formLow, formClose, formVol, formOi, formFoi, formPoc, formVah, formVal, language, setRecords]);
 
   const deleteEntry = useCallback((date) => {
@@ -242,6 +244,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     setFormPoc(record.poc != null ? String(record.poc) : '');
     setFormVah(record.vah != null ? String(record.vah) : '');
     setFormVal(record.val != null ? String(record.val) : '');
+    setFormDelta(record.delta != null ? String(record.delta) : '');
     // Scroll to form
     document.getElementById('tracker-entry-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [isAdmin]);
@@ -512,6 +515,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       poc: r.poc || null,
       vah: r.vah || null,
       val: r.val || null,
+      delta: r.delta != null ? r.delta : null,
       vwap: vwapData?.points[i]?.vwap || null,
       vwapU1: vwapData?.points[i]?.upper1 || null,
       vwapL1: vwapData?.points[i]?.lower1 || null,
@@ -1618,6 +1622,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                               {d.poc && <p style={{ color:'#e879f9' }}>POC: {d.poc?.toFixed(2)}</p>}
                               {d.vah && <p style={{ color:'#fb7185' }}>VAH: {d.vah?.toFixed(2)}</p>}
                               {d.val && <p style={{ color:'#34d399' }}>VAL: {d.val?.toFixed(2)}</p>}
+                              {d.delta != null && <p style={{ color: d.delta >= 0 ? '#22c55e' : '#ef4444' }}>Delta: {d.delta?.toLocaleString()}</p>}
                             </div>
                           );
                         }} cursor={false} />
@@ -1893,7 +1898,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       Volume Profile
                       <span className={`text-[8px] font-normal ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>({t.optional})</span>
                     </p>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-4 gap-3">
                       <div>
                         <label className={`text-[10px] font-bold uppercase block mb-1 text-purple-400`}>POC</label>
                         <input type="number" value={formPoc} onChange={e => setFormPoc(e.target.value)} placeholder={ph.c} step={asset.step} className={inputBase} />
@@ -1905,6 +1910,10 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       <div>
                         <label className={`text-[10px] font-bold uppercase block mb-1 text-emerald-400`}>VAL</label>
                         <input type="number" value={formVal} onChange={e => setFormVal(e.target.value)} placeholder={ph.l} step={asset.step} className={inputBase} />
+                      </div>
+                      <div>
+                        <label className={`text-[10px] font-bold uppercase block mb-1 text-sky-400`}>DELTA</label>
+                        <input type="number" value={formDelta} onChange={e => setFormDelta(e.target.value)} placeholder="-25000" className={inputBase} />
                       </div>
                     </div>
                   </div>

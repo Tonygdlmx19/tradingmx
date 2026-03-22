@@ -44,6 +44,7 @@ export async function POST(request) {
         r.poc ? `POC:${r.poc}` : null,
         r.vah ? `VAH:${r.vah}` : null,
         r.val ? `VAL:${r.val}` : null,
+        r.delta != null ? `Delta:${r.delta}` : null,
       ].filter(Boolean).join(' ');
       return `${r.date} | O:${r.open} H:${r.high} L:${r.low} C:${r.close} | Dir:${dir} Body:${body.toFixed(2)} Range:${range.toFixed(2)} Eff:${eff}% | Vol:${r.vol} (${volDelta}) OI:${r.oi} (${oiDelta}) FOI:${foiPct}${vpData ? ' | ' + vpData : ''}`;
     }).join('\n');
@@ -69,7 +70,7 @@ export async function POST(request) {
     // Volume Profile summary (last sessions with data)
     const vpSessions = sorted.filter(r => r.poc).slice(-10);
     const vpSummary = vpSessions.length > 0
-      ? vpSessions.map(r => `${r.date}: POC=${r.poc}${r.vah ? ' VAH=' + r.vah : ''}${r.val ? ' VAL=' + r.val : ''}`).join('\n')
+      ? vpSessions.map(r => `${r.date}: POC=${r.poc}${r.vah ? ' VAH=' + r.vah : ''}${r.val ? ' VAL=' + r.val : ''}${r.delta != null ? ' Delta=' + r.delta : ''}`).join('\n')
       : 'No volume profile data available';
 
     const es = language === 'es';
