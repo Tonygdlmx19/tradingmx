@@ -1247,33 +1247,33 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
 
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto p-4">
-      <div className={`w-full max-w-6xl rounded-2xl shadow-2xl my-4 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto p-0 sm:p-4">
+      <div className={`w-full max-w-6xl shadow-2xl sm:rounded-2xl sm:my-4 min-h-screen sm:min-h-0 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
 
         {/* ── Header ─────────────────────────────────────── */}
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-t-2xl px-6 py-5 flex justify-between items-start">
-          <div>
-            <h2 className="text-white font-bold text-lg flex items-center gap-2">
-              <BarChart3 size={20} />
-              {asset.ticker} · {t.title}
+        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 sm:rounded-t-2xl px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-start">
+          <div className="min-w-0">
+            <h2 className="text-white font-bold text-sm sm:text-lg flex items-center gap-2">
+              <BarChart3 size={18} className="flex-shrink-0" />
+              <span className="truncate">{asset.ticker} · {t.title}</span>
             </h2>
-            <p className="text-blue-200 text-xs mt-1">{t.subtitle}</p>
+            <p className="text-blue-200 text-[10px] sm:text-xs mt-1 hidden sm:block">{t.subtitle}</p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap flex-shrink-0">
             {/* AI Analysis */}
             <button
               onClick={requestAiAnalysis}
               disabled={aiLoading || !sorted.length}
-              className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
+              className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Brain size={12} />}
-              {es ? 'Análisis IA' : 'AI Analysis'}
+              <span className="hidden sm:inline">{es ? 'Análisis IA' : 'AI Analysis'}</span>
             </button>
             {/* AI History */}
             {aiHistory.length > 0 && (
               <button
                 onClick={() => { setShowAiHistory(true); setShowAiPanel(false); }}
-                className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1"
+                className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1"
               >
                 <Clock size={12} />
                 {aiHistory.length}
@@ -1283,10 +1283,10 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
             <button
               onClick={exportPDF}
               disabled={exportingPdf || !sorted.length}
-              className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
+              className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
             >
               {exportingPdf ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
-              PDF
+              <span className="hidden sm:inline">PDF</span>
             </button>
             {/* Import CSV/Excel (Admin only) */}
             {isAdmin && (
@@ -1304,7 +1304,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                   className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
                 >
                   {importing ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                  {es ? 'Importar' : 'Import'}
+                  <span className="hidden sm:inline">{es ? 'Importar' : 'Import'}</span>
                 </button>
               </>
             )}
@@ -1319,7 +1319,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
           </div>
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="p-3 sm:p-5 space-y-4 sm:space-y-5">
 
           {/* Loading */}
           {loading && (
@@ -1334,7 +1334,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
               {/* ── Asset Selector ────────────────────────────── */}
               <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                 <p className={`text-[9px] font-bold uppercase tracking-wider mb-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.selectAsset}</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                   {ASSET_PRESETS.map(a => {
                     const isActive = a.id === selectedAsset;
                     const count = assetCounts[a.id] || 0;
@@ -1539,7 +1539,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
               {/* ── Charts ────────────────────────────────────── */}
               {sorted.length > 1 && (
                 <div className="space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:overflow-visible sm:flex-wrap">
                   {[
                     { label: '30d', value: 30 },
                     { label: '60d', value: 60 },
