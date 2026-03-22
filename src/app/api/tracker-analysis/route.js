@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { assetData, assetTicker, language = 'es' } = await request.json();
+    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels } = await request.json();
 
     if (!assetData || !assetData.length) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 });
@@ -22,23 +22,13 @@ export async function POST(request) {
     const last5 = sorted.slice(-5);
     const last10 = sorted.slice(-10);
 
-    // ── Calculate VWAP ──
-    let cumTPV = 0, cumVol = 0;
-    const vwapValues = sorted.map(r => {
-      const tp = (r.high + r.low + r.close) / 3;
-      cumTPV += tp * r.vol;
-      cumVol += r.vol;
-      return cumVol > 0 ? cumTPV / cumVol : tp;
-    });
-    const currentVwap = vwapValues[vwapValues.length - 1];
-
-    // VWAP StdDev
-    let sumSqDiff = 0;
-    sorted.forEach((r, i) => {
-      const tp = (r.high + r.low + r.close) / 3;
-      sumSqDiff += r.vol * Math.pow(tp - currentVwap, 2);
-    });
-    const vwapStdDev = cumVol > 0 ? Math.sqrt(sumSqDiff / cumVol) : 0;
+    // ── Use pre-calculated VWAP from client (same as PDF/chart) ──
+    const currentVwap = calculatedVwap?.vwap || 0;
+    const vwapU1 = calculatedVwap?.upper1 || 0;
+    const vwapL1 = calculatedVwap?.lower1 || 0;
+    const vwapU2 = calculatedVwap?.upper2 || 0;
+    const vwapL2 = calculatedVwap?.lower2 || 0;
+    const vwapPeriod = calculatedVwap?.chartPeriod || sorted.length;
 
     // Build data table with POC/VAH/VAL
     const dataTable = sorted.slice(-30).map((r, i, arr) => {
@@ -65,25 +55,16 @@ export async function POST(request) {
     const totalChange = last.close - sorted[0].open;
     const totalChangePct = ((totalChange / sorted[0].open) * 100).toFixed(2);
 
-    // 52w high/low
-    const data52w = sorted.slice(-260);
-    const high52 = Math.max(...data52w.map(r => r.high));
-    const low52 = Math.min(...data52w.map(r => r.low));
-    const position52 = ((last.close - low52) / (high52 - low52) * 100).toFixed(1);
+    // Use pre-calculated levels from client (same as PDF/chart)
+    const high52 = calculatedLevels?.high52 || Math.max(...sorted.slice(-260).map(r => r.high));
+    const low52 = calculatedLevels?.low52 || Math.min(...sorted.slice(-260).map(r => r.low));
+    const position52 = calculatedLevels?.position52 || '50.0';
+    const techPeriodDays = calculatedLevels?.techPeriodDays || 260;
 
-    // Fibonacci levels
-    const range52 = high52 - low52;
-    const fibLevels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1].map(f => ({
-      pct: (f * 100).toFixed(1) + '%',
-      level: (low52 + range52 * f).toFixed(2)
-    }));
+    const fibLevels = calculatedLevels?.fib || [];
+    const pivotLevels = calculatedLevels?.pivots || [];
 
-    // Pivot points
-    const pp = (last.high + last.low + last.close) / 3;
-    const r1 = 2 * pp - last.low;
-    const s1 = 2 * pp - last.high;
-    const r2 = pp + (last.high - last.low);
-    const s2 = pp - (last.high - last.low);
+    const pp = calculatedLevels?.pp || (last.high + last.low + last.close) / 3;
 
     // Volume Profile summary (last sessions with data)
     const vpSessions = sorted.filter(r => r.poc).slice(-10);
@@ -119,22 +100,22 @@ FORMAT RULES:
 ## DATOS DE ${assetTicker} (últimas 30 sesiones de ${sorted.length} totales)
 ${dataTable}
 
-## VWAP (Volume Weighted Average Price)
+## VWAP (Volume Weighted Average Price) - Periodo: ${vwapPeriod} sesiones
 - VWAP actual: ${currentVwap.toFixed(2)}
-- Desviación estándar: ${vwapStdDev.toFixed(2)}
-- VWAP +1 Desv: ${(currentVwap + vwapStdDev).toFixed(2)}  |  VWAP -1 Desv: ${(currentVwap - vwapStdDev).toFixed(2)}
-- VWAP +2 Desv: ${(currentVwap + 2 * vwapStdDev).toFixed(2)}  |  VWAP -2 Desv: ${(currentVwap - 2 * vwapStdDev).toFixed(2)}
+- VWAP +1 Desv: ${vwapU1.toFixed(2)}  |  VWAP -1 Desv: ${vwapL1.toFixed(2)}
+- VWAP +2 Desv: ${vwapU2.toFixed(2)}  |  VWAP -2 Desv: ${vwapL2.toFixed(2)}
 - Precio vs VWAP: ${last.close > currentVwap ? 'POR ENCIMA (+' + (last.close - currentVwap).toFixed(2) + ')' : 'POR DEBAJO (' + (last.close - currentVwap).toFixed(2) + ')'}
 
 ## VOLUME PROFILE (POC, VAH, VAL)
 ${vpSummary}
 
-## NIVELES FIBONACCI (52 semanas: Low ${low52.toFixed(2)} → High ${high52.toFixed(2)})
-${fibLevels.map(f => `${f.pct}: ${f.level}`).join(' | ')}
-Posición en rango 52s: ${position52}%
+## NIVELES FIBONACCI (${techPeriodDays} dias: Low ${low52.toFixed(2)} - High ${high52.toFixed(2)})
+${fibLevels.map(f => `${f.label}: ${f.level.toFixed(2)}`).join(' | ')}
+Posicion en rango: ${position52}%
 
-## PIVOT POINTS (última sesión)
-R2: ${r2.toFixed(2)} | R1: ${r1.toFixed(2)} | PP: ${pp.toFixed(2)} | S1: ${s1.toFixed(2)} | S2: ${s2.toFixed(2)}
+## PIVOT POINTS (ultima sesion: H:${last.high} L:${last.low} C:${last.close})
+${pivotLevels.map(p => `${p.label}: ${p.level.toFixed(2)}`).join(' | ')}
+PP: ${pp.toFixed(2)}
 
 ## ESTADÍSTICAS AGREGADAS
 - Rango promedio 5 sesiones: ${avgRange5.toFixed(2)} pts
@@ -186,22 +167,22 @@ Analiza las últimas 3-5 sesiones: tipo de día, eficiencia, señales.
 ## ${assetTicker} DATA (last 30 sessions of ${sorted.length} total)
 ${dataTable}
 
-## VWAP (Volume Weighted Average Price)
+## VWAP (Volume Weighted Average Price) - Period: ${vwapPeriod} sessions
 - Current VWAP: ${currentVwap.toFixed(2)}
-- Standard deviation: ${vwapStdDev.toFixed(2)}
-- VWAP +1 Desv: ${(currentVwap + vwapStdDev).toFixed(2)}  |  VWAP -1 Desv: ${(currentVwap - vwapStdDev).toFixed(2)}
-- VWAP +2 Desv: ${(currentVwap + 2 * vwapStdDev).toFixed(2)}  |  VWAP -2 Desv: ${(currentVwap - 2 * vwapStdDev).toFixed(2)}
+- VWAP +1 Dev: ${vwapU1.toFixed(2)}  |  VWAP -1 Dev: ${vwapL1.toFixed(2)}
+- VWAP +2 Dev: ${vwapU2.toFixed(2)}  |  VWAP -2 Dev: ${vwapL2.toFixed(2)}
 - Price vs VWAP: ${last.close > currentVwap ? 'ABOVE (+' + (last.close - currentVwap).toFixed(2) + ')' : 'BELOW (' + (last.close - currentVwap).toFixed(2) + ')'}
 
 ## VOLUME PROFILE (POC, VAH, VAL)
 ${vpSummary}
 
-## FIBONACCI LEVELS (52 weeks: Low ${low52.toFixed(2)} → High ${high52.toFixed(2)})
-${fibLevels.map(f => `${f.pct}: ${f.level}`).join(' | ')}
-Position in 52w range: ${position52}%
+## FIBONACCI LEVELS (${techPeriodDays} days: Low ${low52.toFixed(2)} - High ${high52.toFixed(2)})
+${fibLevels.map(f => `${f.label}: ${f.level.toFixed(2)}`).join(' | ')}
+Position in range: ${position52}%
 
-## PIVOT POINTS (last session)
-R2: ${r2.toFixed(2)} | R1: ${r1.toFixed(2)} | PP: ${pp.toFixed(2)} | S1: ${s1.toFixed(2)} | S2: ${s2.toFixed(2)}
+## PIVOT POINTS (last session: H:${last.high} L:${last.low} C:${last.close})
+${pivotLevels.map(p => `${p.label}: ${p.level.toFixed(2)}`).join(' | ')}
+PP: ${pp.toFixed(2)}
 
 ## AGGREGATE STATISTICS
 - Average range 5 sessions: ${avgRange5.toFixed(2)} pts

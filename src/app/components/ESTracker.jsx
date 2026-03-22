@@ -1061,6 +1061,23 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
           assetData: sorted,
           assetTicker: asset.ticker,
           language,
+          calculatedVwap: vwapData?.last ? {
+            vwap: vwapData.last.vwap,
+            upper1: vwapData.last.upper1,
+            lower1: vwapData.last.lower1,
+            upper2: vwapData.last.upper2,
+            lower2: vwapData.last.lower2,
+            chartPeriod: chartRange || sorted.length,
+          } : null,
+          calculatedLevels: techLevels ? {
+            high52: techLevels.high52,
+            low52: techLevels.low52,
+            position52: techLevels.position52,
+            pp: techLevels.pp,
+            fib: techLevels.fib.map(f => ({ label: f.label, level: f.level })),
+            pivots: techLevels.pivots.map(p => ({ label: p.label, level: p.level })),
+            techPeriodDays: techLevels.periodDays,
+          } : null,
         }),
       });
 
