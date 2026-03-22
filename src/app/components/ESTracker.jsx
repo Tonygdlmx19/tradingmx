@@ -6,7 +6,7 @@ import { db } from '../../firebase';
 import { doc, setDoc, onSnapshot, collection, query, where, orderBy, getDocs, deleteDoc } from 'firebase/firestore';
 import {
   X, Plus, RotateCcw, Trash2, BarChart3, Lock,
-  Upload, FileDown, Brain, Loader2, ChevronUp, ChevronDown, Pencil
+  Upload, FileDown, Brain, Loader2, ChevronUp, ChevronDown, Pencil, Clock
 } from 'lucide-react';
 import {
   LineChart, Line, Bar, ComposedChart,
@@ -1174,6 +1174,16 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Brain size={12} />}
               {es ? 'Análisis IA' : 'AI Analysis'}
             </button>
+            {/* AI History */}
+            {aiHistory.length > 0 && (
+              <button
+                onClick={() => { setShowAiHistory(true); setShowAiPanel(false); }}
+                className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1"
+              >
+                <Clock size={12} />
+                {aiHistory.length}
+              </button>
+            )}
             {/* Export PDF */}
             <button
               onClick={exportPDF}
