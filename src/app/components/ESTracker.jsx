@@ -516,6 +516,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
   const [showFib, setShowFib] = useState(true);
   const [showPivots, setShowPivots] = useState(true);
   const [showVwap, setShowVwap] = useState(true);
+  const [tradingTimeframe, setTradingTimeframe] = useState('5m');
   const [techPeriod, setTechPeriod] = useState(260); // trading days (260≈52w)
 
   const techLevels = useMemo(() => {
@@ -1063,6 +1064,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             pivots: techLevels.pivots.map(p => ({ label: p.label, level: p.level })),
             techPeriodDays: techLevels.periodDays,
           } : null,
+          tradingTimeframe,
           userStrategies: estrategias.map(s => ({
             nombre: s.nombre,
             reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
@@ -1294,6 +1296,24 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                 <Lock size={10} /> {es ? 'Lectura' : 'View'}
               </span>
             )}
+            {/* Trading timeframe selector */}
+            <select
+              value={tradingTimeframe}
+              onChange={e => setTradingTimeframe(e.target.value)}
+              className={`text-[10px] font-bold rounded-lg px-2 py-1.5 border outline-none cursor-pointer ${
+                isDark ? 'bg-slate-700 border-slate-600 text-cyan-400' : 'bg-slate-50 border-slate-300 text-cyan-600'
+              }`}
+              title={es ? 'Temporalidad operativa' : 'Trading timeframe'}
+            >
+              <option value="1m">1 min</option>
+              <option value="3m">3 min</option>
+              <option value="5m">5 min</option>
+              <option value="15m">15 min</option>
+              <option value="30m">30 min</option>
+              <option value="1H">1 hora</option>
+              <option value="4H">4 horas</option>
+              <option value="1D">1 día</option>
+            </select>
           </div>
         </div>
       </div>

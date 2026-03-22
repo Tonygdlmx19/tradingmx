@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies } = await request.json();
+    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies, tradingTimeframe = '5m' } = await request.json();
 
     if (!assetData || !assetData.length) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 });
@@ -81,23 +81,37 @@ export async function POST(request) {
 
     const systemPrompt = es
       ? `Eres un analista institucional de futuros con experiencia en flujo de órdenes, estructura de mercado, Volume Profile (POC, VAH, VAL), VWAP y análisis de volumen/open interest. Respondes siempre en español.
-NOTA: El campo "Delta" en los datos es el delta diario de sesión (diferencia entre volumen de compra y venta agresiva del día). Un delta positivo indica presión compradora neta, un delta negativo indica presión vendedora neta.
+
+CONTEXTO DEL TRADER:
+- El trader opera en temporalidad de ${tradingTimeframe} (${tradingTimeframe === '1D' ? 'swing/posicional' : tradingTimeframe === '4H' || tradingTimeframe === '1H' ? 'intradía medio plazo' : 'scalping/intradía corto plazo'})
+- Los datos que recibes son DIARIOS (1D) y sirven como contexto macro e institucional
+- Tu trabajo es usar estos niveles diarios (POC, VAH, VAL, VWAP, Fibonacci, Pivots) para dar recomendaciones ACCIONABLES en el timeframe de ${tradingTimeframe}
+- Las entradas, stops y targets deben ser específicos para operaciones en ${tradingTimeframe}
+
+NOTA: El campo "Delta" es el delta diario de sesión (diferencia entre volumen de compra y venta agresiva). Delta positivo = presión compradora neta, negativo = presión vendedora neta.
 
 REGLAS DE FORMATO:
 - Usa emojis para hacer el texto visual y facil de escanear
 - NO uses caracteres especiales como triangulos, flechas Unicode, sigma, plusminus
 - Usa guiones (-) para listas
 - Escribe los titulos de seccion en MAYUSCULAS
-- Se profesional, conciso y accionable para un trader activo de futuros.`
+- Se profesional, conciso y accionable.`
       : `You are an institutional futures analyst with expertise in order flow, market structure, Volume Profile (POC, VAH, VAL), VWAP and volume/open interest analysis. You always respond in English.
-NOTE: The "Delta" field in the data is the daily session delta (difference between aggressive buy volume and aggressive sell volume for the day). Positive delta indicates net buying pressure, negative delta indicates net selling pressure.
+
+TRADER CONTEXT:
+- The trader operates on ${tradingTimeframe} timeframe (${tradingTimeframe === '1D' ? 'swing/positional' : tradingTimeframe === '4H' || tradingTimeframe === '1H' ? 'intraday medium term' : 'scalping/short-term intraday'})
+- The data you receive is DAILY (1D) and serves as macro/institutional context
+- Your job is to use these daily levels (POC, VAH, VAL, VWAP, Fibonacci, Pivots) to give ACTIONABLE recommendations for the ${tradingTimeframe} timeframe
+- Entries, stops and targets must be specific for ${tradingTimeframe} operations
+
+NOTE: The "Delta" field is the daily session delta (difference between aggressive buy and sell volume). Positive delta = net buying pressure, negative = net selling pressure.
 
 FORMAT RULES:
 - Use emojis to make text visual and easy to scan
 - DO NOT use special characters like triangles, Unicode arrows, sigma, plusminus
 - Use dashes (-) for lists
 - Write section titles in UPPERCASE
-- Be professional, concise and actionable for an active futures trader.`;
+- Be professional, concise and actionable.`;
 
     const userPrompt = es
       ? `Analiza los siguientes datos de ${assetTicker} futuros y proporciona un análisis técnico institucional completo.
@@ -167,16 +181,19 @@ Para CADA estrategia del trader:
 - Da una calificacion de confianza: ALTA, MEDIA o BAJA para operar hoy con esa estrategia
 - Si no es buen momento, explica por que y que condiciones necesita ver
 ` : ''}
-### ${strategiesText ? '7' : '6'}. SESGO OPERATIVO
-- Sesgo direccional para la próxima sesión (alcista/bajista/neutral)
-- Escenarios probables con niveles específicos
-- Niveles clave a vigilar: Pivot Points, VWAP, POC, Fibonacci
-- Zonas de entrada potencial basadas en confluencias
+### ${strategiesText ? '7' : '6'}. SESGO OPERATIVO PARA ${tradingTimeframe}
+- Sesgo direccional para la proxima sesion (alcista/bajista/neutral)
+- Escenario ALCISTA: nivel de entrada especifico, stop loss, target 1, target 2 (para chart de ${tradingTimeframe})
+- Escenario BAJISTA: nivel de entrada especifico, stop loss, target 1, target 2 (para chart de ${tradingTimeframe})
+- Zonas de reaccion: donde esperar confirmacion en ${tradingTimeframe} antes de entrar (POC, VAH, VAL, VWAP, Pivots)
+- Que buscar en el chart de ${tradingTimeframe}: patrones de confirmacion (rechazo, absorcion, delta shift)
+- Horarios recomendados para operar (apertura NY, London close, etc.)
 
 ### ${strategiesText ? '8' : '7'}. ALERTAS Y RIESGOS
-- Señales de alerta activas
+- Senales de alerta activas
 - Factores de riesgo
-- Roll de contrato si aplica`
+- Roll de contrato si aplica
+- Eventos economicos proximos que afecten la operativa`
       : `Analyze the following ${assetTicker} futures data and provide a comprehensive institutional technical analysis.
 
 ## ${assetTicker} DATA (last 30 sessions of ${sorted.length} total)
@@ -244,16 +261,19 @@ For EACH trader strategy:
 - Give a confidence rating: HIGH, MEDIUM or LOW for trading today with that strategy
 - If not a good time, explain why and what conditions need to be seen
 ` : ''}
-### ${strategiesText ? '7' : '6'}. TRADING BIAS
+### ${strategiesText ? '7' : '6'}. TRADING BIAS FOR ${tradingTimeframe}
 - Directional bias for next session (bullish/bearish/neutral)
-- Probable scenarios with specific levels
-- Key levels to watch: Pivot Points, VWAP, POC, Fibonacci
-- Potential entry zones based on confluences
+- BULLISH scenario: specific entry level, stop loss, target 1, target 2 (for ${tradingTimeframe} chart)
+- BEARISH scenario: specific entry level, stop loss, target 1, target 2 (for ${tradingTimeframe} chart)
+- Reaction zones: where to wait for confirmation on ${tradingTimeframe} (POC, VAH, VAL, VWAP, Pivots)
+- What to look for on ${tradingTimeframe} chart: confirmation patterns (rejection, absorption, delta shift)
+- Recommended trading hours (NY open, London close, etc.)
 
 ### ${strategiesText ? '8' : '7'}. ALERTS AND RISKS
 - Active alert signals
 - Risk factors
-- Contract roll if applicable`;
+- Contract roll if applicable
+- Upcoming economic events that may affect trading`;
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
