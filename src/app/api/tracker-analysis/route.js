@@ -369,8 +369,11 @@ ${newsText ? `### ${strategiesText ? '8' : '7'}. NEWS CONTEXT
     return NextResponse.json({ analysis });
   } catch (error) {
     console.error('Tracker analysis error:', error);
+    const errorMsg = error?.status
+      ? `Anthropic API error ${error.status}: ${error.message}`
+      : error?.message || 'Error generating analysis';
     return NextResponse.json(
-      { error: error.message || 'Error generating analysis' },
+      { error: errorMsg },
       { status: 500 }
     );
   }
