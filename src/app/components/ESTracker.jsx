@@ -775,6 +775,76 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         y += 6;
       }
 
+      // ── SECCIÓN: VWAP & VOLUME PROFILE ──
+      if (vwapData?.last) {
+        if (y > pageH - 50) { pdf.addPage(); y = 15; }
+        y = sectionTitle('VWAP & Volume Profile', y);
+
+        const col1X = margin + 2;
+        const col2X = margin + contentW / 2 + 5;
+
+        // VWAP column
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(245, 158, 11);
+        pdf.text('VWAP', col1X, y);
+        pdf.setTextColor(147, 51, 234);
+        pdf.text('Volume Profile (ATAS)', col2X, y);
+        y += 5;
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7.5);
+
+        const vw = vwapData.last;
+        const vwapRows = [
+          { label: 'VWAP', value: vw.vwap.toFixed(dec) },
+          { label: '+1σ', value: vw.upper1.toFixed(dec) },
+          { label: '-1σ', value: vw.lower1.toFixed(dec) },
+          { label: '+2σ', value: vw.upper2.toFixed(dec) },
+          { label: '-2σ', value: vw.lower2.toFixed(dec) },
+          { label: es ? 'Precio vs VWAP' : 'Price vs VWAP', value: last.close > vw.vwap ? `+${(last.close - vw.vwap).toFixed(dec)} ${es ? 'arriba' : 'above'}` : `${(last.close - vw.vwap).toFixed(dec)} ${es ? 'abajo' : 'below'}` },
+        ];
+
+        // Volume Profile: last 5 sessions with POC data
+        const vpRecent = sorted.filter(r => r.poc).slice(-5).reverse();
+
+        const maxVpRows = Math.max(vwapRows.length, vpRecent.length > 0 ? vpRecent.length + 1 : 1);
+
+        for (let i = 0; i < maxVpRows; i++) {
+          if (i < vwapRows.length) {
+            pdf.setTextColor(100);
+            pdf.text(vwapRows[i].label, col1X, y);
+            pdf.setTextColor(30, 30, 30);
+            pdf.text(vwapRows[i].value, col1X + 30, y);
+          }
+          if (vpRecent.length > 0) {
+            if (i === 0) {
+              // Header row
+              pdf.setTextColor(100);
+              pdf.text(es ? 'Fecha' : 'Date', col2X, y);
+              pdf.text('POC', col2X + 22, y);
+              pdf.text('VAH', col2X + 42, y);
+              pdf.text('VAL', col2X + 62, y);
+            } else if (i - 1 < vpRecent.length) {
+              const vp = vpRecent[i - 1];
+              pdf.setTextColor(100);
+              pdf.text(vp.date, col2X, y);
+              pdf.setTextColor(147, 51, 234);
+              pdf.text(vp.poc ? vp.poc.toFixed(dec) : '—', col2X + 22, y);
+              pdf.setTextColor(251, 113, 133);
+              pdf.text(vp.vah ? vp.vah.toFixed(dec) : '—', col2X + 42, y);
+              pdf.setTextColor(52, 211, 153);
+              pdf.text(vp.val ? vp.val.toFixed(dec) : '—', col2X + 62, y);
+            }
+          } else if (i === 0) {
+            pdf.setTextColor(140);
+            pdf.text(es ? 'Sin datos de Volume Profile' : 'No Volume Profile data', col2X, y);
+          }
+          y += 4;
+        }
+        y += 3;
+      }
+
       // ── SECCIÓN: GRÁFICAS ──
       const captureChart = (elementId) => {
         return new Promise((resolve) => {
@@ -851,8 +921,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       const recentHeaders = [
         [es ? 'Fecha' : 'Date', 'Open', 'High', 'Low', 'Close',
          es ? 'Rango' : 'Range', es ? 'Efic.' : 'Eff.',
-         es ? 'Tipo' : 'Type', es ? 'Volumen' : 'Volume', 'Vol Δ',
-         'OI', 'OI Δ', es ? 'Señal' : 'Signal']
+         es ? 'Tipo' : 'Type', es ? 'Vol' : 'Vol', 'Vol Δ',
+         'OI', 'OI Δ', 'POC', 'VAH', 'VAL',
+         es ? 'Señal' : 'Signal']
       ];
 
       const recentData = sorted.slice(-30).reverse().map((r, revI) => {
@@ -866,6 +937,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
           d.range.toFixed(dec), (d.eff * 100).toFixed(0) + '%',
           d.label, fmtVol(r.vol), delta(r.vol, p?.vol),
           fmtVol(r.oi), delta(r.oi, p?.oi),
+          r.poc ? r.poc.toFixed(dec) : '—', r.vah ? r.vah.toFixed(dec) : '—', r.val ? r.val.toFixed(dec) : '—',
           s ? `${s.icon} ${s.label}` : '—'
         ];
       });
@@ -874,8 +946,8 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         startY: y,
         head: recentHeaders,
         body: recentData,
-        styles: { fontSize: 6.5, cellPadding: 1.5, font: 'helvetica' },
-        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 6 },
+        styles: { fontSize: 5.5, cellPadding: 1.2, font: 'helvetica' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 5 },
         alternateRowStyles: { fillColor: [245, 247, 250] },
         margin: { left: margin, right: margin },
       });
