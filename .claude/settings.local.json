@@ -31,7 +31,8 @@
       "Bash(wc:*)",
       "Bash(npx next:*)",
       "Bash(npm list:*)",
-      "Bash(npx firebase:*)"
+      "Bash(npx firebase:*)",
+      "Bash(npm update:*)"
     ]
   }
 }

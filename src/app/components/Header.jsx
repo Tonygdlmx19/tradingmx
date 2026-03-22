@@ -164,7 +164,7 @@ export default function Header({
               <button
                 onClick={onESTracker}
                 className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-cyan-400' : 'hover:bg-slate-100 text-cyan-600'}`}
-                title="Market Tracker"
+                title="Análisis Institucional"
               >
                 <BarChart3 size={18}/>
               </button>

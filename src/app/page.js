@@ -794,6 +794,16 @@ export default function TradingJournalPRO() {
     );
   }
 
+  // Mostrar análisis institucional (ES Tracker)
+  if (showESTracker) {
+    return (
+      <ESTracker
+        onClose={() => setShowESTracker(false)}
+        isAdmin={isAdmin}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen font-sans pb-20 transition-colors duration-300 ${
       isDark ? 'bg-slate-900' : 'bg-slate-100'
@@ -927,12 +937,6 @@ export default function TradingJournalPRO() {
         </div>
       </main>
 
-      {/* ES Tracker Modal */}
-      <ESTracker
-        isOpen={showESTracker}
-        onClose={() => setShowESTracker(false)}
-        isAdmin={isAdmin}
-      />
 
       {/* Trader Diary Modal */}
       <TraderDiary

@@ -100,7 +100,7 @@ function delta(curr, prev) {
 function deltaIsUp(curr, prev) { return prev == null ? null : curr >= prev; }
 
 // ── Component ──────────────────────────────────────────────────
-export default function ESTracker({ isOpen, onClose, isAdmin }) {
+export default function ESTracker({ onClose, isAdmin }) {
   const { isDark } = useTheme();
   const { language } = useLanguage();
 
@@ -1127,7 +1127,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
   // ── i18n ───────────────────────────────────────────────────
   const es = language === 'es';
   const t = {
-    title:       es ? 'Tracker Institucional' : 'Institutional Tracker',
+    title:       es ? 'Análisis Institucional' : 'Institutional Analysis',
     subtitle:    es ? 'Volumen · Open Interest · OHLC · Clasificación de jornada' : 'Volume · Open Interest · OHLC · Session Classification',
     demo:        'Demo',
     lastClose:   es ? 'Último cierre' : 'Last close',
@@ -1196,7 +1196,6 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     setCrosshair(prev => ({ ...prev, visible: false }));
   }, []);
 
-  if (!isOpen) return null;
 
   const inputBase = `w-full h-9 px-3 text-sm font-mono rounded-lg border outline-none transition-colors focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
     isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
@@ -1218,24 +1217,31 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
 
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto p-0 sm:p-4">
-      <div className={`w-full max-w-6xl shadow-2xl sm:rounded-2xl sm:my-4 min-h-screen sm:min-h-0 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
-
-        {/* ── Header ─────────────────────────────────────── */}
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 sm:rounded-t-2xl px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-start">
-          <div className="min-w-0">
-            <h2 className="text-white font-bold text-sm sm:text-lg flex items-center gap-2">
-              <BarChart3 size={18} className="flex-shrink-0" />
-              <span className="truncate">{asset.ticker} · {t.title}</span>
-            </h2>
-            <p className="text-blue-200 text-[10px] sm:text-xs mt-1 hidden sm:block">{t.subtitle}</p>
+    <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
+      {/* ── Header (sticky nav) ─────────────────────────── */}
+      <div className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border-b sticky top-0 z-40`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-lg transition-colors flex-shrink-0 ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+              title={es ? 'Volver' : 'Back'}
+            >
+              <X size={18} />
+            </button>
+            <div className="min-w-0">
+              <h1 className={`font-bold text-sm sm:text-base truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                {asset.ticker} · {es ? 'Análisis Institucional' : 'Institutional Analysis'}
+              </h1>
+              <p className={`text-[10px] sm:text-xs hidden sm:block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.subtitle}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 flex-wrap flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* AI Analysis */}
             <button
               onClick={requestAiAnalysis}
               disabled={aiLoading || !sorted.length}
-              className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
+              className="text-xs font-bold rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40 ${isDark ? 'text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500' : 'text-slate-500 hover:text-slate-800 border border-slate-300 hover:border-slate-400'}"
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Brain size={12} />}
               <span className="hidden sm:inline">{es ? 'Análisis IA' : 'AI Analysis'}</span>
@@ -1254,7 +1260,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
             <button
               onClick={exportPDF}
               disabled={exportingPdf || !sorted.length}
-              className="text-xs text-blue-200 hover:text-white border border-blue-400/40 hover:border-white/60 rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40"
+              className="text-xs font-bold rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1 disabled:opacity-40 ${isDark ? 'text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500' : 'text-slate-500 hover:text-slate-800 border border-slate-300 hover:border-slate-400'}"
             >
               {exportingPdf ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
               <span className="hidden sm:inline">PDF</span>
@@ -1280,17 +1286,16 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
               </>
             )}
             {!isAdmin && (
-              <span className="text-xs text-blue-200 flex items-center gap-1 px-3 py-1.5">
-                <Lock size={12} /> {es ? 'Solo lectura' : 'Read only'}
+              <span className={`text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded ${isDark ? 'text-slate-500 bg-slate-800' : 'text-slate-400 bg-slate-100'}`}>
+                <Lock size={10} /> {es ? 'Lectura' : 'View'}
               </span>
             )}
-            <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 rounded-full p-1.5 transition-colors">
-              <X size={20} />
-            </button>
           </div>
         </div>
+      </div>
 
-        <div className="p-3 sm:p-5 space-y-4 sm:space-y-5">
+      {/* ── Content ─────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
 
           {/* Loading */}
           {loading && (
@@ -2071,7 +2076,6 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
               </div>
             </>
           )}
-        </div>
       </div>
     </div>
   );
