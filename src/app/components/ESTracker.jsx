@@ -6,7 +6,7 @@ import { db } from '../../firebase';
 import { doc, setDoc, onSnapshot, collection, query, where, orderBy, getDocs, deleteDoc } from 'firebase/firestore';
 import {
   X, Plus, RotateCcw, Trash2, BarChart3, Lock,
-  Upload, FileDown, Brain, Loader2, ChevronUp, ChevronDown, Pencil, Clock
+  Upload, FileDown, Brain, Loader2, ChevronUp, ChevronDown, Pencil, Clock, Newspaper, ExternalLink
 } from 'lucide-react';
 import {
   LineChart, Line, Bar, ComposedChart,
@@ -132,11 +132,31 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
   const [aiHistory, setAiHistory] = useState([]); // [{ id, date, asset, analysis, createdAt }]
   const [showAiHistory, setShowAiHistory] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [news, setNews] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [showNews, setShowNews] = useState(false);
   const fileInputRef = useRef(null);
   const [crosshair, setCrosshair] = useState({ x: 0, y: 0, visible: false, chartId: null });
 
   const asset = ASSET_PRESETS.find(a => a.id === selectedAsset) || ASSET_PRESETS[0];
   const ph = asset.placeholders;
+
+  // ── Load market news ──
+  useEffect(() => {
+    const loadNews = async () => {
+      setNewsLoading(true);
+      try {
+        const res = await fetch('/api/market-news?category=general');
+        const data = await res.json();
+        if (data.news) setNews(data.news);
+      } catch (_) { /* ignore */ }
+      setNewsLoading(false);
+    };
+    loadNews();
+    // Refresh every 10 min
+    const interval = setInterval(loadNews, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Firestore: real-time listener on shared document ──
   useEffect(() => {
@@ -1074,6 +1094,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             techPeriodDays: techLevels.periodDays,
           } : null,
           tradingTimeframe,
+          marketNews: news.slice(0, 10).map(n => ({ headline: n.headline, source: n.source, datetime: n.datetime })),
           userStrategies: estrategias.map(s => ({
             nombre: s.nombre,
             reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
@@ -1305,6 +1326,18 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                 <Lock size={10} /> {es ? 'Lectura' : 'View'}
               </span>
             )}
+            {/* News toggle */}
+            <button
+              onClick={() => setShowNews(!showNews)}
+              className={`text-xs font-bold rounded-lg px-2 sm:px-3 py-1.5 transition-colors flex items-center gap-1 ${
+                showNews
+                  ? 'bg-emerald-500 text-white border border-emerald-500'
+                  : isDark ? 'text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500' : 'text-slate-500 hover:text-slate-800 border border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              <Newspaper size={12} />
+              {news.length > 0 && <span className="hidden sm:inline">{news.length}</span>}
+            </button>
             {/* Trading timeframe selector */}
             <select
               value={tradingTimeframe}
@@ -1434,6 +1467,62 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* ── Market News ─────────────────────────────── */}
+              {showNews && (
+                <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+                  <div className={`flex items-center justify-between px-4 py-3 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
+                    <span className={`flex items-center gap-2 font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                      <Newspaper size={16} className="text-emerald-500" />
+                      {es ? 'Noticias del Mercado' : 'Market News'}
+                    </span>
+                    <button onClick={() => setShowNews(false)} className={`p-1 rounded-lg transition-colors ${isDark ? 'text-slate-500 hover:text-white' : 'text-slate-400 hover:text-slate-800'}`}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className={`divide-y ${isDark ? 'divide-slate-700/50' : 'divide-slate-100'} max-h-[400px] overflow-y-auto`}>
+                    {newsLoading ? (
+                      <div className="flex items-center justify-center py-8 gap-2">
+                        <Loader2 size={16} className="animate-spin text-emerald-500" />
+                        <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{es ? 'Cargando noticias...' : 'Loading news...'}</span>
+                      </div>
+                    ) : news.length === 0 ? (
+                      <div className={`text-center py-8 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{es ? 'Sin noticias disponibles' : 'No news available'}</div>
+                    ) : (
+                      news.map(n => (
+                        <a
+                          key={n.id}
+                          href={n.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`block px-4 py-3 transition-colors ${isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            {n.image && (
+                              <img src={n.image} alt="" className="w-16 h-12 rounded object-cover flex-shrink-0 mt-0.5" onError={e => e.target.style.display='none'} />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                                {n.headline}
+                              </p>
+                              {n.summary && (
+                                <p className={`text-[11px] mt-1 line-clamp-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{n.summary}</p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <span className={`text-[10px] font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{n.source}</span>
+                                <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                                  {new Date(n.datetime * 1000).toLocaleString(es ? 'es-MX' : 'en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}
+                                </span>
+                                <ExternalLink size={10} className={isDark ? 'text-slate-600' : 'text-slate-400'} />
+                              </div>
+                            </div>
+                          </div>
+                        </a>
+                      ))
+                    )}
+                  </div>
                 </div>
               )}
 

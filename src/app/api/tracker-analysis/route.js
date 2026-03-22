@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies, tradingTimeframe = '5m' } = await request.json();
+    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies, tradingTimeframe = '5m', marketNews } = await request.json();
 
     if (!assetData || !assetData.length) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 });
@@ -79,6 +79,14 @@ export async function POST(request) {
     const vpSummary = vpSessions.length > 0
       ? vpSessions.map(r => `${r.date}: POC=${r.poc}${r.vah ? ' VAH=' + r.vah : ''}${r.val ? ' VAL=' + r.val : ''}${r.delta != null ? ' Delta=' + r.delta : ''}`).join('\n')
       : 'No volume profile data available';
+
+    // Build news text
+    const newsText = marketNews && marketNews.length > 0
+      ? marketNews.map(n => {
+          const time = new Date(n.datetime * 1000).toLocaleString('es-MX', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+          return `[${time}] ${n.source}: ${n.headline}`;
+        }).join('\n')
+      : null;
 
     // Build user strategies text
     const strategiesText = userStrategies && userStrategies.length > 0
@@ -167,6 +175,11 @@ ${strategiesText ? `
 El trader utiliza las siguientes estrategias. Analiza los datos actuales del mercado y evalua como aplicar cada estrategia en el contexto actual:
 
 ${strategiesText}
+` : ''}${newsText ? `
+## NOTICIAS RECIENTES DEL MERCADO
+Considera estas noticias en tu analisis, especialmente si afectan directamente a ${assetTicker} o al sentimiento general del mercado:
+
+${newsText}
 ` : ''}
 ## INSTRUCCIONES DE ANÁLISIS
 Proporciona tu análisis en las siguientes secciones. Usa formato Markdown:
@@ -211,7 +224,12 @@ Para CADA estrategia del trader:
 - Que buscar en el chart de ${tradingTimeframe}: patrones de confirmacion (rechazo, absorcion, delta shift)
 - Horarios recomendados en CST (Centro Mexico): apertura NY 8:30, London close 10:00, cierre NY 15:00
 
-### ${strategiesText ? '8' : '7'}. ALERTAS Y RIESGOS
+${newsText ? `### ${strategiesText ? '8' : '7'}. CONTEXTO DE NOTICIAS
+- Noticias relevantes que impactan a ${assetTicker} o al mercado
+- Como afectan las noticias al sesgo operativo
+- Eventos proximos que podrian generar volatilidad
+` : ''}
+### ${newsText ? (strategiesText ? '9' : '8') : (strategiesText ? '8' : '7')}. ALERTAS Y RIESGOS
 - Senales de alerta activas
 - Factores de riesgo
 - Roll de contrato si aplica
@@ -248,6 +266,11 @@ ${strategiesText ? `
 The trader uses the following strategies. Analyze current market data and evaluate how to apply each strategy in the current context:
 
 ${strategiesText}
+` : ''}${newsText ? `
+## RECENT MARKET NEWS
+Consider these news items in your analysis, especially if they directly affect ${assetTicker} or general market sentiment:
+
+${newsText}
 ` : ''}
 ## ANALYSIS INSTRUCTIONS
 Provide your analysis in the following sections. Use Markdown format:
@@ -292,7 +315,12 @@ For EACH trader strategy:
 - What to look for on ${tradingTimeframe} chart: confirmation patterns (rejection, absorption, delta shift)
 - Recommended hours in CST (Central Mexico): NY open 8:30, London close 10:00, NY close 15:00
 
-### ${strategiesText ? '8' : '7'}. ALERTS AND RISKS
+${newsText ? `### ${strategiesText ? '8' : '7'}. NEWS CONTEXT
+- Relevant news impacting ${assetTicker} or the market
+- How news affects trading bias
+- Upcoming events that could generate volatility
+` : ''}
+### ${newsText ? (strategiesText ? '9' : '8') : (strategiesText ? '8' : '7')}. ALERTS AND RISKS
 - Active alert signals
 - Risk factors
 - Contract roll if applicable
