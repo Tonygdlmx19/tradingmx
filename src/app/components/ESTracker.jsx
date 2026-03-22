@@ -1455,11 +1455,10 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
 
               {/* ── Market Sentiment Bar ──────────────────────── */}
               {sentiment && (sentiment.fearGreed || sentiment.vix) && (
-                <div className={`flex flex-wrap items-center gap-3 p-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                   {/* Fear & Greed */}
                   {sentiment.fearGreed && (() => {
                     const s = sentiment.fearGreed.score;
-                    const pct = s;
                     const getColor = (v) => v < 20 ? '#ef4444' : v < 40 ? '#f97316' : v < 60 ? '#eab308' : v < 80 ? '#84cc16' : '#22c55e';
                     const getLabel = (v) => {
                       const map = { es: { ef: 'Miedo Extremo', f: 'Miedo', n: 'Neutral', g: 'Codicia', eg: 'Codicia Extrema' }, en: { ef: 'Extreme Fear', f: 'Fear', n: 'Neutral', g: 'Greed', eg: 'Extreme Greed' } };
@@ -1468,58 +1467,52 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                     };
                     const color = getColor(s);
                     return (
-                      <div className="flex items-center gap-3 flex-1 min-w-[200px]">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Fear & Greed</span>
-                        <div className="flex-1 flex items-center gap-2">
-                          <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
-                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #ef4444, #f97316, #eab308, #84cc16, #22c55e)` }} />
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Fear & Greed</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color, backgroundColor: color + '15' }}>{getLabel(s)}</span>
+                            <span className="text-sm font-black" style={{ color }}>{s}</span>
                           </div>
-                          <span className="text-sm font-black" style={{ color }}>{s}</span>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ color, backgroundColor: color + '15' }}>
-                          {getLabel(s)}
-                        </span>
+                        <div className={`w-full h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${s}%`, background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #84cc16, #22c55e)' }} />
+                        </div>
                         {sentiment.fearGreed.previousClose != null && (
-                          <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {language === 'es' ? 'ant' : 'prev'}: {sentiment.fearGreed.previousClose}
-                          </span>
+                          <div className={`flex gap-3 mt-1 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            <span>{language === 'es' ? 'Ant' : 'Prev'}: {sentiment.fearGreed.previousClose}</span>
+                            {sentiment.fearGreed.oneWeekAgo != null && <span>1w: {sentiment.fearGreed.oneWeekAgo}</span>}
+                            {sentiment.fearGreed.oneMonthAgo != null && <span>1m: {sentiment.fearGreed.oneMonthAgo}</span>}
+                          </div>
                         )}
                       </div>
                     );
                   })()}
 
-                  {/* Separator */}
-                  {sentiment.fearGreed && sentiment.vix && (
-                    <div className={`w-px h-6 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-                  )}
-
                   {/* VIX */}
                   {sentiment.vix && (() => {
                     const v = sentiment.vix.current;
                     const getColor = (x) => x < 15 ? '#22c55e' : x < 20 ? '#84cc16' : x < 25 ? '#eab308' : x < 30 ? '#f97316' : '#ef4444';
-                    const getLabel = (x) => {
-                      const l = language === 'es'
-                        ? (x < 15 ? 'Baja' : x < 20 ? 'Normal' : x < 25 ? 'Elevada' : 'Alta')
-                        : (x < 15 ? 'Low' : x < 20 ? 'Normal' : x < 25 ? 'Elevated' : 'High');
-                      return l;
-                    };
+                    const getLabel = (x) => language === 'es'
+                      ? (x < 15 ? 'Baja' : x < 20 ? 'Normal' : x < 25 ? 'Elevada' : 'Alta')
+                      : (x < 15 ? 'Low' : x < 20 ? 'Normal' : x < 25 ? 'Elevated' : 'High');
                     const color = getColor(v);
                     const pct = Math.min((v / 50) * 100, 100);
                     return (
-                      <div className="flex items-center gap-3 flex-1 min-w-[180px]">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>VIX</span>
-                        <div className="flex-1 flex items-center gap-2">
-                          <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
-                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{sentiment.vix.label || 'VIX'}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color, backgroundColor: color + '15' }}>{getLabel(v)}</span>
+                            <span className="text-sm font-black" style={{ color }}>{v.toFixed(1)}</span>
+                            <span className={`text-[10px] font-bold ${sentiment.vix.change >= 0 ? 'text-red-400' : 'text-green-400'}`}>
+                              {sentiment.vix.change >= 0 ? '+' : ''}{sentiment.vix.change.toFixed(2)}
+                            </span>
                           </div>
-                          <span className="text-sm font-black" style={{ color }}>{v.toFixed(1)}</span>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ color, backgroundColor: color + '15' }}>
-                          {getLabel(v)}
-                        </span>
-                        <span className={`text-[10px] font-bold ${sentiment.vix.change >= 0 ? 'text-red-400' : 'text-green-400'}`}>
-                          {sentiment.vix.change >= 0 ? '+' : ''}{sentiment.vix.change.toFixed(2)}
-                        </span>
+                        <div className={`w-full h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
+                        </div>
                       </div>
                     );
                   })()}
