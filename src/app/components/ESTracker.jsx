@@ -1123,7 +1123,12 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          assetData: chartSorted,
+          assetData: chartSorted.slice(-30).map(r => ({
+            date: r.date, open: r.open, high: r.high, low: r.low, close: r.close,
+            vol: r.vol, oi: r.oi, foi: r.foi || null,
+            poc: r.poc || null, vah: r.vah || null, val: r.val || null,
+            delta: r.delta ?? null, vwap: r.vwap || null,
+          })),
           totalSessions: sorted.length,
           assetTicker: asset.ticker,
           language,
@@ -1141,7 +1146,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             techPeriodDays: techLevels.periodDays,
           } : null,
           tradingTimeframe,
-          marketNews: news.slice(0, 10).map(n => ({ headline: n.headline, source: n.source, datetime: n.datetime, datetimeType: n.datetimeType, sentiment: n.sentiment, sentimentLabel: n.sentimentLabel })),
+          marketNews: news.slice(0, 5).map(n => ({ headline: n.headline, source: n.source, sentiment: n.sentiment, sentimentLabel: n.sentimentLabel })),
           userStrategies: estrategias.map(s => ({
             nombre: s.nombre,
             reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
