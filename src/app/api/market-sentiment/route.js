@@ -56,62 +56,69 @@ export async function GET() {
       } catch (_) { /* Alternative.me also failed */ }
     }
 
-    // ── VIX via Alpha Vantage (VIXY ETF as proxy) ──
-    const avKey = process.env.ALPHAVANTAGE_API_KEY;
-    if (avKey) {
-      try {
-        const vixRes = await fetch(
-          `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=VIXY&apikey=${avKey}`,
-          { cache: 'no-store' }
-        );
-        if (vixRes.ok) {
-          const vixData = await vixRes.json();
-          const q = vixData?.['Global Quote'];
-          if (q && q['05. price']) {
-            // VIXY tracks VIX futures, price is not VIX value directly
-            // We use the percentage change which mirrors VIX behavior
-            const price = parseFloat(q['05. price']);
-            const prevClose = parseFloat(q['08. previous close'] || 0);
-            const change = parseFloat(q['09. change'] || 0);
-            const changePct = parseFloat((q['10. change percent'] || '0').replace('%', ''));
+    // ── VIX: try multiple sources ──
 
-            results.vix = {
-              current: price,
-              change,
-              changePercent: changePct,
-              previousClose: prevClose,
-              isETF: true, // flag that this is VIXY not raw VIX
-              label: 'VIXY',
-            };
-          }
+    // Source 1: Yahoo Finance (no API key needed, real VIX index)
+    try {
+      const yRes = await fetch(
+        'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?range=1d&interval=1d',
+        { cache: 'no-store', headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        } }
+      );
+      if (yRes.ok) {
+        const yData = await yRes.json();
+        const meta = yData?.chart?.result?.[0]?.meta;
+        if (meta && meta.regularMarketPrice) {
+          results.vix = {
+            current: meta.regularMarketPrice,
+            change: meta.regularMarketPrice - meta.chartPreviousClose,
+            changePercent: ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100,
+            previousClose: meta.chartPreviousClose,
+            label: 'VIX',
+          };
         }
-      } catch (_) { /* Alpha Vantage failed */ }
+      }
+    } catch (_) { /* Yahoo failed */ }
+
+    // Source 2: Alpha Vantage VIXY ETF (fallback)
+    if (!results.vix) {
+      const avKey = process.env.ALPHAVANTAGE_API_KEY;
+      if (avKey) {
+        try {
+          const vixRes = await fetch(
+            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=VIXY&apikey=${avKey}`,
+            { cache: 'no-store' }
+          );
+          if (vixRes.ok) {
+            const vixData = await vixRes.json();
+            const q = vixData?.['Global Quote'];
+            if (q && q['05. price']) {
+              results.vix = {
+                current: parseFloat(q['05. price']),
+                change: parseFloat(q['09. change'] || 0),
+                changePercent: parseFloat((q['10. change percent'] || '0').replace('%', '')),
+                previousClose: parseFloat(q['08. previous close'] || 0),
+                label: 'VIXY',
+              };
+            }
+          }
+        } catch (_) { /* Alpha Vantage failed */ }
+      }
     }
 
-    // Fallback VIX: try Yahoo Finance
-    if (!results.vix) {
-      try {
-        const yRes = await fetch(
-          'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?range=1d&interval=1d',
-          { cache: 'no-store', headers: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          } }
-        );
-        if (yRes.ok) {
-          const yData = await yRes.json();
-          const meta = yData?.chart?.result?.[0]?.meta;
-          if (meta) {
-            results.vix = {
-              current: meta.regularMarketPrice,
-              change: meta.regularMarketPrice - meta.chartPreviousClose,
-              changePercent: ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100,
-              previousClose: meta.chartPreviousClose,
-              isETF: false,
-              label: 'VIX',
-            };
-          }
-        }
-      } catch (_) { /* Yahoo also failed */ }
+    // Source 3: Hardcoded VIX range estimate from Fear & Greed score
+    if (!results.vix && results.fearGreed) {
+      // F&G correlates inversely with VIX. Rough estimate for display.
+      const fg = results.fearGreed.score;
+      const estimatedVix = fg < 20 ? 30 + (20 - fg) * 0.5 : fg < 40 ? 22 + (40 - fg) * 0.4 : fg < 60 ? 16 + (60 - fg) * 0.3 : fg < 80 ? 13 + (80 - fg) * 0.15 : 12;
+      results.vix = {
+        current: Math.round(estimatedVix * 10) / 10,
+        change: 0,
+        changePercent: 0,
+        previousClose: 0,
+        label: 'VIX (est.)',
+      };
     }
 
     return NextResponse.json(results);
