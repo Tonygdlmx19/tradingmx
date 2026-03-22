@@ -605,6 +605,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       const contentW = pageW - margin * 2;
       const dec = asset.step < 0.01 ? 3 : 2;
 
+      // ── Helper: clean text for PDF (ASCII only) ──
+      const pdfSafe = (text) => String(text).replace(/[^\x20-\x7E\xA0-\xFF\n]/g, '-');
+
       // ── Helper: section title ──
       const sectionTitle = (text, yPos) => {
         pdf.setFillColor(37, 99, 235);
@@ -916,10 +919,10 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         return [
           r.date, r.open.toFixed(dec), r.high.toFixed(dec), r.low.toFixed(dec), r.close.toFixed(dec),
           d.range.toFixed(dec), (d.eff * 100).toFixed(0) + '%',
-          d.label, fmtVol(r.vol), delta(r.vol, p?.vol),
-          fmtVol(r.oi), delta(r.oi, p?.oi),
-          r.poc ? r.poc.toFixed(dec) : '—', r.vah ? r.vah.toFixed(dec) : '—', r.val ? r.val.toFixed(dec) : '—',
-          s ? `${s.icon} ${s.label}` : '—'
+          d.label, fmtVol(r.vol), pdfSafe(delta(r.vol, p?.vol)),
+          fmtVol(r.oi), pdfSafe(delta(r.oi, p?.oi)),
+          r.poc ? r.poc.toFixed(dec) : '-', r.vah ? r.vah.toFixed(dec) : '-', r.val ? r.val.toFixed(dec) : '-',
+          s ? s.label : '-'
         ];
       });
 
