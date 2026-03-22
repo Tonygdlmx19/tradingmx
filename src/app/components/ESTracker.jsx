@@ -1656,11 +1656,8 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                           const bodyW = n > 120 ? 3 : n > 60 ? 5 : 8;
                           // Volume Profile markers on candle
                           const markW = bodyW + 4;
-                          const calcMarkY = (price) => price && price >= payload.wick[0] && price <= payload.wick[1]
-                            ? wickTop + (payload.wick[1] - price) * pxPerUnit : null;
-                          const pocY = calcMarkY(payload.poc);
-                          const vahY = calcMarkY(payload.vah);
-                          const valY = calcMarkY(payload.val);
+                          const pocY = payload.poc && payload.poc >= payload.wick[0] && payload.poc <= payload.wick[1]
+                            ? wickTop + (payload.wick[1] - payload.poc) * pxPerUnit : null;
                           return (
                             <g>
                               <line x1={wickX} y1={wickTop} x2={wickX} y2={wickBottom} stroke={color} strokeWidth={1} />
@@ -1674,14 +1671,6 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                                 strokeWidth={0.5}
                                 rx={0.5}
                               />
-                              {vahY != null && (
-                                <line x1={wickX - markW / 2} y1={vahY} x2={wickX + markW / 2} y2={vahY}
-                                  stroke="#f97316" strokeWidth={1.5} strokeLinecap="round" />
-                              )}
-                              {valY != null && (
-                                <line x1={wickX - markW / 2} y1={valY} x2={wickX + markW / 2} y2={valY}
-                                  stroke="#8b5cf6" strokeWidth={1.5} strokeLinecap="round" />
-                              )}
                               {pocY != null && (
                                 <line x1={wickX - markW / 2} y1={pocY} x2={wickX + markW / 2} y2={pocY}
                                   stroke="#3b82f6" strokeWidth={2} strokeLinecap="round" />
@@ -1706,9 +1695,6 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                         {showVwap && (
                           <Line yAxisId="price" type="monotone" dataKey="vwap" name="VWAP" stroke="#f59e0b" strokeWidth={2} dot={false} strokeOpacity={0.9} />
                         )}
-                        {/* POC / VAH / VAL */}
-                        <Line yAxisId="price" type="stepAfter" dataKey="vah" name="VAH" stroke="#fb7185" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
-                        <Line yAxisId="price" type="stepAfter" dataKey="val" name="VAL" stroke="#34d399" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
                       </ComposedChart>
                     </ResponsiveContainer>
                     {crosshair.visible && crosshair.chartId === 'price' && (
