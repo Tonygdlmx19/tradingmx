@@ -96,23 +96,25 @@ export async function POST(request) {
     const systemPrompt = es
       ? `Eres un analista institucional de futuros con experiencia en flujo de órdenes, estructura de mercado, Volume Profile (POC, VAH, VAL), VWAP y análisis de volumen/open interest. Respondes siempre en español.
 
-REGLAS DE FORMATO:
-- Usa emojis para hacer el texto visual y escaneable (ejemplos: alcista, bajista, alerta, nivel, volumen, zona, objetivo, etc.)
-- NO uses caracteres especiales como ▲ ▼ → ← σ ± ni símbolos Unicode raros
-- Usa solo texto plano, emojis, numeros y signos basicos (+ - % / .)
-- Escribe los titulos de seccion en MAYUSCULAS sin simbolos
-- Usa guiones (-) para listas, no bullets ni asteriscos
-- El texto debe ser legible impreso en PDF sin problemas de encoding
+REGLAS DE FORMATO ESTRICTAS:
+- NO uses emojis, NO uses caracteres especiales, NO uses simbolos Unicode
+- NO uses: triangulos, flechas, sigma, plusminus, bullets, checkmarks ni ningun caracter fuera de ASCII basico
+- Usa SOLO letras (a-z A-Z), numeros (0-9), signos basicos (+ - % / . , : ; ( ) [ ] = !)
+- Para indicar direccion usa palabras: ALCISTA, BAJISTA, ARRIBA, ABAJO, SUBE, BAJA
+- Para listas usa guiones (-)
+- Para desviaciones VWAP escribe: VWAP +1 Desv, VWAP -1 Desv, VWAP +2 Desv, VWAP -2 Desv
+- Escribe los titulos de seccion en MAYUSCULAS
 - Se profesional, conciso y accionable para un trader activo de futuros.`
       : `You are an institutional futures analyst with expertise in order flow, market structure, Volume Profile (POC, VAH, VAL), VWAP and volume/open interest analysis. You always respond in English.
 
-FORMAT RULES:
-- Use emojis to make text visual and scannable (examples: bullish, bearish, alert, level, volume, zone, target, etc.)
-- DO NOT use special characters like ▲ ▼ → ← σ ± or unusual Unicode symbols
-- Use only plain text, emojis, numbers and basic signs (+ - % / .)
-- Write section titles in UPPERCASE without symbols
-- Use dashes (-) for lists, not bullets or asterisks
-- Text must be readable when printed to PDF without encoding issues
+STRICT FORMAT RULES:
+- DO NOT use emojis, DO NOT use special characters, DO NOT use Unicode symbols
+- DO NOT use: triangles, arrows, sigma, plusminus, bullets, checkmarks or any non-ASCII character
+- Use ONLY letters (a-z A-Z), numbers (0-9), basic signs (+ - % / . , : ; ( ) [ ] = !)
+- For direction use words: BULLISH, BEARISH, UP, DOWN, ABOVE, BELOW
+- For lists use dashes (-)
+- For VWAP deviations write: VWAP +1 Dev, VWAP -1 Dev, VWAP +2 Dev, VWAP -2 Dev
+- Write section titles in UPPERCASE
 - Be professional, concise and actionable for an active futures trader.`;
 
     const userPrompt = es
@@ -124,11 +126,11 @@ ${dataTable}
 ## VWAP (Volume Weighted Average Price)
 - VWAP actual: ${currentVwap.toFixed(2)}
 - Desviación estándar: ${vwapStdDev.toFixed(2)}
-- VWAP +1σ: ${(currentVwap + vwapStdDev).toFixed(2)}  |  VWAP -1σ: ${(currentVwap - vwapStdDev).toFixed(2)}
-- VWAP +2σ: ${(currentVwap + 2 * vwapStdDev).toFixed(2)}  |  VWAP -2σ: ${(currentVwap - 2 * vwapStdDev).toFixed(2)}
+- VWAP +1 Desv: ${(currentVwap + vwapStdDev).toFixed(2)}  |  VWAP -1 Desv: ${(currentVwap - vwapStdDev).toFixed(2)}
+- VWAP +2 Desv: ${(currentVwap + 2 * vwapStdDev).toFixed(2)}  |  VWAP -2 Desv: ${(currentVwap - 2 * vwapStdDev).toFixed(2)}
 - Precio vs VWAP: ${last.close > currentVwap ? 'POR ENCIMA (+' + (last.close - currentVwap).toFixed(2) + ')' : 'POR DEBAJO (' + (last.close - currentVwap).toFixed(2) + ')'}
 
-## VOLUME PROFILE (POC, VAH, VAL de ATAS)
+## VOLUME PROFILE (POC, VAH, VAL)
 ${vpSummary}
 
 ## NIVELES FIBONACCI (52 semanas: Low ${low52.toFixed(2)} → High ${high52.toFixed(2)})
@@ -160,7 +162,7 @@ Contexto general del período analizado (2-3 frases).
 
 ### 3. VWAP Y VOLUME PROFILE
 - Posición del precio respecto al VWAP y sus desviaciones
-- Interpretación de las bandas VWAP (±1σ, ±2σ) — zonas de valor/sobreprecio
+- Interpretación de las bandas VWAP (+1/-1 Desv, +2/-2 Desv) — zonas de valor/sobreprecio
 - Análisis de POC, VAH y VAL: ¿dónde se concentra el volumen institucional?
 - ¿El precio está dentro o fuera del Value Area?
 - Confluencias entre VWAP, POC y niveles de Fibonacci
@@ -191,11 +193,11 @@ ${dataTable}
 ## VWAP (Volume Weighted Average Price)
 - Current VWAP: ${currentVwap.toFixed(2)}
 - Standard deviation: ${vwapStdDev.toFixed(2)}
-- VWAP +1σ: ${(currentVwap + vwapStdDev).toFixed(2)}  |  VWAP -1σ: ${(currentVwap - vwapStdDev).toFixed(2)}
-- VWAP +2σ: ${(currentVwap + 2 * vwapStdDev).toFixed(2)}  |  VWAP -2σ: ${(currentVwap - 2 * vwapStdDev).toFixed(2)}
+- VWAP +1 Desv: ${(currentVwap + vwapStdDev).toFixed(2)}  |  VWAP -1 Desv: ${(currentVwap - vwapStdDev).toFixed(2)}
+- VWAP +2 Desv: ${(currentVwap + 2 * vwapStdDev).toFixed(2)}  |  VWAP -2 Desv: ${(currentVwap - 2 * vwapStdDev).toFixed(2)}
 - Price vs VWAP: ${last.close > currentVwap ? 'ABOVE (+' + (last.close - currentVwap).toFixed(2) + ')' : 'BELOW (' + (last.close - currentVwap).toFixed(2) + ')'}
 
-## VOLUME PROFILE (POC, VAH, VAL from ATAS)
+## VOLUME PROFILE (POC, VAH, VAL)
 ${vpSummary}
 
 ## FIBONACCI LEVELS (52 weeks: Low ${low52.toFixed(2)} → High ${high52.toFixed(2)})
@@ -227,7 +229,7 @@ General context (2-3 sentences).
 
 ### 3. VWAP AND VOLUME PROFILE
 - Price position relative to VWAP and its deviations
-- VWAP bands interpretation (±1σ, ±2σ) — value/overpriced zones
+- VWAP bands interpretation (+1/-1 Desv, +2/-2 Desv) — value/overpriced zones
 - POC, VAH, VAL analysis: where is institutional volume concentrated?
 - Is price inside or outside the Value Area?
 - Confluences between VWAP, POC and Fibonacci levels

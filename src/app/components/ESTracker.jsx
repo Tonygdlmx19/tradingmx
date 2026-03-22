@@ -779,7 +779,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         pdf.setTextColor(245, 158, 11);
         pdf.text('VWAP', col1X, y);
         pdf.setTextColor(147, 51, 234);
-        pdf.text('Volume Profile (ATAS)', col2X, y);
+        pdf.text('Volume Profile', col2X, y);
         y += 5;
 
         pdf.setFont('helvetica', 'normal');
@@ -927,8 +927,8 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         startY: y,
         head: recentHeaders,
         body: recentData,
-        styles: { fontSize: 5.5, cellPadding: 1.2, font: 'helvetica' },
-        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 5 },
+        styles: { fontSize: 7, cellPadding: 1.8, font: 'courier' },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 6.5, font: 'helvetica' },
         alternateRowStyles: { fillColor: [245, 247, 250] },
         margin: { left: margin, right: margin },
       });
@@ -1576,7 +1576,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                     <ResponsiveContainer width="100%" height={300}>
                       <ComposedChart data={priceChartData}>
                         <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
-                        <YAxis orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} domain={['dataMin','dataMax']} tickFormatter={v=>v.toFixed(0)} padding={{ top: 10, bottom: 10 }} />
+                        <YAxis orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} domain={['dataMin','dataMax']} tickFormatter={v=>v.toFixed(0)} padding={{ top: 10, bottom: 10 }} tickCount={12} />
                         <Tooltip content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
                           const d = payload[0]?.payload;
@@ -1671,8 +1671,8 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                     <ResponsiveContainer width="100%" height={220}>
                       <ComposedChart data={volChartData}>
                         <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
-                        <YAxis yAxisId="vol" orientation="left" tick={{ fontSize:9, fill:'#3b82f6' }} axisLine={false} tickLine={false} tickFormatter={v=>(v/1e6).toFixed(1)+'M'} />
-                        <YAxis yAxisId="oi" orientation="right" tick={{ fontSize:9, fill:'#f59e0b' }} axisLine={false} tickLine={false} tickFormatter={v=>(v/1e6).toFixed(2)+'M'} />
+                        <YAxis yAxisId="vol" orientation="left" tick={{ fontSize:9, fill:'#3b82f6', fontFamily:'monospace' }} axisLine={false} tickLine={false} tickFormatter={v=>(v/1e6).toFixed(1)+'M'} tickCount={8} />
+                        <YAxis yAxisId="oi" orientation="right" tick={{ fontSize:9, fill:'#f59e0b', fontFamily:'monospace' }} axisLine={false} tickLine={false} tickFormatter={v=>(v/1e6).toFixed(2)+'M'} tickCount={8} />
                         <Tooltip content={<CustomTooltip />} cursor={false} />
                         <Bar yAxisId="vol" dataKey="vol" name={t.volume} fill="rgba(59,130,246,0.45)" radius={[1,1,0,0]} />
                         <Line yAxisId="oi" type="monotone" dataKey="oi" name="OI" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
@@ -1855,7 +1855,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                   {/* Volume Profile inputs (ATAS) */}
                   <div className={`mt-3 pt-3 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
                     <p className={`text-[9px] font-bold uppercase tracking-wider mb-2 flex items-center gap-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                      Volume Profile (ATAS)
+                      Volume Profile
                       <span className={`text-[8px] font-normal ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>({t.optional})</span>
                     </p>
                     <div className="grid grid-cols-3 gap-3">
