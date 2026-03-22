@@ -584,6 +584,10 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       pp,
       position52,
       lastClose: last.close,
+      lastDate: last.date,
+      lastHigh: last.high,
+      lastLow: last.low,
+      lastCloseVal: last.close,
       periodDays: data52w.length,
     };
   }, [sorted, techPeriod]);
@@ -1766,8 +1770,11 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
 
                     {/* Pivot Points + Key Levels */}
                     <div>
-                      <p className={`text-[10px] font-bold mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                      <p className={`text-[10px] font-bold mb-1 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                         Pivot Points + {es ? 'Niveles clave' : 'Key Levels'}
+                      </p>
+                      <p className={`text-[9px] mb-2 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                        {es ? 'Base' : 'Based on'}: {techLevels.lastDate} (H:{techLevels.lastHigh?.toFixed(2)} L:{techLevels.lastLow?.toFixed(2)} C:{techLevels.lastCloseVal?.toFixed(2)})
                       </p>
                       <div className="space-y-1">
                         {/* 52w High */}
