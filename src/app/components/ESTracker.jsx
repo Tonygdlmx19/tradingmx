@@ -115,6 +115,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
   const [formVol, setFormVol] = useState('');
   const [formOi, setFormOi] = useState('');
   const [formFoi, setFormFoi] = useState('');
+  const [formPoc, setFormPoc] = useState('');
+  const [formVah, setFormVah] = useState('');
+  const [formVal, setFormVal] = useState('');
   const [importing, setImporting] = useState(false);
   const [chartRange, setChartRange] = useState(60); // days to show in charts
   const [tablePage, setTablePage] = useState(0);
@@ -208,13 +211,18 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       return;
     }
 
+    const poc = formPoc ? parseFloat(formPoc) : null;
+    const vah = formVah ? parseFloat(formVah) : null;
+    const val = formVal ? parseFloat(formVal) : null;
+
     setRecords(prev => {
       const filtered = prev.filter(r => r.date !== formDate);
-      return [...filtered, { date: formDate, open, high, low, close, vol, oi, foi }];
+      return [...filtered, { date: formDate, open, high, low, close, vol, oi, foi, poc, vah, val }];
     });
     setFormOpen(''); setFormHigh(''); setFormLow(''); setFormClose('');
     setFormVol(''); setFormOi(''); setFormFoi('');
-  }, [isAdmin, formDate, formOpen, formHigh, formLow, formClose, formVol, formOi, formFoi, language, setRecords]);
+    setFormPoc(''); setFormVah(''); setFormVal('');
+  }, [isAdmin, formDate, formOpen, formHigh, formLow, formClose, formVol, formOi, formFoi, formPoc, formVah, formVal, language, setRecords]);
 
   const deleteEntry = useCallback((date) => {
     if (!isAdmin) return;
@@ -231,6 +239,9 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     setFormVol(String(record.vol));
     setFormOi(String(record.oi));
     setFormFoi(record.foi != null ? String(record.foi) : '');
+    setFormPoc(record.poc != null ? String(record.poc) : '');
+    setFormVah(record.vah != null ? String(record.vah) : '');
+    setFormVal(record.val != null ? String(record.val) : '');
     // Scroll to form
     document.getElementById('tracker-entry-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [isAdmin]);
@@ -406,7 +417,18 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     [sorted, chartRange]
   );
   const priceChartData = useMemo(() =>
-    chartSorted.map((r) => ({ name: r.date.slice(5), close: r.close })), [chartSorted]
+    chartSorted.map((r, i) => ({
+      name: r.date.slice(5),
+      close: r.close,
+      poc: r.poc || null,
+      vah: r.vah || null,
+      val: r.val || null,
+      vwap: vwapData?.points[i]?.vwap || null,
+      vwapU1: vwapData?.points[i]?.upper1 || null,
+      vwapL1: vwapData?.points[i]?.lower1 || null,
+      vwapU2: vwapData?.points[i]?.upper2 || null,
+      vwapL2: vwapData?.points[i]?.lower2 || null,
+    })), [chartSorted, vwapData]
   );
   const volChartData = useMemo(() =>
     chartSorted.map(r => ({ name: r.date.slice(5), vol: r.vol, oi: r.oi })), [chartSorted]
@@ -447,9 +469,52 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     return counts;
   }, [allData]);
 
+  // ── VWAP + Deviations (calculated from chart range) ─────
+  const vwapData = useMemo(() => {
+    if (chartSorted.length < 2) return null;
+
+    let cumTPV = 0; // cumulative (typical price × volume)
+    let cumVol = 0;
+    const points = [];
+
+    for (let i = 0; i < chartSorted.length; i++) {
+      const r = chartSorted[i];
+      const tp = (r.high + r.low + r.close) / 3;
+      cumTPV += tp * r.vol;
+      cumVol += r.vol;
+      const vwap = cumVol > 0 ? cumTPV / cumVol : tp;
+
+      // Standard deviation for bands
+      let sumSqDiff = 0;
+      let tempCumTPV = 0, tempCumVol = 0;
+      for (let j = 0; j <= i; j++) {
+        const rj = chartSorted[j];
+        const tpj = (rj.high + rj.low + rj.close) / 3;
+        tempCumTPV += tpj * rj.vol;
+        tempCumVol += rj.vol;
+        sumSqDiff += rj.vol * Math.pow(tpj - vwap, 2);
+      }
+      const variance = cumVol > 0 ? sumSqDiff / cumVol : 0;
+      const stdDev = Math.sqrt(variance);
+
+      points.push({
+        name: r.date.slice(5),
+        vwap: parseFloat(vwap.toFixed(2)),
+        upper1: parseFloat((vwap + stdDev).toFixed(2)),
+        lower1: parseFloat((vwap - stdDev).toFixed(2)),
+        upper2: parseFloat((vwap + 2 * stdDev).toFixed(2)),
+        lower2: parseFloat((vwap - 2 * stdDev).toFixed(2)),
+      });
+    }
+
+    const lastPoint = points[points.length - 1];
+    return { points, last: lastPoint };
+  }, [chartSorted]);
+
   // ── Technical Levels (52-week based) ──────────────────────
   const [showFib, setShowFib] = useState(true);
   const [showPivots, setShowPivots] = useState(true);
+  const [showVwap, setShowVwap] = useState(true);
   const [techPeriod, setTechPeriod] = useState(260); // trading days (260≈52w)
 
   const techLevels = useMemo(() => {
@@ -1410,6 +1475,18 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       </button>
                     </>
                   )}
+                  {vwapData && (
+                    <button
+                      onClick={() => setShowVwap(!showVwap)}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-colors ${
+                        showVwap
+                          ? 'bg-amber-500 text-white'
+                          : isDark ? 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700' : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-200'
+                      }`}
+                    >
+                      VWAP
+                    </button>
+                  )}
                   <span className={`text-[10px] ml-auto ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                     {chartSorted.length} / {sorted.length} {es ? 'sesiones' : 'sessions'}
                   </span>
@@ -1440,6 +1517,20 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                           <ReferenceLine key={`pv-${p.label}`} y={p.level} stroke={p.color} strokeDasharray="4 3" strokeWidth={1} strokeOpacity={0.75}
                             label={{ value: `${p.label}  ${p.level.toFixed(0)}`, position: 'insideTopRight', fontSize: 7, fill: p.color, fontWeight: 700 }} />
                         ))}
+                        {/* VWAP + Deviations */}
+                        {showVwap && (
+                          <>
+                            <Line type="monotone" dataKey="vwap" name="VWAP" stroke="#f59e0b" strokeWidth={2} dot={false} strokeOpacity={0.9} />
+                            <Line type="monotone" dataKey="vwapU1" name="+1σ" stroke="#f59e0b" strokeWidth={0.8} dot={false} strokeDasharray="4 2" strokeOpacity={0.4} />
+                            <Line type="monotone" dataKey="vwapL1" name="-1σ" stroke="#f59e0b" strokeWidth={0.8} dot={false} strokeDasharray="4 2" strokeOpacity={0.4} />
+                            <Line type="monotone" dataKey="vwapU2" name="+2σ" stroke="#f59e0b" strokeWidth={0.6} dot={false} strokeDasharray="2 3" strokeOpacity={0.25} />
+                            <Line type="monotone" dataKey="vwapL2" name="-2σ" stroke="#f59e0b" strokeWidth={0.6} dot={false} strokeDasharray="2 3" strokeOpacity={0.25} />
+                          </>
+                        )}
+                        {/* POC / VAH / VAL from ATAS */}
+                        <Line type="stepAfter" dataKey="poc" name="POC" stroke="#e879f9" strokeWidth={1.5} dot={false} connectNulls={false} strokeOpacity={0.8} />
+                        <Line type="stepAfter" dataKey="vah" name="VAH" stroke="#fb7185" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
+                        <Line type="stepAfter" dataKey="val" name="VAL" stroke="#34d399" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
                       </LineChart>
                     </ResponsiveContainer>
                     {crosshair.visible && crosshair.chartId === 'price' && (
@@ -1640,6 +1731,27 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                       <button onClick={addEntry} className="w-full h-9 text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-1 hover:brightness-110" style={{ background: asset.color }}>
                         <Plus size={14} /> {t.add}
                       </button>
+                    </div>
+                  </div>
+                  {/* Volume Profile inputs (ATAS) */}
+                  <div className={`mt-3 pt-3 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+                    <p className={`text-[9px] font-bold uppercase tracking-wider mb-2 flex items-center gap-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Volume Profile (ATAS)
+                      <span className={`text-[8px] font-normal ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>({t.optional})</span>
+                    </p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className={`text-[10px] font-bold uppercase block mb-1 text-purple-400`}>POC</label>
+                        <input type="number" value={formPoc} onChange={e => setFormPoc(e.target.value)} placeholder={ph.c} step={asset.step} className={inputBase} />
+                      </div>
+                      <div>
+                        <label className={`text-[10px] font-bold uppercase block mb-1 text-rose-400`}>VAH</label>
+                        <input type="number" value={formVah} onChange={e => setFormVah(e.target.value)} placeholder={ph.h} step={asset.step} className={inputBase} />
+                      </div>
+                      <div>
+                        <label className={`text-[10px] font-bold uppercase block mb-1 text-emerald-400`}>VAL</label>
+                        <input type="number" value={formVal} onChange={e => setFormVal(e.target.value)} placeholder={ph.l} step={asset.step} className={inputBase} />
+                      </div>
                     </div>
                   </div>
                 </div>

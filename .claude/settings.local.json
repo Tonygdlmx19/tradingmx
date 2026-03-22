@@ -24,7 +24,14 @@
       "Bash(ls:*)",
       "Bash(code:*)",
       "WebFetch(domain:ai.google.dev)",
-      "Bash(firebase deploy:*)"
+      "Bash(firebase deploy:*)",
+      "Bash(npx next dev --no-turbopack)",
+      "Read(//Users/antoniomartinez/Downloads/**)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(npx next:*)",
+      "Bash(npm list:*)",
+      "Bash(npx firebase:*)"
     ]
   }
 }
