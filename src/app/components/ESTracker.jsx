@@ -1530,38 +1530,39 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                             </div>
                           );
                         }} cursor={false} />
-                        {/* Candlestick wicks (high-low) */}
-                        <Bar dataKey="wick" barSize={1} shape={(props) => {
+                        {/* Candlesticks (single Bar with wick + body in one shape) */}
+                        <Bar dataKey="wick" isAnimationActive={false} shape={(props) => {
                           const { x, y, width, height, payload } = props;
-                          if (!payload?.wick) return null;
-                          const yScale = props.background ? null : props;
+                          if (!payload?.wick || !payload?.body) return null;
+                          const color = payload.bullish ? '#22c55e' : '#ef4444';
+                          const strokeColor = payload.bullish ? '#16a34a' : '#dc2626';
+                          const wickX = x + width / 2;
+                          // Body position relative to wick
+                          const wickTop = y;
+                          const wickBottom = y + height;
+                          const wickRange = payload.wick[1] - payload.wick[0];
+                          if (wickRange <= 0) return null;
+                          const pxPerUnit = height / wickRange;
+                          const bodyTop = wickTop + (payload.wick[1] - payload.body[1]) * pxPerUnit;
+                          const bodyBottom = wickTop + (payload.wick[1] - payload.body[0]) * pxPerUnit;
+                          const bodyH = Math.max(bodyBottom - bodyTop, 1);
+                          const bodyW = chartSorted.length > 120 ? 3 : chartSorted.length > 60 ? 5 : 8;
                           return (
-                            <line
-                              x1={x + width / 2} y1={y}
-                              x2={x + width / 2} y2={y + height}
-                              stroke={payload.bullish ? '#22c55e' : '#ef4444'}
-                              strokeWidth={1}
-                            />
+                            <g>
+                              <line x1={wickX} y1={wickTop} x2={wickX} y2={wickBottom} stroke={color} strokeWidth={1} />
+                              <rect
+                                x={wickX - bodyW / 2}
+                                y={bodyTop}
+                                width={bodyW}
+                                height={bodyH}
+                                fill={color}
+                                stroke={strokeColor}
+                                strokeWidth={0.5}
+                                rx={0.5}
+                              />
+                            </g>
                           );
-                        }} isAnimationActive={false} />
-                        {/* Candlestick bodies (open-close) */}
-                        <Bar dataKey="body" barSize={chartSorted.length > 120 ? 2 : chartSorted.length > 60 ? 4 : 7} shape={(props) => {
-                          const { x, y, width, height, payload } = props;
-                          if (!payload?.body) return null;
-                          const bodyH = Math.max(height, 1);
-                          return (
-                            <rect
-                              x={x}
-                              y={y}
-                              width={width}
-                              height={bodyH}
-                              fill={payload.bullish ? '#22c55e' : '#ef4444'}
-                              stroke={payload.bullish ? '#16a34a' : '#dc2626'}
-                              strokeWidth={0.5}
-                              rx={0.5}
-                            />
-                          );
-                        }} isAnimationActive={false} />
+                        }} />
                         {/* Fibonacci levels */}
                         {showFib && techLevels && techLevels.fib.map(f => (
                           <ReferenceLine key={`fib-${f.pct}`} y={f.level} stroke={f.color} strokeDasharray="10 5" strokeWidth={0.8} strokeOpacity={0.65}
