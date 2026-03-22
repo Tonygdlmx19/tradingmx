@@ -1150,6 +1150,13 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         }),
       });
 
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok || !contentType.includes('application/json')) {
+        const text = await res.text();
+        setAiAnalysis(`Error: ${res.status} — ${language === 'es' ? 'El servidor no respondió correctamente. Verifica que ANTHROPIC_API_KEY esté configurada en Netlify.' : 'Server did not respond correctly. Verify ANTHROPIC_API_KEY is set in Netlify.'}`);
+        setAiLoading(false);
+        return;
+      }
       const data = await res.json();
       if (data.error) {
         setAiAnalysis(`Error: ${data.error}`);
