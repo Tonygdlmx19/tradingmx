@@ -432,7 +432,14 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
   );
 
   // Reset page when switching asset
-  useEffect(() => { setTablePage(0); }, [selectedAsset]);
+  // Reset state when switching asset
+  useEffect(() => {
+    setTablePage(0);
+    setAiAnalysis('');
+    setAiAnalysisDate('');
+    setShowAiPanel(false);
+    setShowAiHistory(false);
+  }, [selectedAsset]);
 
   const assetCounts = useMemo(() => {
     const counts = {};
@@ -895,12 +902,6 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         const snap = await getDocs(q);
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setAiHistory(items);
-        // Auto-load the most recent analysis
-        if (items.length > 0 && !aiAnalysis) {
-          setAiAnalysis(items[0].analysis);
-          setAiAnalysisDate(items[0].date);
-          setShowAiPanel(true);
-        }
       } catch (_) { /* collection may not exist yet */ }
     };
     if (selectedAsset) loadHistory();
