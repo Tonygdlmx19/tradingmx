@@ -1072,7 +1072,8 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          assetData: sorted,
+          assetData: sorted.slice(-60),
+          totalSessions: sorted.length,
           assetTicker: asset.ticker,
           language,
           calculatedVwap: vwapData?.last ? {
