@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies, tradingTimeframe = '5m', marketNews, marketSentiment } = await request.json();
+    const { assetData, assetTicker, language = 'es', calculatedVwap, calculatedLevels, userStrategies, tradingTimeframe = '5m', marketNews } = await request.json();
 
     if (!assetData || !assetData.length) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 });
@@ -95,22 +95,6 @@ export async function POST(request) {
           return `${time ? '[' + time + '] ' : ''}${n.source}: ${n.headline}${sent}`;
         }).join('\n')
       : null;
-
-    // Build market sentiment text
-    let sentimentText = null;
-    if (marketSentiment) {
-      const parts = [];
-      if (marketSentiment.fearGreed) {
-        const fg = marketSentiment.fearGreed;
-        parts.push(`Fear & Greed Index: ${fg.score}/100 (${fg.rating})${fg.previousClose ? ` | Previous: ${fg.previousClose}` : ''}${fg.oneWeekAgo ? ` | 1 week ago: ${fg.oneWeekAgo}` : ''}${fg.oneMonthAgo ? ` | 1 month ago: ${fg.oneMonthAgo}` : ''}`);
-      }
-      if (marketSentiment.vix) {
-        const vx = marketSentiment.vix;
-        const level = vx.current < 15 ? 'Low' : vx.current < 20 ? 'Normal' : vx.current < 25 ? 'Elevated' : 'High';
-        parts.push(`VIX: ${vx.current.toFixed(2)} (${level}) | Change: ${vx.change >= 0 ? '+' : ''}${vx.change.toFixed(2)} (${vx.changePercent.toFixed(1)}%)`);
-      }
-      if (parts.length > 0) sentimentText = parts.join('\n');
-    }
 
     // Build user strategies text
     const strategiesText = userStrategies && userStrategies.length > 0
@@ -295,11 +279,6 @@ ${strategiesText}
 Consider these news items in your analysis, especially if they directly affect ${assetTicker} or general market sentiment:
 
 ${newsText}
-` : ''}${sentimentText ? `
-## MARKET SENTIMENT
-Use this data to gauge overall market mood. Fear & Greed below 25 = extreme fear (potential reversal/bounce zone). VIX above 25 = high volatility (wider stops, smaller size). Factor this into your risk management recommendations.
-
-${sentimentText}
 ` : ''}
 ## ANALYSIS INSTRUCTIONS
 Provide your analysis in the following sections. Use Markdown format:
@@ -369,11 +348,8 @@ ${newsText ? `### ${strategiesText ? '8' : '7'}. NEWS CONTEXT
     return NextResponse.json({ analysis });
   } catch (error) {
     console.error('Tracker analysis error:', error);
-    const errorMsg = error?.status
-      ? `Anthropic API error ${error.status}: ${error.message}`
-      : error?.message || 'Error generating analysis';
     return NextResponse.json(
-      { error: errorMsg },
+      { error: error.message || 'Error generating analysis' },
       { status: 500 }
     );
   }
