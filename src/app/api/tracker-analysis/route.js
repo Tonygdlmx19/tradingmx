@@ -85,8 +85,11 @@ export async function POST(request) {
       ? marketNews.map(n => {
           const dt = String(n.datetime || '');
           let time = '';
-          if (dt.includes('T') && dt.length >= 13) {
+          if (n.datetimeType === 'alphavantage' && dt.includes('T') && dt.length >= 13) {
             time = `${dt.slice(6,8)}/${dt.slice(4,6)} ${dt.slice(9,11)}:${dt.slice(11,13)}`;
+          } else if (n.datetimeType === 'unix' && dt) {
+            const d = new Date(parseInt(dt) * 1000);
+            time = d.toLocaleString('es-MX', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
           }
           const sent = n.sentimentLabel ? ` [${n.sentimentLabel}]` : '';
           return `${time ? '[' + time + '] ' : ''}${n.source}: ${n.headline}${sent}`;

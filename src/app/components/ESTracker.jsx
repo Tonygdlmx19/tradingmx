@@ -1094,7 +1094,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             techPeriodDays: techLevels.periodDays,
           } : null,
           tradingTimeframe,
-          marketNews: news.slice(0, 10).map(n => ({ headline: n.headline, source: n.source, datetime: n.datetime, sentiment: n.sentiment, sentimentLabel: n.sentimentLabel })),
+          marketNews: news.slice(0, 10).map(n => ({ headline: n.headline, source: n.source, datetime: n.datetime, datetimeType: n.datetimeType, sentiment: n.sentiment, sentimentLabel: n.sentimentLabel })),
           userStrategies: estrategias.map(s => ({
             nombre: s.nombre,
             reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
