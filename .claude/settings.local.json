@@ -35,7 +35,11 @@
       "Bash(npm update:*)",
       "Bash(git log:*)",
       "WebFetch(domain:www.alphavantage.co)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Read(//Users/antoniomartinez/Desktop/**)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Today: {d[\"\"data\"\"][0][\"\"value\"\"]} \\({d[\"\"data\"\"][0][\"\"value_classification\"\"]}\\)\\\\nYesterday: {d[\"\"data\"\"][1][\"\"value\"\"]}\\\\n7 days ago: {d[\"\"data\"\"][7][\"\"value\"\"]}\\\\n30 days ago: {d[\"\"data\"\"][30][\"\"value\"\"]}''''\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); q=d.get\\(''''Global Quote'''',{}\\); print\\(f''''Price: {q.get\\(\"\"05. price\"\",\"\"N/A\"\"\\)}\\\\nChange: {q.get\\(\"\"09. change\"\",\"\"N/A\"\"\\)}\\\\nChange%: {q.get\\(\"\"10. change percent\"\",\"\"N/A\"\"\\)}''''\\)\")",
+      "Bash(python3 -c \"import sys,json; print\\(json.dumps\\(json.load\\(sys.stdin\\), indent=2\\)\\)\")"
     ]
   }
 }
