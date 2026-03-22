@@ -1150,12 +1150,26 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         }),
       });
 
-      const data = await res.json();
-      if (data.error) {
-        setAiAnalysis(`Error: ${data.error}`);
+      // Check if response is an error (JSON) or streaming text
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        setAiAnalysis(`Error: ${data.error || 'Unknown error'}`);
       } else {
+        // Read streaming response
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+          setAiAnalysis(fullText);
+        }
+
         const today = new Date().toISOString().slice(0, 10);
-        setAiAnalysis(data.analysis);
         setAiAnalysisDate(today);
 
         // Save to Firestore
@@ -1165,13 +1179,12 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             asset: selectedAsset,
             ticker: asset.ticker,
             date: today,
-            analysis: data.analysis,
+            analysis: fullText,
             language,
             sessionsCount: sorted.length,
             lastClose: sorted[sorted.length - 1]?.close,
             createdAt: new Date(),
           });
-          // Refresh history
           const q = query(
             collection(db, 'tracker_analyses'),
             where('asset', '==', selectedAsset),
