@@ -27,7 +27,7 @@ export async function GET(request) {
       try {
         const res = await fetch(
           `https://finnhub.io/api/v1/news?category=general&token=${finnhubKey}`,
-          { next: { revalidate: 300 } }
+          { cache: 'no-store' }
         );
         if (res.ok) {
           const data = await res.json();
@@ -69,7 +69,7 @@ export async function GET(request) {
       try {
         const res = await fetch(
           `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=${assetConfig.tickers}&topics=${assetConfig.topics}&sort=LATEST&limit=20&apikey=${avKey}`,
-          { next: { revalidate: 300 } }
+          { cache: 'no-store' }
         );
         if (res.ok) {
           const data = await res.json();
