@@ -1676,7 +1676,6 @@ export default function ESTracker({ onClose, isAdmin }) {
                           <Line yAxisId="price" type="monotone" dataKey="vwap" name="VWAP" stroke="#f59e0b" strokeWidth={2} dot={false} strokeOpacity={0.9} />
                         )}
                         {/* POC / VAH / VAL */}
-                        <Line yAxisId="price" type="stepAfter" dataKey="poc" name="POC" stroke="#e879f9" strokeWidth={1.5} dot={false} connectNulls={false} strokeOpacity={0.8} />
                         <Line yAxisId="price" type="stepAfter" dataKey="vah" name="VAH" stroke="#fb7185" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
                         <Line yAxisId="price" type="stepAfter" dataKey="val" name="VAL" stroke="#34d399" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
                       </ComposedChart>
