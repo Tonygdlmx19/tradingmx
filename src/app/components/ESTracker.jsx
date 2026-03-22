@@ -197,7 +197,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     const close = parseFloat(formClose);
     const vol = parseInt(formVol);
     const oi = parseInt(formOi);
-    const foi = formFoi ? parseInt(formFoi) : null;
+    const foi = formFoi !== '' ? parseInt(formFoi) : null;
 
     if (!formDate || isNaN(open) || isNaN(high) || isNaN(low) || isNaN(close) || isNaN(vol) || isNaN(oi)) {
       alert(language === 'es'
@@ -212,10 +212,10 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
       return;
     }
 
-    const poc = formPoc ? parseFloat(formPoc) : null;
-    const vah = formVah ? parseFloat(formVah) : null;
-    const val = formVal ? parseFloat(formVal) : null;
-    const dlt = formDelta ? parseInt(formDelta) : null;
+    const poc = formPoc !== '' ? parseFloat(formPoc) : null;
+    const vah = formVah !== '' ? parseFloat(formVah) : null;
+    const val = formVal !== '' ? parseFloat(formVal) : null;
+    const dlt = formDelta !== '' ? parseInt(formDelta) : null;
 
     setRecords(prev => {
       const filtered = prev.filter(r => r.date !== formDate);
