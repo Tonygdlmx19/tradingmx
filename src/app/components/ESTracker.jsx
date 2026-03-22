@@ -416,20 +416,6 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     chartRange === 0 ? sorted : sorted.slice(-chartRange),
     [sorted, chartRange]
   );
-  const priceChartData = useMemo(() =>
-    chartSorted.map((r, i) => ({
-      name: r.date.slice(5),
-      close: r.close,
-      poc: r.poc || null,
-      vah: r.vah || null,
-      val: r.val || null,
-      vwap: vwapData?.points[i]?.vwap || null,
-      vwapU1: vwapData?.points[i]?.upper1 || null,
-      vwapL1: vwapData?.points[i]?.lower1 || null,
-      vwapU2: vwapData?.points[i]?.upper2 || null,
-      vwapL2: vwapData?.points[i]?.lower2 || null,
-    })), [chartSorted, vwapData]
-  );
   const volChartData = useMemo(() =>
     chartSorted.map(r => ({ name: r.date.slice(5), vol: r.vol, oi: r.oi })), [chartSorted]
   );
@@ -510,6 +496,21 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
     const lastPoint = points[points.length - 1];
     return { points, last: lastPoint };
   }, [chartSorted]);
+
+  const priceChartData = useMemo(() =>
+    chartSorted.map((r, i) => ({
+      name: r.date.slice(5),
+      close: r.close,
+      poc: r.poc || null,
+      vah: r.vah || null,
+      val: r.val || null,
+      vwap: vwapData?.points[i]?.vwap || null,
+      vwapU1: vwapData?.points[i]?.upper1 || null,
+      vwapL1: vwapData?.points[i]?.lower1 || null,
+      vwapU2: vwapData?.points[i]?.upper2 || null,
+      vwapL2: vwapData?.points[i]?.lower2 || null,
+    })), [chartSorted, vwapData]
+  );
 
   // ── Technical Levels (52-week based) ──────────────────────
   const [showFib, setShowFib] = useState(true);
