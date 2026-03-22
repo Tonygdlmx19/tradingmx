@@ -500,7 +500,15 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
   const priceChartData = useMemo(() =>
     chartSorted.map((r, i) => ({
       name: r.date.slice(5),
+      open: r.open,
+      high: r.high,
+      low: r.low,
       close: r.close,
+      // For candlestick body: [min(open,close), max(open,close)]
+      body: [Math.min(r.open, r.close), Math.max(r.open, r.close)],
+      // For wick: [low, high]
+      wick: [r.low, r.high],
+      bullish: r.close >= r.open,
       poc: r.poc || null,
       vah: r.vah || null,
       val: r.val || null,
@@ -1502,18 +1510,64 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                     onMouseLeave={handleChartMouseLeave}
                   >
                     <p className={`text-[9px] font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.priceChart}</p>
-                    <ResponsiveContainer width="100%" height={260}>
-                      <LineChart data={priceChartData}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <ComposedChart data={priceChartData}>
                         <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
-                        <YAxis orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} domain={['auto','auto']} tickFormatter={v=>v.toFixed(0)} />
-                        <Tooltip content={<CustomTooltip />} cursor={false} />
-                        <Line type="monotone" dataKey="close" name={t.close} stroke={asset.color} strokeWidth={1.5} dot={chartSorted.length <= 60 ? { r:2, fill:asset.color } : false} activeDot={{ r:4 }} />
-                        {/* Fibonacci levels — dashed long */}
+                        <YAxis orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} domain={['dataMin','dataMax']} tickFormatter={v=>v.toFixed(0)} padding={{ top: 10, bottom: 10 }} />
+                        <Tooltip content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null;
+                          const d = payload[0]?.payload;
+                          if (!d) return null;
+                          return (
+                            <div className={`px-3 py-2 rounded-lg border shadow-lg text-xs ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
+                              <p className="font-bold mb-1">{label}</p>
+                              <p>O: {d.open?.toFixed(2)} <span style={{ color: d.bullish ? '#22c55e' : '#ef4444' }}>C: {d.close?.toFixed(2)}</span></p>
+                              <p>H: <span className="text-green-500">{d.high?.toFixed(2)}</span> L: <span className="text-red-500">{d.low?.toFixed(2)}</span></p>
+                              {d.vwap && <p style={{ color:'#f59e0b' }}>VWAP: {d.vwap}</p>}
+                              {d.poc && <p style={{ color:'#e879f9' }}>POC: {d.poc?.toFixed(2)}</p>}
+                              {d.vah && <p style={{ color:'#fb7185' }}>VAH: {d.vah?.toFixed(2)}</p>}
+                              {d.val && <p style={{ color:'#34d399' }}>VAL: {d.val?.toFixed(2)}</p>}
+                            </div>
+                          );
+                        }} cursor={false} />
+                        {/* Candlestick wicks (high-low) */}
+                        <Bar dataKey="wick" barSize={1} shape={(props) => {
+                          const { x, y, width, height, payload } = props;
+                          if (!payload?.wick) return null;
+                          const yScale = props.background ? null : props;
+                          return (
+                            <line
+                              x1={x + width / 2} y1={y}
+                              x2={x + width / 2} y2={y + height}
+                              stroke={payload.bullish ? '#22c55e' : '#ef4444'}
+                              strokeWidth={1}
+                            />
+                          );
+                        }} isAnimationActive={false} />
+                        {/* Candlestick bodies (open-close) */}
+                        <Bar dataKey="body" barSize={chartSorted.length > 120 ? 2 : chartSorted.length > 60 ? 4 : 7} shape={(props) => {
+                          const { x, y, width, height, payload } = props;
+                          if (!payload?.body) return null;
+                          const bodyH = Math.max(height, 1);
+                          return (
+                            <rect
+                              x={x}
+                              y={y}
+                              width={width}
+                              height={bodyH}
+                              fill={payload.bullish ? '#22c55e' : '#ef4444'}
+                              stroke={payload.bullish ? '#16a34a' : '#dc2626'}
+                              strokeWidth={0.5}
+                              rx={0.5}
+                            />
+                          );
+                        }} isAnimationActive={false} />
+                        {/* Fibonacci levels */}
                         {showFib && techLevels && techLevels.fib.map(f => (
                           <ReferenceLine key={`fib-${f.pct}`} y={f.level} stroke={f.color} strokeDasharray="10 5" strokeWidth={0.8} strokeOpacity={0.65}
                             label={{ value: `F ${f.label}  ${f.level.toFixed(0)}`, position: 'insideTopLeft', fontSize: 7, fill: f.color, fontWeight: 700 }} />
                         ))}
-                        {/* Pivot S/R levels — dashed short, right side */}
+                        {/* Pivot S/R levels */}
                         {showPivots && techLevels && techLevels.pivots.map(p => (
                           <ReferenceLine key={`pv-${p.label}`} y={p.level} stroke={p.color} strokeDasharray="4 3" strokeWidth={1} strokeOpacity={0.75}
                             label={{ value: `${p.label}  ${p.level.toFixed(0)}`, position: 'insideTopRight', fontSize: 7, fill: p.color, fontWeight: 700 }} />
@@ -1528,11 +1582,11 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                             <Line type="monotone" dataKey="vwapL2" name="-2σ" stroke="#f59e0b" strokeWidth={0.6} dot={false} strokeDasharray="2 3" strokeOpacity={0.25} />
                           </>
                         )}
-                        {/* POC / VAH / VAL from ATAS */}
+                        {/* POC / VAH / VAL */}
                         <Line type="stepAfter" dataKey="poc" name="POC" stroke="#e879f9" strokeWidth={1.5} dot={false} connectNulls={false} strokeOpacity={0.8} />
                         <Line type="stepAfter" dataKey="vah" name="VAH" stroke="#fb7185" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
                         <Line type="stepAfter" dataKey="val" name="VAL" stroke="#34d399" strokeWidth={0.8} dot={false} connectNulls={false} strokeDasharray="3 2" strokeOpacity={0.5} />
-                      </LineChart>
+                      </ComposedChart>
                     </ResponsiveContainer>
                     {crosshair.visible && crosshair.chartId === 'price' && (
                       <>
