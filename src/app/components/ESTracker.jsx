@@ -1584,7 +1584,7 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                     onMouseLeave={handleChartMouseLeave}
                   >
                     <p className={`text-[9px] font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.priceChart}</p>
-                    <ResponsiveContainer width="100%" height={chartSorted.length > 200 ? 380 : 300}>
+                    <ResponsiveContainer width="100%" height={300}>
                       <ComposedChart data={priceChartData}>
                         <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
                         <YAxis orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} domain={['dataMin','dataMax']} tickFormatter={v=>v.toFixed(0)} padding={{ top: 10, bottom: 10 }} tickCount={12} />
@@ -1604,14 +1604,14 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                             </div>
                           );
                         }} cursor={false} />
-                        {/* Candlesticks (single Bar with wick + body in one shape) */}
+                        {/* Candlesticks (< 200 data points) or Line (200+) */}
+                        {chartSorted.length <= 200 ? (
                         <Bar dataKey="wick" isAnimationActive={false} shape={(props) => {
                           const { x, y, width, height, payload } = props;
                           if (!payload?.wick || !payload?.body) return null;
                           const color = payload.bullish ? '#22c55e' : '#ef4444';
                           const strokeColor = payload.bullish ? '#16a34a' : '#dc2626';
                           const wickX = x + width / 2;
-                          // Body position relative to wick
                           const wickTop = y;
                           const wickBottom = y + height;
                           const wickRange = payload.wick[1] - payload.wick[0];
@@ -1621,25 +1621,26 @@ export default function ESTracker({ isOpen, onClose, isAdmin }) {
                           const bodyBottom = wickTop + (payload.wick[1] - payload.body[0]) * pxPerUnit;
                           const bodyH = Math.max(bodyBottom - bodyTop, 1);
                           const n = chartSorted.length;
-                          // With too many candles, show as thin bars
-                          const bodyW = n > 500 ? 1 : n > 300 ? 1.5 : n > 200 ? 2 : n > 120 ? 3 : n > 60 ? 5 : 8;
-                          const wickW = n > 300 ? 0.5 : 1;
+                          const bodyW = n > 120 ? 3 : n > 60 ? 5 : 8;
                           return (
                             <g>
-                              <line x1={wickX} y1={wickTop} x2={wickX} y2={wickBottom} stroke={color} strokeWidth={wickW} />
+                              <line x1={wickX} y1={wickTop} x2={wickX} y2={wickBottom} stroke={color} strokeWidth={1} />
                               <rect
                                 x={wickX - bodyW / 2}
                                 y={bodyTop}
                                 width={bodyW}
                                 height={bodyH}
                                 fill={color}
-                                stroke={n > 300 ? color : strokeColor}
-                                strokeWidth={n > 300 ? 0 : 0.5}
+                                stroke={strokeColor}
+                                strokeWidth={0.5}
                                 rx={0.5}
                               />
                             </g>
                           );
                         }} />
+                        ) : (
+                          <Line type="monotone" dataKey="close" name={t.close} stroke={asset.color} strokeWidth={1.5} dot={false} activeDot={{ r:3 }} />
+                        )}
                         {/* Fibonacci levels */}
                         {showFib && techLevels && techLevels.fib.map(f => (
                           <ReferenceLine key={`fib-${f.pct}`} y={f.level} stroke={f.color} strokeDasharray="10 5" strokeWidth={0.8} strokeOpacity={0.65}
