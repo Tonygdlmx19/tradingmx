@@ -1630,6 +1630,11 @@ export default function ESTracker({ onClose, isAdmin }) {
                           const bodyH = Math.max(bodyBottom - bodyTop, 1);
                           const n = chartSorted.length;
                           const bodyW = n > 120 ? 3 : n > 60 ? 5 : 8;
+                          // POC marker on the candle
+                          const pocY = payload.poc && payload.poc >= payload.wick[0] && payload.poc <= payload.wick[1]
+                            ? wickTop + (payload.wick[1] - payload.poc) * pxPerUnit
+                            : null;
+                          const pocW = bodyW + 4;
                           return (
                             <g>
                               <line x1={wickX} y1={wickTop} x2={wickX} y2={wickBottom} stroke={color} strokeWidth={1} />
@@ -1643,6 +1648,13 @@ export default function ESTracker({ onClose, isAdmin }) {
                                 strokeWidth={0.5}
                                 rx={0.5}
                               />
+                              {pocY != null && (
+                                <line
+                                  x1={wickX - pocW / 2} y1={pocY}
+                                  x2={wickX + pocW / 2} y2={pocY}
+                                  stroke="#3b82f6" strokeWidth={2} strokeLinecap="round"
+                                />
+                              )}
                             </g>
                           );
                         }} />
