@@ -83,8 +83,13 @@ export async function POST(request) {
     // Build news text
     const newsText = marketNews && marketNews.length > 0
       ? marketNews.map(n => {
-          const time = new Date(n.datetime * 1000).toLocaleString('es-MX', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-          return `[${time}] ${n.source}: ${n.headline}`;
+          const dt = String(n.datetime || '');
+          let time = '';
+          if (dt.includes('T') && dt.length >= 13) {
+            time = `${dt.slice(6,8)}/${dt.slice(4,6)} ${dt.slice(9,11)}:${dt.slice(11,13)}`;
+          }
+          const sent = n.sentimentLabel ? ` [${n.sentimentLabel}]` : '';
+          return `${time ? '[' + time + '] ' : ''}${n.source}: ${n.headline}${sent}`;
         }).join('\n')
       : null;
 

@@ -1094,7 +1094,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             techPeriodDays: techLevels.periodDays,
           } : null,
           tradingTimeframe,
-          marketNews: news.slice(0, 10).map(n => ({ headline: n.headline, source: n.source, datetime: n.datetime })),
+          marketNews: news.slice(0, 10).map(n => ({ headline: n.headline, source: n.source, datetime: n.datetime, sentiment: n.sentiment, sentimentLabel: n.sentimentLabel })),
           userStrategies: estrategias.map(s => ({
             nombre: s.nombre,
             reglas: (s.reglas || []).map(r => ({ texto: r.texto, descripcion: r.descripcion || '' })),
@@ -1510,11 +1510,25 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                               {n.summary && (
                                 <p className={`text-[11px] mt-1 line-clamp-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{n.summary}</p>
                               )}
-                              <div className="flex items-center gap-2 mt-1.5">
+                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                 <span className={`text-[10px] font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{n.source}</span>
                                 <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                                  {new Date(n.datetime * 1000).toLocaleString(es ? 'es-MX' : 'en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}
+                                  {n.datetime ? (() => {
+                                    const d = String(n.datetime);
+                                    if (d.includes('T') && d.length >= 13) {
+                                      const year = d.slice(0,4), mo = d.slice(4,6), day = d.slice(6,8), hr = d.slice(9,11), min = d.slice(11,13);
+                                      return `${day}/${mo} ${hr}:${min}`;
+                                    }
+                                    return new Date(d * 1000).toLocaleString(es ? 'es-MX' : 'en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+                                  })() : ''}
                                 </span>
+                                {n.sentimentLabel && (
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                    n.sentiment >= 0.15 ? 'bg-green-500/10 text-green-500'
+                                    : n.sentiment <= -0.15 ? 'bg-red-500/10 text-red-500'
+                                    : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'
+                                  }`}>{n.sentimentLabel}</span>
+                                )}
                                 <ExternalLink size={10} className={isDark ? 'text-slate-600' : 'text-slate-400'} />
                               </div>
                             </div>

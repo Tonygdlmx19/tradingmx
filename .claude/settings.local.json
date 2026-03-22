@@ -32,7 +32,10 @@
       "Bash(npx next:*)",
       "Bash(npm list:*)",
       "Bash(npx firebase:*)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "Bash(git log:*)",
+      "WebFetch(domain:www.alphavantage.co)",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }
