@@ -135,28 +135,45 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [showNews, setShowNews] = useState(false);
+  const [newsSentiment, setNewsSentiment] = useState(null);
+  const [newsSentimentCount, setNewsSentimentCount] = useState(null);
   const fileInputRef = useRef(null);
   const [crosshair, setCrosshair] = useState({ x: 0, y: 0, visible: false, chartId: null });
 
   const asset = ASSET_PRESETS.find(a => a.id === selectedAsset) || ASSET_PRESETS[0];
   const ph = asset.placeholders;
 
-  // ── Load market news ──
+  // ── Load market news (filtered by asset) ──
+  const assetKeywords = {
+    ES: 'S&P 500,SPX,SPY,equity,stock market',
+    NQ: 'Nasdaq,QQQ,technology,tech stocks',
+    CL: 'crude oil,oil,energy,petroleum,OPEC',
+    GC: 'gold,precious metals,safe haven',
+    YM: 'Dow Jones,DJIA,blue chip',
+    RTY: 'Russell 2000,small cap',
+    SI: 'silver,precious metals',
+    NG: 'natural gas,energy,LNG',
+  };
+
   useEffect(() => {
     const loadNews = async () => {
       setNewsLoading(true);
       try {
-        const res = await fetch('/api/market-news?category=general');
+        const keywords = assetKeywords[selectedAsset] || '';
+        const res = await fetch(`/api/market-news?asset=${selectedAsset}&keywords=${encodeURIComponent(keywords)}`);
         const data = await res.json();
-        if (data.news) setNews(data.news);
+        if (data.news) {
+          setNews(data.news);
+          if (data.sentiment != null) setNewsSentiment(data.sentiment);
+          if (data.sentimentCount) setNewsSentimentCount(data.sentimentCount);
+        }
       } catch (_) { /* ignore */ }
       setNewsLoading(false);
     };
     loadNews();
-    // Refresh every 10 min
     const interval = setInterval(loadNews, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedAsset]);
 
   // ── Firestore: real-time listener on shared document ──
   useEffect(() => {
@@ -1474,10 +1491,30 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
               {showNews && (
                 <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
                   <div className={`flex items-center justify-between px-4 py-3 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
-                    <span className={`flex items-center gap-2 font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                      <Newspaper size={16} className="text-emerald-500" />
-                      {es ? 'Noticias del Mercado' : 'Market News'}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-2 font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        <Newspaper size={16} className="text-emerald-500" />
+                        {es ? 'Noticias' : 'News'} — {asset.ticker}
+                      </span>
+                      {newsSentiment != null && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          newsSentiment >= 0.15 ? 'bg-green-500/10 text-green-500'
+                          : newsSentiment <= -0.15 ? 'bg-red-500/10 text-red-500'
+                          : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {es ? 'Sentimiento' : 'Sentiment'}: {newsSentiment >= 0.15 ? 'Bullish' : newsSentiment <= -0.15 ? 'Bearish' : 'Neutral'}
+                        </span>
+                      )}
+                      {newsSentimentCount && (
+                        <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                          <span className="text-green-500">{newsSentimentCount.bullish}</span>
+                          {' / '}
+                          <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{newsSentimentCount.neutral}</span>
+                          {' / '}
+                          <span className="text-red-500">{newsSentimentCount.bearish}</span>
+                        </span>
+                      )}
+                    </div>
                     <button onClick={() => setShowNews(false)} className={`p-1 rounded-lg transition-colors ${isDark ? 'text-slate-500 hover:text-white' : 'text-slate-400 hover:text-slate-800'}`}>
                       <X size={14} />
                     </button>
