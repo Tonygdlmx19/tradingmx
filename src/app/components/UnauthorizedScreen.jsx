@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { LogOut, ShieldX, CheckCircle, ArrowRight, Mail, MessageCircle, HelpCircle, Clock, Ticket, Loader2, Crown, Zap, Star, Infinity } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { openPayment, isPayPalAvailable } from '../config/paypalLinks';
 
 const PLANS = [
   {
@@ -11,8 +12,7 @@ const PLANS = [
     price: 10,
     duration: '1 mes',
     icon: Zap,
-    color: 'blue',
-    paypalLink: 'https://www.paypal.com/ncp/payment/X3GWT63PZQ8J6'
+    color: 'blue'
   },
   {
     id: '3months',
@@ -21,8 +21,7 @@ const PLANS = [
     duration: '3 meses',
     icon: Star,
     color: 'purple',
-    popular: true,
-    paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU'
+    popular: true
   },
   {
     id: '1year',
@@ -30,8 +29,7 @@ const PLANS = [
     price: 50,
     duration: '12 meses',
     icon: Crown,
-    color: 'amber',
-    paypalLink: 'https://www.paypal.com/ncp/payment/8DV9WS43YAXV8'
+    color: 'amber'
   },
   {
     id: 'lifetime',
@@ -39,8 +37,7 @@ const PLANS = [
     price: 100,
     duration: 'Para siempre',
     icon: Infinity,
-    color: 'green',
-    paypalLink: 'https://www.paypal.com/ncp/payment/Z2NETX47DZ5K4'
+    color: 'green'
   },
 ];
 
@@ -153,9 +150,7 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
 
   const handlePayPal = () => {
     const plan = PLANS.find(p => p.id === selectedPlan);
-    if (plan) {
-      window.open(plan.paypalLink, '_blank');
-    }
+    openPayment(plan);
   };
 
   const selectedPlanData = PLANS.find(p => p.id === selectedPlan);
@@ -320,8 +315,10 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
             onClick={handlePayPal}
             className="w-full bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold py-4 px-6 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-yellow-500/30 flex items-center justify-center gap-3 mb-4"
           >
-            <img src="/paypal.png" alt="PayPal" className="h-6" />
-            <span className="text-lg font-black">Pagar ${selectedPlanData?.price} USD</span>
+            {isPayPalAvailable(selectedPlan)
+              ? <img src="/paypal.png" alt="PayPal" className="h-6" />
+              : <MessageCircle size={22} />}
+            <span className="text-lg font-black">Pagar ${selectedPlanData?.price} USD{isPayPalAvailable(selectedPlan) ? '' : ' por WhatsApp'}</span>
             <ArrowRight size={20} />
           </button>
 
@@ -334,9 +331,11 @@ export default function UnauthorizedScreen({ user, onLogout, authStatus }) {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
               </span>
               <p className="text-xs text-amber-700 font-semibold">
-                {isExpired
-                  ? `Paga con ${user?.email} y tu acceso se activa automáticamente.`
-                  : 'Tu cuenta será activada en breve después del pago.'
+                {!isPayPalAvailable(selectedPlan)
+                  ? 'Te atendemos por WhatsApp y activamos tu acceso al confirmar el pago.'
+                  : isExpired
+                    ? `Paga con ${user?.email} y tu acceso se activa automáticamente.`
+                    : 'Tu cuenta será activada en breve después del pago.'
                 }
               </p>
             </div>

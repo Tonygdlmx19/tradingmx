@@ -36,19 +36,20 @@ import {
   Bot
 } from 'lucide-react';
 import { useLanguage } from './LanguageProvider';
+import { openPayment, isPayPalAvailable } from '../config/paypalLinks';
 
 const PLANS = {
   es: [
-    { id: '1month', name: '1 Mes', price: 10, duration: '1 mes', icon: Zap, color: 'blue', aiQueries: 5, paypalLink: 'https://www.paypal.com/ncp/payment/X3GWT63PZQ8J6' },
-    { id: '3months', name: '3 Meses', price: 20, duration: '3 meses', icon: Star, color: 'purple', popular: true, aiQueries: 10, paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU' },
-    { id: '1year', name: '1 Año', price: 50, duration: '12 meses', icon: Crown, color: 'amber', aiQueries: 20, paypalLink: 'https://www.paypal.com/ncp/payment/8DV9WS43YAXV8' },
-    { id: 'lifetime', name: 'De por vida', price: 100, duration: 'Para siempre', icon: Infinity, color: 'green', aiQueries: 30, paypalLink: 'https://www.paypal.com/ncp/payment/Z2NETX47DZ5K4' },
+    { id: '1month', name: '1 Mes', price: 10, duration: '1 mes', icon: Zap, color: 'blue', aiQueries: 5 },
+    { id: '3months', name: '3 Meses', price: 20, duration: '3 meses', icon: Star, color: 'purple', popular: true, aiQueries: 10 },
+    { id: '1year', name: '1 Año', price: 50, duration: '12 meses', icon: Crown, color: 'amber', aiQueries: 20 },
+    { id: 'lifetime', name: 'De por vida', price: 100, duration: 'Para siempre', icon: Infinity, color: 'green', aiQueries: 30 },
   ],
   en: [
-    { id: '1month', name: '1 Month', price: 10, duration: '1 month', icon: Zap, color: 'blue', aiQueries: 5, paypalLink: 'https://www.paypal.com/ncp/payment/X3GWT63PZQ8J6' },
-    { id: '3months', name: '3 Months', price: 20, duration: '3 months', icon: Star, color: 'purple', popular: true, aiQueries: 10, paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU' },
-    { id: '1year', name: '1 Year', price: 50, duration: '12 months', icon: Crown, color: 'amber', aiQueries: 20, paypalLink: 'https://www.paypal.com/ncp/payment/8DV9WS43YAXV8' },
-    { id: 'lifetime', name: 'Lifetime', price: 100, duration: 'Forever', icon: Infinity, color: 'green', aiQueries: 30, paypalLink: 'https://www.paypal.com/ncp/payment/Z2NETX47DZ5K4' },
+    { id: '1month', name: '1 Month', price: 10, duration: '1 month', icon: Zap, color: 'blue', aiQueries: 5 },
+    { id: '3months', name: '3 Months', price: 20, duration: '3 months', icon: Star, color: 'purple', popular: true, aiQueries: 10 },
+    { id: '1year', name: '1 Year', price: 50, duration: '12 months', icon: Crown, color: 'amber', aiQueries: 20 },
+    { id: 'lifetime', name: 'Lifetime', price: 100, duration: 'Forever', icon: Infinity, color: 'green', aiQueries: 30 },
   ]
 };
 
@@ -408,9 +409,7 @@ export default function LandingPage({ onLogin }) {
 
   const handlePayPal = () => {
     const plan = plans.find(p => p.id === selectedPlan);
-    if (plan) {
-      window.open(plan.paypalLink, '_blank');
-    }
+    openPayment(plan, language);
   };
 
   const selectedPlanData = plans.find(p => p.id === selectedPlan);
@@ -444,8 +443,12 @@ export default function LandingPage({ onLogin }) {
         className="relative bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-6 sm:px-8 py-2.5 sm:py-3"
       >
         <div className="relative flex items-center justify-center gap-2">
-          <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />
-          <span className="text-sm sm:text-base font-black">{language === 'es' ? 'Comprar' : 'Buy'}</span>
+          {isPayPalAvailable(selectedPlan) && <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />}
+          <span className="text-sm sm:text-base font-black">
+            {isPayPalAvailable(selectedPlan)
+              ? (language === 'es' ? 'Comprar' : 'Buy')
+              : (language === 'es' ? 'Comprar por WhatsApp' : 'Buy via WhatsApp')}
+          </span>
         </div>
       </button>
     </div>
@@ -971,8 +974,10 @@ export default function LandingPage({ onLogin }) {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   </div>
                   <div className="relative flex items-center justify-center gap-3">
-                    <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />
-                    <span className="text-base sm:text-lg font-black">{t.pay} ${selectedPlanData?.price} USD</span>
+                    {isPayPalAvailable(selectedPlan) && <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />}
+                    <span className="text-base sm:text-lg font-black">
+                      {t.pay} ${selectedPlanData?.price} USD{isPayPalAvailable(selectedPlan) ? '' : (language === 'es' ? ' por WhatsApp' : ' via WhatsApp')}
+                    </span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>

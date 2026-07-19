@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import { X, Clock, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
+import { openPayment, isPayPalAvailable } from '../config/paypalLinks';
 
 const PLANS = [
-  { id: '1month', name: '1 Mes', price: 10, paypalLink: 'https://www.paypal.com/ncp/payment/X3GWT63PZQ8J6' },
-  { id: '3months', name: '3 Meses', price: 20, popular: true, paypalLink: 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU' },
-  { id: '1year', name: '1 Año', price: 50, paypalLink: 'https://www.paypal.com/ncp/payment/8DV9WS43YAXV8' },
-  { id: 'lifetime', name: 'De por vida', price: 100, paypalLink: 'https://www.paypal.com/ncp/payment/Z2NETX47DZ5K4' },
+  { id: '1month', name: '1 Mes', price: 10 },
+  { id: '3months', name: '3 Meses', price: 20, popular: true },
+  { id: '1year', name: '1 Año', price: 50 },
+  { id: 'lifetime', name: 'De por vida', price: 100 },
 ];
 
 export default function TrialExpiringAlert({ trialEnd, userEmail }) {
@@ -53,9 +54,7 @@ export default function TrialExpiringAlert({ trialEnd, userEmail }) {
 
   const handlePayPal = () => {
     const plan = PLANS.find(p => p.id === selectedPlan);
-    if (plan) {
-      window.open(plan.paypalLink, '_blank');
-    }
+    openPayment(plan);
   };
 
   const selectedPlanData = PLANS.find(p => p.id === selectedPlan);
@@ -225,13 +224,15 @@ export default function TrialExpiringAlert({ trialEnd, userEmail }) {
                 onClick={handlePayPal}
                 className="w-full py-3 bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-3"
               >
-                <img src="/paypal.png" alt="PayPal" className="h-5" />
-                <span>Pagar ${selectedPlanData?.price} USD</span>
+                {isPayPalAvailable(selectedPlan) && <img src="/paypal.png" alt="PayPal" className="h-5" />}
+                <span>Pagar ${selectedPlanData?.price} USD{isPayPalAvailable(selectedPlan) ? '' : ' por WhatsApp'}</span>
                 <ArrowRight size={18} />
               </button>
 
               <p className={`text-center text-xs mt-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                Tu acceso se activa en breve después del pago
+                {isPayPalAvailable(selectedPlan)
+                  ? 'Tu acceso se activa en breve después del pago'
+                  : 'Te atendemos por WhatsApp para completar tu pago'}
               </p>
             </div>
           </div>
