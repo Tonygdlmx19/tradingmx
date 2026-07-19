@@ -312,15 +312,40 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
       let imported = 0;
       const newRecords = [];
 
+      // Búsqueda de columna insensible a mayúsculas/espacios; acepta varios
+      // nombres (Barchart, ATAS en inglés y ruso). Devuelve '' si no la encuentra.
+      const colCache = new Map();
+      const findCol = (row, names) => {
+        const key = names.join('|');
+        let lookup = colCache.get(key);
+        if (!lookup) {
+          const norm = (s) => String(s).trim().toLowerCase();
+          const wanted = names.map(norm);
+          lookup = (r) => {
+            for (const k of Object.keys(r)) {
+              if (wanted.includes(norm(k))) return r[k];
+            }
+            return '';
+          };
+          colCache.set(key, lookup);
+        }
+        return lookup(row);
+      };
+
       for (const row of rows) {
-        // Map common Barchart column names to our fields
-        const dateRaw = row['Time'] || row['Date'] || row['date'] || row['Fecha'] || row['DATE'] || '';
-        const openRaw = row['Open'] || row['open'] || row['OPEN'] || row['Apertura'] || '';
-        const highRaw = row['High'] || row['high'] || row['HIGH'] || row['Máximo'] || row['Maximo'] || '';
-        const lowRaw  = row['Low'] || row['low'] || row['LOW'] || row['Mínimo'] || row['Minimo'] || '';
-        const closeRaw = row['Last'] || row['Latest'] || row['Close'] || row['close'] || row['CLOSE'] || row['Cierre'] || row['Settle'] || row['Adj Close'] || '';
-        const volRaw = row['Volume'] || row['volume'] || row['VOLUME'] || row['Vol'] || row['Volumen'] || '';
-        const oiRaw  = row['Open Int'] || row['Open Interest'] || row['OI'] || row['oi'] || row['OpenInt'] || row['Prev. Day Open Interest'] || '';
+        // Nombres de columna comunes: Barchart + ATAS (EN y RU)
+        const dateRaw = findCol(row, ['Time', 'Date', 'Fecha', 'DateTime', 'Дата', 'Время']);
+        const openRaw = findCol(row, ['Open', 'Apertura', 'Открытие']);
+        const highRaw = findCol(row, ['High', 'Máximo', 'Maximo', 'Максимум', 'Max']);
+        const lowRaw  = findCol(row, ['Low', 'Mínimo', 'Minimo', 'Минимум', 'Min']);
+        const closeRaw = findCol(row, ['Last', 'Latest', 'Close', 'Cierre', 'Settle', 'Adj Close', 'Закрытие']);
+        const volRaw = findCol(row, ['Volume', 'Vol', 'Volumen', 'Объём', 'Объем']);
+        const oiRaw  = findCol(row, ['Open Int', 'Open Interest', 'OI', 'OpenInt', 'Prev. Day Open Interest', 'Открытый интерес']);
+        // Campos de orderflow / perfil de volumen (ATAS)
+        const deltaRaw = findCol(row, ['Delta', 'Дельта']);
+        const pocRaw = findCol(row, ['POC', 'Point of Control', 'PoC']);
+        const vahRaw = findCol(row, ['VAH', 'Value Area High', 'VA High']);
+        const valRaw = findCol(row, ['VAL', 'Value Area Low', 'VA Low']);
 
         if (!dateRaw || !closeRaw) continue;
 
@@ -353,6 +378,11 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         const close = parseNum(closeRaw);
         const vol = parseInt(String(volRaw).replace(/,/g, '')) || 0;
         const oi = parseInt(String(oiRaw).replace(/,/g, '')) || 0;
+        // Orderflow / perfil de volumen: null si no viene en el archivo
+        const delta = deltaRaw === '' ? null : parseNum(deltaRaw);
+        const poc = pocRaw === '' ? null : parseNum(pocRaw);
+        const vah = vahRaw === '' ? null : parseNum(vahRaw);
+        const val = valRaw === '' ? null : parseNum(valRaw);
 
         if (isNaN(close)) continue;
 
@@ -365,6 +395,10 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
           vol,
           oi,
           foi: null,
+          delta: delta != null && !isNaN(delta) ? delta : null,
+          poc: poc != null && !isNaN(poc) ? poc : null,
+          vah: vah != null && !isNaN(vah) ? vah : null,
+          val: val != null && !isNaN(val) ? val : null,
         });
         imported++;
       }
