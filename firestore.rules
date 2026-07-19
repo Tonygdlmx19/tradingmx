@@ -12,6 +12,18 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Admin: email en la lista Y verificado (Google sign-in siempre verifica)
+    function isAdmin() {
+      return isAuthenticated()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
+    }
+
+    // El documento pertenece al email del usuario autenticado
+    function ownsEmailDoc(email) {
+      return isAuthenticated() && request.auth.token.email.lower() == email;
+    }
+
     // Users config - users can only access their own config
     match /users/{userId} {
       allow read, write: if isOwner(userId);
@@ -74,67 +86,81 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
-    // Authorized users - read for authentication check
+    // Authorized users - cada quien lee SOLO su propio documento; el admin todo
     match /authorized_users/{email} {
-      allow read: if isAuthenticated();
+      allow get: if ownsEmailDoc(email) || isAdmin();
+      allow list: if isAdmin();
 
-      // Admin emails list
-      function isAdmin() {
-        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
-      }
-
-      // Allow user to create their own trial entry OR admin can create any entry
-      allow create: if isAuthenticated() && (
-        request.auth.token.email.lower() == email ||
-        isAdmin()
+      // Crear: solo el propio trial (activo, máx 16 días) o el admin
+      allow create: if isAdmin() || (
+        ownsEmailDoc(email)
+        && request.resource.data.type == 'trial'
+        && request.resource.data.status == 'active'
+        && request.resource.data.trialEnd is timestamp
+        && request.resource.data.trialEnd < request.time + duration.value(16, 'd')
       );
 
-      // Allow user to update their own trial entry OR admin can update any entry
-      allow update: if isAuthenticated() && (
-        (request.auth.token.email.lower() == email && request.resource.data.type == 'trial') ||
-        isAdmin()
+      // Actualizar el propio documento: solo transiciones legítimas de trial
+      allow update: if isAdmin() || (
+        ownsEmailDoc(email)
+        && request.resource.data.type == 'trial'
+        && (
+          // 1) Marcar como expirado (u otro estado no activo) sin tocar el vencimiento
+          (
+            request.resource.data.status != 'active'
+            && request.resource.data.get('trialEnd', null) == resource.data.get('trialEnd', null)
+          )
+          // 2) Activar la prueba gratis por primera vez (una sola vez por email)
+          || (
+            request.resource.data.status == 'active'
+            && resource.data.get('trialUsed', false) != true
+            && request.resource.data.trialUsed == true
+            && request.resource.data.trialEnd is timestamp
+            && request.resource.data.trialEnd < request.time + duration.value(16, 'd')
+          )
+          // 3) Reactivar canjeando un código nuevo y sin usar
+          || (
+            request.resource.data.status == 'active'
+            && request.resource.data.codeUsed is string
+            && request.resource.data.codeUsed != resource.data.get('codeUsed', '')
+            && exists(/databases/$(database)/documents/trial_codes/$(request.resource.data.codeUsed))
+            && get(/databases/$(database)/documents/trial_codes/$(request.resource.data.codeUsed)).data.used != true
+            && request.resource.data.trialEnd is timestamp
+            && request.resource.data.trialEnd < request.time + duration.value(16, 'd')
+          )
+        )
       );
 
       // Only admins can delete
-      allow delete: if isAuthenticated() && isAdmin();
+      allow delete: if isAdmin();
     }
 
     // Market tracker - shared data, admin writes, all authenticated read
     match /market_tracker/{docId} {
       allow read: if isAuthenticated();
-
-      function isTrackerAdmin() {
-        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
-      }
-      allow write: if isAuthenticated() && isTrackerAdmin();
+      allow write: if isAdmin();
     }
 
     // Tracker AI analyses - shared, admin writes, all authenticated read
     match /tracker_analyses/{docId} {
       allow read: if isAuthenticated();
-
-      function isAnalysisAdmin() {
-        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
-      }
-      allow write: if isAuthenticated() && isAnalysisAdmin();
+      allow write: if isAdmin();
     }
 
-    // Trial codes - read for code validation
+    // Trial codes - se puede consultar un código exacto, pero no listarlos todos
     match /trial_codes/{code} {
-      allow read: if isAuthenticated();
+      allow get: if isAuthenticated();
+      allow list: if isAdmin();
 
-      // Admin emails list for trial codes
-      function isTrialCodeAdmin() {
-        return request.auth.token.email.lower() in ['tonytrader19@gmail.com'];
-      }
-
-      // Allow users to mark a code as used (for their own email)
-      allow update: if isAuthenticated() && (
-        request.resource.data.usedBy == request.auth.token.email.lower() ||
-        isTrialCodeAdmin()
+      // Un usuario solo puede marcar como usado (por él mismo) un código sin usar
+      allow update: if isAdmin() || (
+        isAuthenticated()
+        && resource.data.used != true
+        && request.resource.data.used == true
+        && request.resource.data.usedBy == request.auth.token.email.lower()
       );
       // Only admins can create/delete codes
-      allow create, delete: if isAuthenticated() && isTrialCodeAdmin();
+      allow create, delete: if isAdmin();
     }
   }
 }
