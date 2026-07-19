@@ -1105,6 +1105,15 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         const snap = await getDocs(q);
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setAiHistory(items);
+        // Si ya existe el análisis de hoy (p.ej. generado por el cron pre-sesión),
+        // mostrarlo de inmediato sin que el usuario tenga que generarlo o buscarlo.
+        const today = new Date().toISOString().slice(0, 10);
+        const todays = items.find(h => h.date === today);
+        if (todays) {
+          setAiAnalysis(todays.analysis);
+          setAiAnalysisDate(todays.date);
+          setShowAiPanel(true);
+        }
       } catch (_) { /* collection may not exist yet */ }
     };
     if (selectedAsset) loadHistory();
