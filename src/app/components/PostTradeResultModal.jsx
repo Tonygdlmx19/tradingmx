@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import useEscapeKey from './useEscapeKey';
+import { createPortal } from 'react-dom';
 
 export default function PostTradeResultModal({
   isOpen,
@@ -187,7 +188,9 @@ export default function PostTradeResultModal({
 
   const isWin = trade?.res >= 0;
 
-  return (
+  if (typeof document === 'undefined') return null;
+  // Portal al body: el formulario vive en una columna sticky que atraparía el modal bajo el encabezado.
+  return createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pt-16 sm:pt-4">
       {/* Backdrop */}
       <div
@@ -343,5 +346,5 @@ export default function PostTradeResultModal({
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }

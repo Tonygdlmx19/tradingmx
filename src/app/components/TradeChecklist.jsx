@@ -4,6 +4,7 @@ import { ClipboardCheck, X, CheckCircle, AlertTriangle, XCircle, Image, Maximize
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import useEscapeKey from './useEscapeKey';
+import { createPortal } from 'react-dom';
 
 export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm, strategyName }) {
   useEscapeKey(onClose, isOpen);
@@ -119,13 +120,15 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm, str
     onClose();
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+  // Portal al body: el formulario vive en una columna sticky que atraparía el modal bajo el encabezado.
+  return createPortal(
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         className={`rounded-2xl shadow-2xl border max-h-[90vh] overflow-hidden flex flex-col ${
           isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
         }`}
-        style={{ width: '100%', maxWidth: '420px' }}
+        style={{ width: '100%', maxWidth: '680px' }}
       >
         {/* Header */}
         <div className={`p-4 border-b ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
@@ -316,5 +319,5 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm, str
         </div>
       )}
     </div>
-  );
+  , document.body);
 }
