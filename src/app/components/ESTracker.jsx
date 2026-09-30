@@ -200,7 +200,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
     return () => unsub();
   }, []);
 
-  const records = allData[selectedAsset] || [];
+  const records = useMemo(() => allData[selectedAsset] || [], [allData, selectedAsset]);
   const sorted = useMemo(() => [...records].sort((a, b) => a.date.localeCompare(b.date)), [records]);
 
   // ── Firestore: persist (admin only) ──
@@ -309,109 +309,183 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
     const ext = file.name.split('.').pop().toLowerCase();
 
     const processRows = (rows) => {
-      let imported = 0;
-      const newRecords = [];
-
       // Búsqueda de columna insensible a mayúsculas/espacios; acepta varios
-      // nombres (Barchart, ATAS en inglés y ruso). Devuelve '' si no la encuentra.
+      // nombres (Barchart, ATAS en inglés y ruso). Devuelve null si no la encuentra
+      // o si la celda viene vacía.
+      const norm = (s) => String(s).trim().toLowerCase();
       const colCache = new Map();
       const findCol = (row, names) => {
         const key = names.join('|');
         let lookup = colCache.get(key);
         if (!lookup) {
-          const norm = (s) => String(s).trim().toLowerCase();
           const wanted = names.map(norm);
           lookup = (r) => {
             for (const k of Object.keys(r)) {
               if (wanted.includes(norm(k))) return r[k];
             }
-            return '';
+            return null;
           };
           colCache.set(key, lookup);
         }
-        return lookup(row);
+        const v = lookup(row);
+        return v === '' || v === undefined ? null : v;
       };
 
-      for (const row of rows) {
-        // Nombres de columna comunes: Barchart + ATAS (EN y RU)
-        const dateRaw = findCol(row, ['Time', 'Date', 'Fecha', 'DateTime', 'Дата', 'Время']);
-        const openRaw = findCol(row, ['Open', 'Apertura', 'Открытие']);
-        const highRaw = findCol(row, ['High', 'Máximo', 'Maximo', 'Максимум', 'Max']);
-        const lowRaw  = findCol(row, ['Low', 'Mínimo', 'Minimo', 'Минимум', 'Min']);
-        const closeRaw = findCol(row, ['Last', 'Latest', 'Close', 'Cierre', 'Settle', 'Adj Close', 'Закрытие']);
-        const volRaw = findCol(row, ['Volume', 'Vol', 'Volumen', 'Объём', 'Объем']);
-        const oiRaw  = findCol(row, ['Open Int', 'Open Interest', 'OI', 'OpenInt', 'Prev. Day Open Interest', 'Открытый интерес']);
-        // Campos de orderflow / perfil de volumen (ATAS)
-        const deltaRaw = findCol(row, ['Delta', 'Дельта']);
-        const pocRaw = findCol(row, ['POC', 'Point of Control', 'PoC']);
-        const vahRaw = findCol(row, ['VAH', 'Value Area High', 'VA High']);
-        const valRaw = findCol(row, ['VAL', 'Value Area Low', 'VA Low']);
+      // Nombres de columna comunes: Barchart + ATAS (EN y RU)
+      const COLS = {
+        date:  ['Time', 'Date', 'Fecha', 'DateTime', 'Дата', 'Время'],
+        open:  ['Open', 'Apertura', 'Открытие'],
+        high:  ['High', 'Máximo', 'Maximo', 'Максимум', 'Max'],
+        low:   ['Low', 'Mínimo', 'Minimo', 'Минимум', 'Min'],
+        close: ['Last', 'Latest', 'Close', 'Cierre', 'Settle', 'Adj Close', 'Закрытие'],
+        vol:   ['Volume', 'Vol', 'Volumen', 'Объём', 'Объем'],
+        oi:    ['Open Int', 'Open Interest', 'OI', 'OpenInt', 'Prev. Day Open Interest', 'Открытый интерес'],
+        // Orderflow / perfil de volumen (ATAS)
+        delta: ['Delta', 'Дельта'],
+        poc:   ['POC', 'Point of Control', 'PoC'],
+        vah:   ['VAH', 'Value Area High', 'VA High'],
+        val:   ['VAL', 'Value Area Low', 'VA Low'],
+        vwap:  ['VWAP'],
+      };
 
-        if (!dateRaw || !closeRaw) continue;
-
-        // Parse date - handle formats: MM/DD/YYYY, YYYY-MM-DD, DD/MM/YYYY, etc.
-        let date = '';
-        const dateStr = String(dateRaw).trim();
-        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-          date = dateStr.slice(0, 10);
-        } else if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(dateStr)) {
-          const parts = dateStr.split('/');
-          date = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
-        } else if (/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(dateStr)) {
-          const parts = dateStr.split('/');
-          const year = parseInt(parts[2]) > 50 ? '19' + parts[2] : '20' + parts[2];
-          date = `${year}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
-        } else {
-          const parsed = new Date(dateStr);
-          if (!isNaN(parsed)) date = parsed.toISOString().slice(0, 10);
+      // Detecta locale con coma decimal ("4512,25" o "4.512,25") para no
+      // confundirla con separador de miles. Se decide una vez por archivo.
+      const priceCols = ['open', 'high', 'low', 'close', 'poc', 'vah', 'val', 'vwap'];
+      let commaDecimal = false;
+      outer: for (const row of rows.slice(0, 50)) {
+        for (const c of priceCols) {
+          const v = findCol(row, COLS[c]);
+          if (typeof v !== 'string') continue;
+          const s = v.trim();
+          if (/^-?\d{1,3}(\.\d{3})+,\d+$/.test(s) || (/^-?\d+,\d+$/.test(s) && !/,\d{3}$/.test(s))) {
+            commaDecimal = true;
+            break outer;
+          }
         }
-        if (!date) continue;
-
-        const parseNum = (v) => {
-          if (v === '' || v == null) return NaN;
-          return parseFloat(String(v).replace(/,/g, ''));
-        };
-
-        const open = parseNum(openRaw);
-        const high = parseNum(highRaw);
-        const low = parseNum(lowRaw);
-        const close = parseNum(closeRaw);
-        const vol = parseInt(String(volRaw).replace(/,/g, '')) || 0;
-        const oi = parseInt(String(oiRaw).replace(/,/g, '')) || 0;
-        // Orderflow / perfil de volumen: null si no viene en el archivo
-        const delta = deltaRaw === '' ? null : parseNum(deltaRaw);
-        const poc = pocRaw === '' ? null : parseNum(pocRaw);
-        const vah = vahRaw === '' ? null : parseNum(vahRaw);
-        const val = valRaw === '' ? null : parseNum(valRaw);
-
-        if (isNaN(close)) continue;
-
-        newRecords.push({
-          date,
-          open: isNaN(open) ? close : open,
-          high: isNaN(high) ? close : high,
-          low: isNaN(low) ? close : low,
-          close,
-          vol,
-          oi,
-          foi: null,
-          delta: delta != null && !isNaN(delta) ? delta : null,
-          poc: poc != null && !isNaN(poc) ? poc : null,
-          vah: vah != null && !isNaN(vah) ? vah : null,
-          val: val != null && !isNaN(val) ? val : null,
-        });
-        imported++;
       }
 
-      if (imported > 0) {
+      const parseNum = (v) => {
+        if (v == null || v === '') return null;
+        if (typeof v === 'number') return isNaN(v) ? null : v;
+        let s = String(v).trim().replace(/[\s ]/g, '');
+        s = commaDecimal ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+        const n = parseFloat(s);
+        return isNaN(n) ? null : n;
+      };
+
+      const pad2 = (n) => String(n).padStart(2, '0');
+      const localIso = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+      // Devuelve { date: 'YYYY-MM-DD', ts } o null. Formatos: YYYY-MM-DD,
+      // DD.MM.YYYY (ATAS), MM/DD/YYYY (Barchart), DD/MM/YYYY, MM/DD/YY,
+      // objetos Date y seriales de Excel. ts se usa para ordenar barras intradía.
+      const parseDate = (raw) => {
+        if (raw == null || raw === '') return null;
+        if (raw instanceof Date) {
+          return isNaN(raw) ? null : { date: localIso(raw), ts: raw.getTime() };
+        }
+        if (typeof raw === 'number') {
+          const d = new Date(Math.round((raw - 25569) * 86400 * 1000));
+          return isNaN(d) ? null : { date: d.toISOString().slice(0, 10), ts: d.getTime() };
+        }
+        const s = String(raw).trim();
+        let y, m, d, mt;
+        if ((mt = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) {
+          [, y, m, d] = mt;
+        } else if ((mt = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/))) {
+          [, d, m, y] = mt;
+        } else if ((mt = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) {
+          // Barchart usa MM/DD/YYYY; solo se invierte si el primer número no puede ser mes
+          const a = parseInt(mt[1]), b = parseInt(mt[2]);
+          if (a > 12 && b <= 12) { d = mt[1]; m = mt[2]; } else { m = mt[1]; d = mt[2]; }
+          y = mt[3];
+        } else if ((mt = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/))) {
+          y = (parseInt(mt[3]) > 50 ? '19' : '20') + mt[3];
+          m = mt[1]; d = mt[2];
+        } else {
+          const p = new Date(s);
+          return isNaN(p) ? null : { date: localIso(p), ts: p.getTime() };
+        }
+        const t = s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+        const ts = Date.UTC(+y, +m - 1, +d, t ? +t[1] : 0, t ? +t[2] : 0, t && t[3] ? +t[3] : 0);
+        return { date: `${y}-${pad2(m)}-${pad2(d)}`, ts };
+      };
+
+      const parsed = [];
+      rows.forEach((row, idx) => {
+        const dt = parseDate(findCol(row, COLS.date));
+        const close = parseNum(findCol(row, COLS.close));
+        if (!dt || close == null) return;
+        const rec = { idx, date: dt.date, ts: dt.ts, close };
+        for (const k of ['open', 'high', 'low', 'vol', 'oi', 'delta', 'poc', 'vah', 'val', 'vwap']) {
+          rec[k] = parseNum(findCol(row, COLS[k]));
+        }
+        parsed.push(rec);
+      });
+      // Orden cronológico: por timestamp y, a igualdad, por orden en el archivo
+      parsed.sort((a, b) => (a.ts - b.ts) || (a.idx - b.idx));
+
+      // Agrupa por día: Barchart exporta una fila por sesión, ATAS una por barra.
+      // OHLC se agrega, volumen y delta se suman, perfil/VWAP/OI toman el último valor.
+      const byDate = new Map();
+      for (const p of parsed) {
+        const cur = byDate.get(p.date);
+        if (!cur) {
+          byDate.set(p.date, {
+            date: p.date,
+            open: p.open ?? p.close,
+            high: p.high ?? p.close,
+            low: p.low ?? p.close,
+            close: p.close,
+            vol: p.vol, oi: p.oi, delta: p.delta,
+            poc: p.poc, vah: p.vah, val: p.val, vwap: p.vwap,
+          });
+          continue;
+        }
+        cur.high = Math.max(cur.high, p.high ?? p.close);
+        cur.low = Math.min(cur.low, p.low ?? p.close);
+        cur.close = p.close;
+        if (p.vol != null) cur.vol = (cur.vol ?? 0) + p.vol;
+        if (p.delta != null) cur.delta = (cur.delta ?? 0) + p.delta;
+        for (const k of ['oi', 'poc', 'vah', 'val', 'vwap']) {
+          if (p[k] != null) cur[k] = p[k];
+        }
+      }
+      const newRecords = [...byDate.values()].map(r => ({
+        ...r,
+        vol: r.vol != null ? Math.round(r.vol) : null,
+        oi: r.oi != null ? Math.round(r.oi) : null,
+        delta: r.delta != null ? Math.round(r.delta) : null,
+      }));
+
+      const existingDates = new Set(records.map(r => r.date));
+      const updated = newRecords.filter(r => existingDates.has(r.date)).length;
+      const added = newRecords.length - updated;
+
+      if (newRecords.length > 0) {
         setRecords(prev => {
-          const existingDates = new Set(prev.map(r => r.date));
-          const onlyNew = newRecords.filter(r => !existingDates.has(r.date));
-          return [...prev, ...onlyNew];
+          const byExisting = new Map(prev.map(r => [r.date, r]));
+          const merged = newRecords.map(n => {
+            const ex = byExisting.get(n.date);
+            const out = ex ? { ...ex } : { date: n.date, foi: null };
+            // Solo sobrescribe con valores que sí vienen en el archivo;
+            // los campos ausentes conservan lo que ya había.
+            for (const k of ['open', 'high', 'low', 'close', 'vol', 'oi', 'delta', 'poc', 'vah', 'val', 'vwap']) {
+              if (n[k] != null) out[k] = n[k];
+            }
+            if (out.vol == null) out.vol = 0;
+            if (out.oi == null) out.oi = 0;
+            for (const k of ['delta', 'poc', 'vah', 'val', 'vwap']) {
+              if (out[k] === undefined) out[k] = null;
+            }
+            return out;
+          });
+          const importedDates = new Set(newRecords.map(r => r.date));
+          return [...prev.filter(r => !importedDates.has(r.date)), ...merged];
         });
       }
 
-      setImportResult({ count: imported, filename: file.name });
+      setImportResult({ count: newRecords.length, added, updated, filename: file.name });
       setImporting(false);
       setTimeout(() => setImportResult(null), 4000);
     };
@@ -421,7 +495,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
       const reader = new FileReader();
       reader.onload = (evt) => {
         try {
-          const wb = XLSX.read(evt.target.result, { type: 'array' });
+          const wb = XLSX.read(evt.target.result, { type: 'array', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(ws);
           processRows(rows);
@@ -451,7 +525,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
 
     // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [isAdmin, language, setRecords]);
+  }, [isAdmin, language, records, setRecords]);
 
   // ── Computed ───────────────────────────────────────────────
   const metrics = useMemo(() => {
@@ -1734,7 +1808,9 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
               {importResult && (
                 <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500 text-sm font-bold">
                   <Upload size={14} />
-                  {es ? `${importResult.count} sesiones importadas de ${importResult.filename}` : `${importResult.count} sessions imported from ${importResult.filename}`}
+                  {es
+                    ? `${importResult.count} sesiones importadas de ${importResult.filename} (${importResult.added} nuevas, ${importResult.updated} actualizadas)`
+                    : `${importResult.count} sessions imported from ${importResult.filename} (${importResult.added} new, ${importResult.updated} updated)`}
                 </div>
               )}
 
