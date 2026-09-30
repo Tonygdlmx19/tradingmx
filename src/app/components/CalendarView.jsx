@@ -259,7 +259,7 @@ export default function CalendarView({
           {/* Mes y año */}
           <div className="flex items-center gap-2">
             <Calendar size={18} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
-            <h3 className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <h3 className={`font-bold text-base ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
               {monthsFull[selectedMonth]} {selectedYear}
             </h3>
           </div>

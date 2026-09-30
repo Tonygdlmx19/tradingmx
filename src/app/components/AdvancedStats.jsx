@@ -191,8 +191,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
     }`}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-5">
-        <BarChart3 size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
-        <h3 className={`font-bold text-sm uppercase tracking-wide ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+        <BarChart3 size={18} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
+        <h3 className={`font-bold text-sm uppercase tracking-wide ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
           {t.title}
         </h3>
       </div>

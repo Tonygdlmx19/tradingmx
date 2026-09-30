@@ -38,7 +38,7 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
     : 0;
 
   // Iconos monocromos: el color se reserva para los valores con signo.
-  const iconStyle = isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-500';
+  const iconStyle = isDark ? 'bg-blue-500/15 text-blue-400' : 'bg-blue-50 text-blue-600';
   const badgeFor = (pct) => {
     if (pct > 0) return { text: `+${pct.toFixed(1)}%`, color: 'bg-green-500/10 text-green-600' };
     if (pct < 0) return { text: `${pct.toFixed(1)}%`, color: 'bg-red-500/10 text-red-600' };
@@ -74,7 +74,7 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
       {/* Header con cuenta seleccionada */}
       {selectedAccount && (
         <div className="flex items-center gap-2">
-          <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-700'}`}>
+          <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${isDark ? 'bg-blue-500/15 border-blue-500/30 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
             {selectedAccount.broker} #{selectedAccount.numero}
           </span>
           <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>

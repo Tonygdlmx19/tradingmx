@@ -52,8 +52,8 @@ export default function DrawdownChart({ data }) {
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
       }`}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingDown size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'}/> {t.title}
+          <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            <TrendingDown size={18}/> {t.title}
           </h3>
         </div>
         <div className={`h-[120px] rounded-xl border border-dashed flex flex-col items-center justify-center gap-2 ${
@@ -73,8 +73,8 @@ export default function DrawdownChart({ data }) {
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
       }`}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingDown size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'}/> {t.title}
+          <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            <TrendingDown size={18}/> {t.title}
           </h3>
         </div>
         <div className={`h-[160px] flex items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -99,8 +99,8 @@ export default function DrawdownChart({ data }) {
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
     }`}>
       <div className="flex justify-between items-center mb-4">
-        <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          <TrendingDown size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'}/> {t.title}
+        <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+          <TrendingDown size={18}/> {t.title}
         </h3>
         <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
           {t.max}: {Math.abs(minDD).toFixed(1)}%
