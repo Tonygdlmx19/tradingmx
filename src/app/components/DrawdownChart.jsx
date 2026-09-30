@@ -53,11 +53,14 @@ export default function DrawdownChart({ data }) {
       }`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingDown size={18} className="text-red-500"/> {t.title}
+            <TrendingDown size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'}/> {t.title}
           </h3>
         </div>
-        <div className={`h-[160px] flex items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-          <p className="text-sm italic">{t.noData}</p>
+        <div className={`h-[120px] rounded-xl border border-dashed flex flex-col items-center justify-center gap-2 ${
+          isDark ? 'border-slate-700 text-slate-500' : 'border-slate-200 text-slate-400'
+        }`}>
+          <TrendingDown size={20} className={isDark ? 'text-slate-600' : 'text-slate-300'} />
+          <p className="text-sm">{t.noData}</p>
         </div>
       </div>
     );
@@ -71,7 +74,7 @@ export default function DrawdownChart({ data }) {
       }`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <TrendingDown size={18} className="text-red-500"/> {t.title}
+            <TrendingDown size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'}/> {t.title}
           </h3>
         </div>
         <div className={`h-[160px] flex items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -97,7 +100,7 @@ export default function DrawdownChart({ data }) {
     }`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className={`font-bold flex items-center gap-2 text-sm sm:text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          <TrendingDown size={18} className="text-red-500"/> {t.title}
+          <TrendingDown size={18} className={isDark ? 'text-slate-400' : 'text-slate-500'}/> {t.title}
         </h3>
         <span className={`text-xs px-2 py-1 rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
           {t.max}: {Math.abs(minDD).toFixed(1)}%

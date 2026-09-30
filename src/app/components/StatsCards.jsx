@@ -37,35 +37,33 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
     ? ((stats.balance - stats.startBalance) / stats.startBalance) * 100
     : 0;
 
+  // Iconos monocromos: el color se reserva para los valores con signo.
+  const iconStyle = isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-500';
+  const badgeFor = (pct) => {
+    if (pct > 0) return { text: `+${pct.toFixed(1)}%`, color: 'bg-green-500/10 text-green-600' };
+    if (pct < 0) return { text: `${pct.toFixed(1)}%`, color: 'bg-red-500/10 text-red-600' };
+    return { text: '0.0%', color: isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500' };
+  };
+
   const cards = [
     {
       icon: <Wallet size={18} />,
-      bgColor: 'bg-blue-500/10',
-      textColor: 'text-blue-500',
       label: t.balance,
       value: `${currencySymbol}${stats.balance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-      badge: growthPct >= 0
-        ? { text: `+${growthPct.toFixed(1)}%`, color: 'bg-green-500/20 text-green-500' }
-        : { text: `${growthPct.toFixed(1)}%`, color: 'bg-red-500/20 text-red-500' }
+      badge: badgeFor(growthPct)
     },
     {
       icon: <TrendingUp size={18} />,
-      bgColor: 'bg-emerald-500/10',
-      textColor: 'text-emerald-500',
       label: t.profitFactor,
       value: stats.profitFactor.toFixed(2),
     },
     {
       icon: <Target size={18} />,
-      bgColor: 'bg-indigo-500/10',
-      textColor: 'text-indigo-500',
       label: t.winRate,
       value: `${stats.winRate.toFixed(0)}%`,
     },
     {
       icon: <AlertTriangle size={18} />,
-      bgColor: 'bg-red-500/10',
-      textColor: 'text-red-500',
       label: t.maxDrawdown,
       value: `${stats.maxDD.toFixed(2)}%`,
     },
@@ -76,7 +74,7 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
       {/* Header con cuenta seleccionada */}
       {selectedAccount && (
         <div className="flex items-center gap-2">
-          <span className={`px-3 py-1 rounded-full text-sm font-bold bg-blue-500/20 text-blue-500`}>
+          <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-700'}`}>
             {selectedAccount.broker} #{selectedAccount.numero}
           </span>
           <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -95,7 +93,7 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
             }`}
           >
             <div className="flex justify-between mb-2">
-              <div className={`p-2 ${card.bgColor} ${card.textColor} rounded-lg`}>
+              <div className={`p-2 ${iconStyle} rounded-lg`}>
                 {card.icon}
               </div>
               {card.badge && (
@@ -120,7 +118,7 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
           isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
         }`}>
           <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 bg-cyan-500/10 text-cyan-500 rounded-lg">
+            <div className={`p-2 ${iconStyle} rounded-lg`}>
               <Crosshair size={18} />
             </div>
             <p className={`text-xs font-bold uppercase tracking-wide ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -133,9 +131,9 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
                 Total
               </p>
               <p className={`text-lg font-black ${
-                stats.totalPuntos >= 0 ? 'text-cyan-500' : 'text-red-500'
+                stats.totalPuntos > 0 ? 'text-green-600' : stats.totalPuntos < 0 ? 'text-red-600' : isDark ? 'text-white' : 'text-slate-800'
               }`}>
-                {stats.totalPuntos >= 0 ? '+' : ''}{stats.totalPuntos.toFixed(1)}
+                {stats.totalPuntos > 0 ? '+' : ''}{stats.totalPuntos.toFixed(1)}
               </p>
               <p className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 {stats.tradesConPuntos} {t.trades}
@@ -146,16 +144,16 @@ export default function StatsCards({ stats, currencySymbol = '$', selectedAccoun
                 {t.avgPoints}
               </p>
               <p className={`text-lg font-black ${
-                stats.promedioPuntos >= 0 ? 'text-cyan-500' : 'text-red-500'
+                stats.promedioPuntos > 0 ? 'text-green-600' : stats.promedioPuntos < 0 ? 'text-red-600' : isDark ? 'text-white' : 'text-slate-800'
               }`}>
-                {stats.promedioPuntos >= 0 ? '+' : ''}{stats.promedioPuntos.toFixed(2)}
+                {stats.promedioPuntos > 0 ? '+' : ''}{stats.promedioPuntos.toFixed(2)}
               </p>
             </div>
             <div>
               <p className={`text-[10px] font-medium uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 {t.totalSwap}
               </p>
-              <p className={`text-lg font-black text-amber-500`}>
+              <p className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 -{currencySymbol}{stats.totalSwap.toFixed(2)}
               </p>
             </div>

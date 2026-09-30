@@ -181,6 +181,10 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
 
   const winPct = m.totalTrades > 0 ? (m.winningTrades / m.totalTrades) * 100 : 0;
 
+  // Color solo cuando hay signo: cero y "sin datos" se muestran en neutro.
+  const neutral = isDark ? 'text-white' : 'text-slate-800';
+  const signColor = (v) => (v > 0 ? 'text-green-600' : v < 0 ? 'text-red-600' : neutral);
+
   return (
     <div data-tour="advanced-stats" className={`p-4 sm:p-6 rounded-2xl border transition-colors ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
@@ -194,22 +198,18 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
       </div>
 
       {/* Crecimiento de cuenta - Destacado */}
-      <div className={`mb-4 p-4 rounded-xl border ${
-        growthPct >= 0 
-          ? isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200'
-          : isDark ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'
-      }`}>
+      <div className={`mb-4 p-4 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${growthPct >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-              {growthPct >= 0 ? <TrendingUp size={20} className="text-green-500" /> : <TrendingDown size={20} className="text-red-500" />}
+            <div className={`p-2 rounded-lg ${growthPct > 0 ? 'bg-green-500/10 text-green-600' : growthPct < 0 ? 'bg-red-500/10 text-red-600' : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
+              {growthPct < 0 ? <TrendingDown size={20} /> : <TrendingUp size={20} />}
             </div>
             <div>
               <p className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t.accountGrowth}
               </p>
-              <p className={`text-xl font-black ${growthPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {growthPct >= 0 ? '+' : ''}{growthPct.toFixed(2)}%
+              <p className={`text-xl font-black tabular-nums ${signColor(growthPct)}`}>
+                {growthPct > 0 ? '+' : ''}{growthPct.toFixed(2)}%
               </p>
             </div>
           </div>
@@ -217,8 +217,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
             <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
               {t.capital}: {currencySymbol}{capitalInicial?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || 0}
             </p>
-            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
-              {totalPnl >= 0 ? '+' : ''}{currencySymbol}{totalPnl.toFixed(2)}
+            <p className={`text-sm font-bold tabular-nums ${signColor(totalPnl)}`}>
+              {totalPnl > 0 ? '+' : ''}{currencySymbol}{totalPnl.toFixed(2)}
             </p>
           </div>
         </div>
@@ -231,8 +231,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.avgWin}
           </p>
-          <p className="text-lg font-bold text-green-500">
-            +{currencySymbol}{m.avgWin.toFixed(0)}
+          <p className={`text-lg font-bold tabular-nums ${m.winningTrades > 0 ? 'text-green-600' : neutral}`}>
+            {m.winningTrades > 0 ? '+' : ''}{currencySymbol}{m.avgWin.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {m.winningTrades} trades
@@ -244,8 +244,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.avgLoss}
           </p>
-          <p className="text-lg font-bold text-red-500">
-            -{currencySymbol}{Math.abs(m.avgLoss).toFixed(0)}
+          <p className={`text-lg font-bold tabular-nums ${m.losingTrades > 0 ? 'text-red-600' : neutral}`}>
+            {m.losingTrades > 0 ? '-' : ''}{currencySymbol}{Math.abs(m.avgLoss).toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {m.losingTrades} trades
@@ -270,7 +270,7 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.expectancy}
           </p>
-          <p className={`text-lg font-bold ${m.expectancy >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <p className={`text-lg font-bold tabular-nums ${signColor(m.expectancy)}`}>
             {currencySymbol}{m.expectancy.toFixed(2)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -283,8 +283,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.bestTrade}
           </p>
-          <p className={`text-lg font-bold ${m.bestTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {m.bestTrade.amount >= 0 ? '+' : ''}{currencySymbol}{m.bestTrade.amount.toFixed(0)}
+          <p className={`text-lg font-bold tabular-nums ${signColor(m.bestTrade.amount)}`}>
+            {m.bestTrade.amount > 0 ? '+' : ''}{currencySymbol}{m.bestTrade.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {formatDate(m.bestTrade.date)}
@@ -296,8 +296,8 @@ export default function AdvancedStats({ trades, capitalInicial, balance, currenc
           <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.worstTrade}
           </p>
-          <p className={`text-lg font-bold ${m.worstTrade.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {m.worstTrade.amount >= 0 ? '+' : ''}{currencySymbol}{m.worstTrade.amount.toFixed(0)}
+          <p className={`text-lg font-bold tabular-nums ${signColor(m.worstTrade.amount)}`}>
+            {m.worstTrade.amount > 0 ? '+' : ''}{currencySymbol}{m.worstTrade.amount.toFixed(0)}
           </p>
           <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {formatDate(m.worstTrade.date)}

@@ -46,15 +46,15 @@ export default function TradesTable({ trades, onTradeClick }) {
 
   const getEmojiForEmotion = (emo) => {
     const emojis = {
-      'Neutral': '😐',
-      'Calmado': '😌',
-      'Ansioso': '😰',
-      'Venganza': '😤',
-      'Miedo': '😨',
-      'Eufórico': '🤑',
-      'Frustrado': '😔',
+      'Neutral': 'Neutral',
+      'Calmado': 'Calmado',
+      'Ansioso': 'Ansioso',
+      'Venganza': 'Venganza',
+      'Miedo': 'Miedo',
+      'Eufórico': 'Eufórico',
+      'Frustrado': 'Frustrado',
     };
-    return emojis[emo] || '😐';
+    return emojis[emo] || emo || 'Neutral';
   };
 
   return (

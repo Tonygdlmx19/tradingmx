@@ -20,7 +20,7 @@ const AI_QUERY_LIMITS = {
 
 const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'];
 
-// 📊 ACTIVOS ORGANIZADOS POR CATEGORÍA
+// ACTIVOS ORGANIZADOS POR CATEGORÍA
 const ACTIVOS_POR_CATEGORIA = {
   'Índices US': [
     { symbol: 'MNQ', name: 'Micro Nasdaq' },
@@ -421,7 +421,7 @@ export default function TradeForm({
       rules: 'reglas',
       binaryOptions: 'Opciones Binarias',
       asset: 'Activo',
-      myAssets: '★ Mis Activos ★',
+      myAssets: 'Mis Activos',
       direction: 'Dirección',
       prediction: 'Predicción',
       amountInvested: 'Monto Invertido ($)',
@@ -435,13 +435,13 @@ export default function TradeForm({
       points: 'Puntos',
       emotionalState: 'Estado Emocional',
       emotions: {
-        neutral: '😐 Neutral',
-        calm: '😌 Calmado',
-        anxious: '😰 Ansioso',
-        revenge: '😤 Venganza',
-        fear: '😨 Miedo',
-        euphoric: '🤑 Eufórico',
-        frustrated: '😔 Frustrado',
+        neutral: 'Neutral',
+        calm: 'Calmado',
+        anxious: 'Ansioso',
+        revenge: 'Venganza',
+        fear: 'Miedo',
+        euphoric: 'Eufórico',
+        frustrated: 'Frustrado',
       },
       notes: 'Notas (opcional)',
       notesPlaceholder: 'Observaciones del trade...',
@@ -505,7 +505,7 @@ export default function TradeForm({
       rules: 'rules',
       binaryOptions: 'Binary Options',
       asset: 'Asset',
-      myAssets: '★ My Assets ★',
+      myAssets: 'My Assets',
       direction: 'Direction',
       prediction: 'Prediction',
       amountInvested: 'Amount Invested ($)',
@@ -519,13 +519,13 @@ export default function TradeForm({
       points: 'Points',
       emotionalState: 'Emotional State',
       emotions: {
-        neutral: '😐 Neutral',
-        calm: '😌 Calm',
-        anxious: '😰 Anxious',
-        revenge: '😤 Revenge',
-        fear: '😨 Fear',
-        euphoric: '🤑 Euphoric',
-        frustrated: '😔 Frustrated',
+        neutral: 'Neutral',
+        calm: 'Calm',
+        anxious: 'Anxious',
+        revenge: 'Revenge',
+        fear: 'Fear',
+        euphoric: 'Euphoric',
+        frustrated: 'Frustrated',
       },
       notes: 'Notes (optional)',
       notesPlaceholder: 'Trade observations...',
@@ -973,8 +973,8 @@ export default function TradeForm({
                       ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
                       : 'bg-red-500/10 border-red-500/30 text-red-500'
                   : isDark
-                    ? 'bg-slate-700/50 border-slate-600 text-slate-400 hover:border-amber-500 hover:text-amber-400'
-                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-amber-500 hover:text-amber-500'
+                    ? 'bg-slate-700/50 border-slate-600 text-slate-400 hover:border-blue-500 hover:text-blue-400'
+                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-blue-500 hover:text-blue-600'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -1003,24 +1003,24 @@ export default function TradeForm({
         onClick={handleBinaryToggle}
         className={`mb-4 p-3 rounded-xl border cursor-pointer transition-all ${
           isBinaryOptions 
-            ? 'bg-purple-500/10 border-purple-500/50' 
+            ? 'bg-blue-500/10 border-blue-500/50' 
             : isDark ? 'bg-slate-700/50 border-slate-600 hover:border-slate-500' : 'bg-slate-50 border-slate-200 hover:border-slate-300'
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isBinaryOptions ? (
-              <ToggleRight size={24} className="text-purple-500" />
+              <ToggleRight size={24} className="text-blue-500" />
             ) : (
               <ToggleLeft size={24} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
             )}
-            <span className={`text-sm font-bold ${isBinaryOptions ? 'text-purple-500' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+            <span className={`text-sm font-bold ${isBinaryOptions ? 'text-blue-500' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
               {t.binaryOptions}
             </span>
           </div>
           <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${
             isBinaryOptions 
-              ? 'bg-purple-500 text-white' 
+              ? 'bg-blue-500 text-white' 
               : isDark ? 'bg-slate-600 text-slate-400' : 'bg-slate-200 text-slate-500'
           }`}>
             {isBinaryOptions ? 'ON' : 'OFF'}
@@ -1033,7 +1033,7 @@ export default function TradeForm({
 
       {/* Pre-Trade AI Analysis Section */}
       <div className={`mb-4 rounded-xl border overflow-hidden ${
-        isDark ? 'bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30' : 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200'
+        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
       }`}>
         <div
           className={`w-full p-3 flex items-center justify-between transition-colors ${
@@ -1044,8 +1044,8 @@ export default function TradeForm({
             className="flex items-center gap-2 flex-1 cursor-pointer"
             onClick={() => setShowPreTradeSection(!showPreTradeSection)}
           >
-            <Bot size={24} className="text-purple-500" />
-            <span className={`text-sm font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+            <Bot size={24} className="text-blue-500" />
+            <span className={`text-sm font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               {t.showPreTrade}
             </span>
           </div>
@@ -1059,7 +1059,7 @@ export default function TradeForm({
                 }}
                 className={`p-1.5 rounded-lg transition-colors ${
                   showHistory
-                    ? 'bg-purple-500 text-white'
+                    ? 'bg-blue-500 text-white'
                     : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                 }`}
                 title={language === 'es' ? 'Historial' : 'History'}
@@ -1068,7 +1068,7 @@ export default function TradeForm({
               </button>
             )}
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-              isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+              isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
             }`}>
               {hasUnlimitedQueries()
                 ? (language === 'es' ? '∞ Ilimitado' : '∞ Unlimited')
@@ -1085,7 +1085,7 @@ export default function TradeForm({
         </div>
 
         {showPreTradeSection && (
-          <div className={`p-4 border-t ${isDark ? 'border-purple-500/20' : 'border-purple-200'}`}>
+          <div className={`p-4 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
 
             {/* History list */}
             {showHistory && preTradeHistory.length > 0 && (
@@ -1163,14 +1163,14 @@ export default function TradeForm({
 
             {/* Asset selector for pre-trade */}
             <div className="mb-3">
-              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t.preTradeAsset}
               </label>
               <select
-                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
                   isDark
-                    ? 'bg-slate-700 border-purple-500/30 text-white'
-                    : 'bg-white border-purple-200 text-slate-600'
+                    ? 'bg-slate-700 border-slate-600 text-white'
+                    : 'bg-white border-slate-200 text-slate-700'
                 }`}
                 value={preTradeAsset}
                 onChange={e => setPreTradeAsset(e.target.value)}
@@ -1201,7 +1201,7 @@ export default function TradeForm({
 
             {/* Direction selector */}
             <div className="mb-3">
-              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {language === 'es' ? '¿Qué dirección tienes en mente?' : 'What direction do you have in mind?'}
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -1210,10 +1210,10 @@ export default function TradeForm({
                   onClick={() => setPreTradeDirection('Long')}
                   className={`p-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                     preTradeDirection === 'Long'
-                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                      ? 'bg-blue-600 text-white'
                       : isDark
-                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-green-500'
-                        : 'bg-white border border-slate-200 text-slate-500 hover:border-green-500'
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-blue-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-blue-500'
                   }`}
                 >
                   <TrendingUp size={16} />
@@ -1224,10 +1224,10 @@ export default function TradeForm({
                   onClick={() => setPreTradeDirection('Short')}
                   className={`p-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                     preTradeDirection === 'Short'
-                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      ? 'bg-blue-600 text-white'
                       : isDark
-                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-red-500'
-                        : 'bg-white border border-slate-200 text-slate-500 hover:border-red-500'
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-blue-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-blue-500'
                   }`}
                 >
                   <TrendingDown size={16} />
@@ -1240,14 +1240,14 @@ export default function TradeForm({
             <div className="grid grid-cols-2 gap-2 mb-3">
               {/* Primary timeframe */}
               <div>
-                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {t.preTradeTimeframe}
                 </label>
                 <select
-                  className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                  className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
                     isDark
-                      ? 'bg-slate-700 border-purple-500/30 text-white'
-                      : 'bg-white border-purple-200 text-slate-600'
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-200 text-slate-700'
                   }`}
                   value={preTradeTimeframe}
                   onChange={e => setPreTradeTimeframe(e.target.value)}
@@ -1260,14 +1260,14 @@ export default function TradeForm({
 
               {/* Market session */}
               <div>
-                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {t.marketSession}
                 </label>
                 <select
-                  className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                  className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
                     isDark
-                      ? 'bg-slate-700 border-purple-500/30 text-white'
-                      : 'bg-white border-purple-200 text-slate-600'
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-200 text-slate-700'
                   }`}
                   value={preTradeSession}
                   onChange={e => setPreTradeSession(e.target.value)}
@@ -1284,7 +1284,7 @@ export default function TradeForm({
 
             {/* Current session indicator */}
             <div className={`mb-3 p-2 rounded-lg flex items-center justify-between ${
-              isDark ? 'bg-slate-700/50' : 'bg-purple-50'
+              isDark ? 'bg-slate-700/50' : 'bg-slate-50'
             }`}>
               <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t.sessionInfo}
@@ -1293,8 +1293,8 @@ export default function TradeForm({
                 getCurrentSession().includes('american')
                   ? 'bg-blue-500/20 text-blue-400'
                   : getCurrentSession().includes('european')
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'bg-purple-500/20 text-purple-400'
+                    ? 'bg-slate-700 text-slate-300'
+                    : 'bg-blue-500/20 text-blue-400'
               }`}>
                 {getSessionLabel(getCurrentSession())}
               </span>
@@ -1302,7 +1302,7 @@ export default function TradeForm({
 
             {/* Analysis mode selector */}
             <div className="mb-3">
-              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t.analysisMode}
               </label>
               <div className="flex gap-2">
@@ -1311,43 +1311,43 @@ export default function TradeForm({
                   onClick={() => setPreTradeAnalysisMode('quick')}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
                     preTradeAnalysisMode === 'quick'
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
+                      ? 'bg-blue-600 text-white'
                       : isDark
-                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-amber-500'
-                        : 'bg-white border border-slate-200 text-slate-500 hover:border-amber-500'
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-blue-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-blue-500'
                   }`}
                 >
-                  ⚡ {t.quickMode}
+                  {t.quickMode}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPreTradeAnalysisMode('detailed')}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
                     preTradeAnalysisMode === 'detailed'
-                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg'
+                      ? 'bg-blue-600 text-white shadow-lg'
                       : isDark
-                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-purple-500'
-                        : 'bg-white border border-slate-200 text-slate-500 hover:border-purple-500'
+                        ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-blue-500'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-blue-500'
                   }`}
                 >
-                  📊 {t.detailedMode}
+                  {t.detailedMode}
                 </button>
               </div>
             </div>
 
             {/* Current price input for CFD reference */}
             <div className="mb-3">
-              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
-                📍 {t.currentPrice}
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {t.currentPrice}
               </label>
               <input
                 type="text"
                 inputMode="decimal"
                 placeholder={t.currentPricePlaceholder}
-                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+                className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
                   isDark
-                    ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500'
-                    : 'bg-white border-purple-200 text-slate-600 placeholder-slate-400'
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500'
+                    : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
                 }`}
                 value={preTradeCurrentPrice}
                 onChange={e => setPreTradeCurrentPrice(e.target.value)}
@@ -1367,7 +1367,7 @@ export default function TradeForm({
                       <img
                         src={img.base64}
                         alt={`Pre-trade ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border-2 border-purple-500"
+                        className="w-full h-24 object-cover rounded-lg border-2 border-blue-500"
                       />
                       <button
                         type="button"
@@ -1381,7 +1381,7 @@ export default function TradeForm({
                         value={img.timeframe}
                         onChange={(e) => updatePreTradeImageTimeframe(index, e.target.value)}
                         className={`absolute bottom-1 left-1 right-1 text-[10px] font-bold rounded px-1 py-0.5 ${
-                          isDark ? 'bg-slate-800/90 text-purple-400' : 'bg-white/90 text-purple-600'
+                          isDark ? 'bg-slate-800/90 text-blue-400' : 'bg-white/90 text-blue-600'
                         }`}
                       >
                         {TEMPORALIDADES.map(tf => (
@@ -1411,8 +1411,8 @@ export default function TradeForm({
                     htmlFor="pre-trade-image"
                     className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                       isDark
-                        ? 'border-purple-500/30 hover:border-purple-500 text-purple-400'
-                        : 'border-purple-300 hover:border-purple-500 text-purple-500'
+                        ? 'border-blue-500/30 hover:border-blue-500 text-blue-400'
+                        : 'border-blue-300 hover:border-blue-500 text-blue-500'
                     }`}
                   >
                     <Camera size={18} />
@@ -1433,16 +1433,16 @@ export default function TradeForm({
                 {/* User description textarea */}
                 {!preTradeAnalysis && (
                   <div>
-                    <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                    <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       {t.preTradeDescLabel}
                     </label>
                     <textarea
                       placeholder={t.preTradeDescPlaceholder}
                       rows={3}
-                      className={`w-full p-2.5 border rounded-xl text-sm outline-none focus:border-purple-500 resize-none ${
+                      className={`w-full p-2.5 border rounded-xl text-sm outline-none focus:border-blue-500 resize-none ${
                         isDark
-                          ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500'
-                          : 'bg-white border-purple-200 text-slate-800 placeholder-slate-400'
+                          ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500'
+                          : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
                       }`}
                       value={preTradeDescription}
                       onChange={e => setPreTradeDescription(e.target.value)}
@@ -1461,7 +1461,7 @@ export default function TradeForm({
                     disabled={!canAnalyze}
                     className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                       canAnalyze
-                        ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg'
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg'
                         : 'bg-slate-500/20 text-slate-400 cursor-not-allowed'
                     }`}
                   >
@@ -1514,7 +1514,7 @@ export default function TradeForm({
                         <button
                           type="button"
                           onClick={() => setShowPreTradeModal(true)}
-                          className="px-3 py-2 rounded-xl text-xs font-bold bg-purple-500 hover:bg-purple-600 text-white transition-colors flex items-center gap-1.5"
+                          className="px-3 py-2 rounded-xl text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center gap-1.5"
                         >
                           <Eye size={14} />
                           {language === 'es' ? 'Ver análisis' : 'View analysis'}
@@ -1527,7 +1527,7 @@ export default function TradeForm({
             )}
 
             {!hasUnlimitedQueries() && aiQueriesUsed >= aiQueriesLimit && (
-              <p className="text-amber-500 text-xs text-center mt-2 font-medium">
+              <p className={`text-xs text-center mt-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t.noQueriesLeft}
               </p>
             )}
@@ -1543,10 +1543,10 @@ export default function TradeForm({
               {t.brokerAccount}
             </label>
             <select
-              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-purple-500 ${
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-blue-500 ${
                 isDark
                   ? 'bg-slate-700 border-slate-600 text-white'
-                  : 'bg-purple-50 border-purple-200 text-slate-600'
+                  : 'bg-white border-slate-200 text-slate-700'
               }`}
               value={form.cuentaId || ''}
               onChange={e => setForm({...form, cuentaId: e.target.value})}
@@ -1609,10 +1609,10 @@ export default function TradeForm({
               onClick={() => setForm({...form, dir: 'Long'})}
               className={`p-2.5 rounded-xl font-bold text-sm transition-all ${
                 form.dir === 'Long'
-                  ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                  ? 'bg-blue-600 text-white'
                   : isDark 
-                    ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-green-500' 
-                    : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-green-500'
+                    ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-blue-500' 
+                    : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-blue-500'
               }`}
             >
               {isBinaryOptions ? '↑ CALL' : '↑ LONG'}
@@ -1622,10 +1622,10 @@ export default function TradeForm({
               onClick={() => setForm({...form, dir: 'Short'})}
               className={`p-2.5 rounded-xl font-bold text-sm transition-all ${
                 form.dir === 'Short'
-                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                  ? 'bg-blue-600 text-white'
                   : isDark 
-                    ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-red-500' 
-                    : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-red-500'
+                    ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-blue-500' 
+                    : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-blue-500'
               }`}
             >
               {isBinaryOptions ? '↓ PUT' : '↓ SHORT'}
@@ -1687,7 +1687,7 @@ export default function TradeForm({
         {/* Indicador de swing trade */}
         {form.fechaEntrada && form.fechaSalida && form.fechaEntrada !== form.fechaSalida && (
           <div className={`p-2 rounded-xl text-center text-xs font-bold ${
-            isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'
+            isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'
           }`}>
             {t.swingTrade} ({Math.ceil((new Date(form.fechaSalida) - new Date(form.fechaEntrada)) / (1000 * 60 * 60 * 24))} días)
           </div>
@@ -1698,17 +1698,17 @@ export default function TradeForm({
           <>
             {/* Monto invertido */}
             <div>
-              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t.amountInvested}
               </label>
               <input 
                 type="number" 
                 step="0.01"
                 placeholder="100.00" 
-                className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-purple-500 ${
+                className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
                   isDark 
-                    ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500' 
-                    : 'bg-purple-50 border-purple-200 text-slate-800 placeholder-slate-400'
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                    : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
                 }`}
                 value={form.montoInvertido || ''} 
                 onChange={e => setForm({...form, montoInvertido: e.target.value})} 
@@ -1718,7 +1718,7 @@ export default function TradeForm({
 
             {/* Porcentaje de pago */}
             <div>
-              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 flex items-center gap-1 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              <label className={`text-[10px] font-bold uppercase ml-1 mb-1 flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 <Percent size={10} /> {t.payoutPercent}
               </label>
               <div className="relative">
@@ -1728,10 +1728,10 @@ export default function TradeForm({
                   min="1"
                   max="100"
                   placeholder="80" 
-                  className={`w-full p-2.5 pr-8 border rounded-xl text-sm font-bold outline-none focus:border-purple-500 ${
+                  className={`w-full p-2.5 pr-8 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
                     isDark 
-                      ? 'bg-slate-700 border-purple-500/30 text-white placeholder-slate-500' 
-                      : 'bg-purple-50 border-purple-200 text-slate-800 placeholder-slate-400'
+                      ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500' 
+                      : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
                   }`}
                   value={form.porcentajePago || 80} 
                   onChange={e => setForm({...form, porcentajePago: e.target.value})} 
@@ -1751,7 +1751,7 @@ export default function TradeForm({
                   onClick={() => setForm({...form, resultadoBinario: 'win'})}
                   className={`p-2.5 rounded-xl font-bold text-sm transition-all ${
                     form.resultadoBinario === 'win'
-                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                      ? 'bg-green-500 text-white'
                       : isDark 
                         ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-green-500' 
                         : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-green-500'
@@ -1764,7 +1764,7 @@ export default function TradeForm({
                   onClick={() => setForm({...form, resultadoBinario: 'loss'})}
                   className={`p-2.5 rounded-xl font-bold text-sm transition-all ${
                     form.resultadoBinario === 'loss'
-                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      ? 'bg-red-500 text-white'
                       : isDark 
                         ? 'bg-slate-700 border border-slate-600 text-slate-400 hover:border-red-500' 
                         : 'bg-slate-50 border border-slate-200 text-slate-500 hover:border-red-500'
@@ -1857,11 +1857,11 @@ export default function TradeForm({
                   className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none transition-colors ${
                     form.esGanancia !== false
                       ? isDark
-                        ? 'bg-green-500/10 border-green-500/50 text-green-400 focus:border-green-500'
-                        : 'bg-green-50 border-green-200 text-green-600 focus:border-green-500'
+                        ? 'bg-slate-700 border-slate-600 text-green-400 focus:border-green-500'
+                        : 'bg-white border-slate-200 text-green-600 focus:border-green-500'
                       : isDark
-                        ? 'bg-red-500/10 border-red-500/50 text-red-400 focus:border-red-500'
-                        : 'bg-red-50 border-red-200 text-red-600 focus:border-red-500'
+                        ? 'bg-slate-700 border-slate-600 text-red-400 focus:border-red-500'
+                        : 'bg-white border-slate-200 text-red-600 focus:border-red-500'
                   }`}
                   value={form.res}
                   onChange={e => setForm({...form, res: e.target.value.replace('-', '')})}
@@ -1939,10 +1939,10 @@ export default function TradeForm({
                 min="0"
                 step="0.01"
                 placeholder="0.00"
-                className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-amber-500 ${
+                className={`w-full p-2.5 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
                   isDark
-                    ? 'bg-slate-700 border-slate-600 text-amber-400 placeholder-slate-500'
-                    : 'bg-amber-50 border-amber-200 text-amber-600 placeholder-slate-400'
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500'
+                    : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
                 }`}
                 value={form.swap || ''}
                 onChange={e => setForm({...form, swap: e.target.value})}
@@ -2084,10 +2084,10 @@ export default function TradeForm({
         <button 
           type="submit" 
           disabled={!canSubmit}
-          className={`w-full py-3 text-white rounded-xl font-bold shadow-lg active:scale-[0.98] transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed ${
-            isBinaryOptions 
-              ? 'bg-purple-600 hover:bg-purple-700' 
-              : 'bg-blue-600 hover:bg-blue-700'
+          className={`w-full py-3 rounded-xl font-bold transition-colors flex justify-center items-center ${
+            canSubmit
+              ? 'bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.98]'
+              : isDark ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
           }`}
         >
           <Save size={18} className="mr-2"/> {t.saveTrade}

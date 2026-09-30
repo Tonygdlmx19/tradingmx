@@ -6,15 +6,15 @@ import { Calendar, ChevronRight, ChevronLeft, Image, FileText, Ban, XCircle } fr
 
 const getEmojiForEmotion = (emo) => {
   const emojis = {
-    'Neutral': '😐',
-    'Calmado': '😌',
-    'Ansioso': '😰',
-    'Venganza': '😤',
-    'Miedo': '😨',
-    'Eufórico': '🤑',
-    'Frustrado': '😔',
+    'Neutral': 'Neutral',
+    'Calmado': 'Calmado',
+    'Ansioso': 'Ansioso',
+    'Venganza': 'Venganza',
+    'Miedo': 'Miedo',
+    'Eufórico': 'Eufórico',
+    'Frustrado': 'Frustrado',
   };
-  return emojis[emo] || '😐';
+  return emojis[emo] || emo || 'Neutral';
 };
 
 export default function CalendarView({
@@ -344,9 +344,7 @@ export default function CalendarView({
                       <div
                         key={i}
                         className={`h-1 flex-1 rounded-full ${
-                          swing.color === 'green'
-                            ? 'bg-amber-500'
-                            : 'bg-amber-500'
+                          swing.color === 'green' ? 'bg-blue-500' : 'bg-blue-500'
                         } ${swing.isStart ? 'rounded-l-full ml-1' : ''} ${swing.isEnd ? 'rounded-r-full mr-1' : ''}`}
                       />
                     ))}
@@ -374,7 +372,7 @@ export default function CalendarView({
 
                 {/* Indicador swing sin cierre */}
                 {hasSwing && !tradesByDay[day] && (
-                  <span className={`text-[8px] font-bold text-amber-500`}>
+                  <span className={`text-[8px] font-bold text-blue-500`}>
                     {t.swingTrade}
                   </span>
                 )}
@@ -451,11 +449,13 @@ export default function CalendarView({
                       {/* Mostrar puntos del trade si existen, sino mostrar icono */}
                       {trade.puntos !== null && trade.puntos !== undefined ? (
                         <div className={`w-12 h-8 flex items-center justify-center rounded-lg text-xs font-black ${
-                          trade.puntos >= 0
-                            ? isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600'
-                            : isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
+                          trade.puntos > 0
+                            ? isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
+                            : trade.puntos < 0
+                              ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'
+                              : isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'
                         }`}>
-                          {trade.puntos >= 0 ? '+' : ''}{trade.puntos.toFixed(1)}
+                          {trade.puntos > 0 ? '+' : ''}{trade.puntos.toFixed(1)}
                         </div>
                       ) : (
                         <div className={`w-8 h-8 flex items-center justify-center rounded-lg ${
@@ -480,13 +480,13 @@ export default function CalendarView({
                           </span>
                           {isSwing && (
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                              isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                             }`}>
                               SWING
                             </span>
                           )}
-                          {trade.imagenes?.length > 0 && <Image size={12} className="text-blue-400" />}
-                          {trade.notas && <FileText size={12} className="text-purple-400" />}
+                          {trade.imagenes?.length > 0 && <Image size={12} className={isDark ? 'text-slate-500' : 'text-slate-400'} />}
+                          {trade.notas && <FileText size={12} className={isDark ? 'text-slate-500' : 'text-slate-400'} />}
                         </div>
                         <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                           {isSwing ? (

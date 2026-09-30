@@ -1,7 +1,7 @@
 "use client";
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
-import { Settings, LogOut, Sun, Moon, CloudSun, Target, Calendar, Trophy, ShieldCheck, GraduationCap, BarChart3 } from 'lucide-react';
+import { Settings, LogOut, Sun, Moon, Target, Calendar, Trophy, ShieldCheck, GraduationCap, BarChart3, User } from 'lucide-react';
 import SessionBar from './SessionBar';
 
 export default function Header({
@@ -31,30 +31,18 @@ export default function Header({
 
   const displayName = config?.nombreTrader || user.displayName || user.email?.split('@')[0];
 
-  const getGreetingData = () => {
+  const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) {
-      return {
-        text: language === 'es' ? "Buenos días" : "Good morning",
-        icon: <Sun className="text-yellow-500" size={24} />,
-        bgIcon: 'bg-yellow-500/10'
-      };
-    }
-    if (hour >= 12 && hour < 19) {
-      return {
-        text: language === 'es' ? "Buenas tardes" : "Good afternoon",
-        icon: <CloudSun className="text-orange-500" size={24} />,
-        bgIcon: 'bg-orange-500/10'
-      };
-    }
-    return {
-      text: language === 'es' ? "Buenas noches" : "Good evening",
-      icon: <Moon className="text-indigo-400" size={24} />,
-      bgIcon: 'bg-indigo-500/10'
-    };
+    if (hour >= 5 && hour < 12) return language === 'es' ? "Buenos días" : "Good morning";
+    if (hour >= 12 && hour < 19) return language === 'es' ? "Buenas tardes" : "Good afternoon";
+    return language === 'es' ? "Buenas noches" : "Good evening";
   };
-  
-  const greetingData = getGreetingData();
+  const greeting = getGreeting();
+
+  // Un solo estilo para todos los iconos del encabezado: gris en reposo, blanco/negro al pasar.
+  const iconBtn = `p-2 rounded-lg transition-colors ${
+    isDark ? 'text-slate-400 hover:text-white hover:bg-slate-700' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+  }`;
   
   const frasesMotivadoras = {
     es: [
@@ -141,12 +129,9 @@ export default function Header({
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-full transition-all ${
-                isDark
-                  ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={iconBtn}
               title={isDark ? 'Modo claro' : 'Modo oscuro'}
+              aria-label={isDark ? 'Modo claro' : 'Modo oscuro'}
             >
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -154,8 +139,9 @@ export default function Header({
             <button
               onClick={onFundingSimulator}
               data-tour="funding"
-              className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-amber-400' : 'hover:bg-slate-100 text-amber-600'}`}
+              className={iconBtn}
               title="Simulador de Fondeo"
+              aria-label="Simulador de Fondeo"
             >
               <Trophy size={18}/>
             </button>
@@ -163,8 +149,9 @@ export default function Header({
             {(isAdmin || hasTrackerAccess) && (
               <button
                 onClick={onESTracker}
-                className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-cyan-400' : 'hover:bg-slate-100 text-cyan-600'}`}
+                className={iconBtn}
                 title="Análisis Institucional"
+                aria-label="Análisis Institucional"
               >
                 <BarChart3 size={18}/>
               </button>
@@ -173,8 +160,9 @@ export default function Header({
             {userType !== 'trial' && (
               <button
                 onClick={onAcademy}
-                className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-orange-400' : 'hover:bg-slate-100 text-orange-600'}`}
+                className={iconBtn}
                 title={language === 'es' ? 'Academia de Trading' : 'Trading Academy'}
+                aria-label={language === 'es' ? 'Academia de Trading' : 'Trading Academy'}
               >
                 <GraduationCap size={18}/>
               </button>
@@ -183,8 +171,9 @@ export default function Header({
             {isAdmin && (
               <button
                 onClick={onAdmin}
-                className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-purple-400' : 'hover:bg-slate-100 text-purple-600'}`}
+                className={iconBtn}
                 title="Panel de Admin"
+                aria-label="Panel de Admin"
               >
                 <ShieldCheck size={18}/>
               </button>
@@ -193,8 +182,9 @@ export default function Header({
             <button
               onClick={onCalendar}
               data-tour="calendar"
-              className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-blue-400' : 'hover:bg-slate-100 text-blue-500'}`}
+              className={iconBtn}
               title="Calendario Económico"
+              aria-label="Calendario Económico"
             >
               <Calendar size={18}/>
             </button>
@@ -202,16 +192,19 @@ export default function Header({
             <button
               onClick={onSettings}
               data-tour="settings"
-              className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}
+              className={iconBtn}
               title="Configuración"
+              aria-label="Configuración"
             >
               <Settings size={18}/>
             </button>
             
-            <button 
-              onClick={onLogout} 
-              title="Cerrar Sesión" 
-              className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-full transition-colors"
+            <div className={`w-px h-5 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
+            <button
+              onClick={onLogout}
+              title="Cerrar Sesión"
+              aria-label="Cerrar Sesión"
+              className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10' : 'text-slate-500 hover:text-red-600 hover:bg-red-50'}`}
             >
               <LogOut size={18}/>
             </button>
@@ -225,27 +218,26 @@ export default function Header({
       {/* Sección de bienvenida + Target */}
       <div className={`px-4 sm:px-6 lg:px-8 py-5 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <div className="mx-auto" style={{ maxWidth: '1280px' }}>
-          <div className="text-center mb-5">
-            {/* Foto de perfil */}
+          <div className="flex flex-col items-center text-center gap-2 mb-4">
             {config?.fotoPerfil ? (
-              <div className="mb-3">
-                <img
-                  src={config.fotoPerfil}
-                  alt="Perfil"
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-3 border-blue-500 mx-auto shadow-lg"
-                />
-              </div>
+              <img
+                src={config.fotoPerfil}
+                alt="Perfil"
+                className={`w-12 h-12 rounded-full object-cover border ${isDark ? 'border-slate-700' : 'border-slate-200'}`}
+              />
             ) : (
-              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-2 ${greetingData.bgIcon}`}>
-                {greetingData.icon}
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
+                <User size={20} />
               </div>
             )}
-            <h2 className={`text-lg sm:text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {greetingData.text}, <span className="text-blue-500">{displayName}</span>
-            </h2>
-            <p className={`mt-1 text-sm italic ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              &quot;{fraseDelDia}&quot;
-            </p>
+            <div>
+              <h2 className={`text-base sm:text-lg font-semibold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                {greeting}, {displayName}
+              </h2>
+              <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                {fraseDelDia}
+              </p>
+            </div>
           </div>
 
           {/* Selector de cuenta y Target */}
@@ -279,8 +271,8 @@ export default function Header({
             {/* Target del día */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${pnlHoy >= metaDiaria ? 'bg-green-500/10' : 'bg-blue-500/10'}`}>
-                  <Target size={18} className={pnlHoy >= metaDiaria ? 'text-green-500' : 'text-blue-500'} />
+                <div className={`p-2 rounded-lg ${pnlHoy >= metaDiaria ? 'bg-green-500/10 text-green-600' : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                  <Target size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -288,7 +280,7 @@ export default function Header({
                       {language === 'es' ? 'Target del día' : 'Daily Target'} ({metaDiariaPct}%)
                     </p>
                     {selectedAccount && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-500`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                         {selectedAccount.divisa || 'USD'}
                       </span>
                     )}
@@ -308,14 +300,13 @@ export default function Header({
                   <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>
                     {language === 'es' ? 'Progreso' : 'Progress'}
                   </span>
-                  <span className={`font-bold flex items-center gap-1 ${pnlHoy >= metaDiaria ? 'text-green-500 animate-pulse' : 'text-blue-500'}`}>
-                    {pnlHoy >= metaDiaria && <span className="text-sm">🏆</span>}
+                  <span className={`font-bold tabular-nums ${pnlHoy >= metaDiaria ? 'text-green-500' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                     {Math.max(0, Math.min(100, progresoMeta)).toFixed(0)}%
                   </span>
                 </div>
                 <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
                   <div
-                    className={`h-full transition-all duration-500 rounded-full ${pnlHoy >= metaDiaria ? 'bg-gradient-to-r from-green-500 to-emerald-400 animate-pulse' : 'bg-blue-500'}`}
+                    className={`h-full transition-all duration-500 rounded-full ${pnlHoy >= metaDiaria ? 'bg-green-500' : 'bg-blue-500'}`}
                     style={{ width: `${Math.max(0, Math.min(100, progresoMeta))}%` }}
                   />
                 </div>

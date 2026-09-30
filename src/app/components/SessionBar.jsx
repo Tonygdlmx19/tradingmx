@@ -13,12 +13,6 @@ const SESSIONS = [
   { id: 'newyork', name: { es: 'New York', en: 'New York' }, startUTC: 13, endUTC: 22, color: 'orange' },
 ];
 
-const SESSION_COLORS = {
-  blue: { bg: 'bg-blue-500', text: 'text-blue-500', bgLight: 'bg-blue-500/20' },
-  pink: { bg: 'bg-pink-500', text: 'text-pink-500', bgLight: 'bg-pink-500/20' },
-  green: { bg: 'bg-green-500', text: 'text-green-500', bgLight: 'bg-green-500/20' },
-  orange: { bg: 'bg-orange-500', text: 'text-orange-500', bgLight: 'bg-orange-500/20' },
-};
 
 function isSessionActive(session, utcHour) {
   if (session.startUTC > session.endUTC) {
@@ -106,7 +100,7 @@ export default function SessionBar() {
           {/* Session Indicator - Clickable */}
           <button
             onClick={() => setShowSessionsModal(true)}
-            className={`flex items-center gap-2 cursor-pointer transition-all hover:scale-105 ${
+            className={`flex items-center gap-2 cursor-pointer transition-colors ${
               isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-100'
             } px-2 py-1 rounded-lg`}
             title={language === 'es' ? 'Ver sesiones de mercado' : 'View market sessions'}
@@ -117,20 +111,19 @@ export default function SessionBar() {
               </span>
             ) : (
               <div className="flex items-center gap-2">
-                {activeSessions.map((session, index) => {
-                  const colors = SESSION_COLORS[session.color];
-                  return (
-                    <div
-                      key={session.id}
-                      className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${colors.bgLight}`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${colors.bg} animate-pulse`} />
-                      <span className={`text-xs font-bold ${colors.text}`}>
-                        {session.name[language]}
-                      </span>
-                    </div>
-                  );
-                })}
+                {activeSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${
+                      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <span className={`text-xs font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                      {session.name[language]}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </button>

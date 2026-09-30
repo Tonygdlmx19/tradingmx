@@ -130,7 +130,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm, str
           <div className="flex justify-between items-center">
             <div>
               <h3 className={`font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                <ClipboardCheck size={20} className="text-amber-500"/>
+                <ClipboardCheck size={20} className={isDark ? 'text-slate-400' : 'text-slate-500'}/>
                 {t.title}
               </h3>
               {strategyName && (
@@ -215,7 +215,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm, str
                     <div className="flex-1 min-w-0">
                       {/* Header row: Number + Importance + Image icon */}
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm flex-shrink-0">
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${isDark ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>
                           {index + 1}
                         </span>
                         <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${impStyle.bg} ${impStyle.text}`}>
@@ -223,7 +223,7 @@ export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm, str
                           {impStyle.label}
                         </div>
                         {normalizedRule.imagen && (
-                          <span className={`${isDark ? 'text-amber-400' : 'text-amber-500'}`}>
+                          <span className={`${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                             <Image size={14}/>
                           </span>
                         )}
