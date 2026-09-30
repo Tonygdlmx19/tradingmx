@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
+const { defineSecret } = require("firebase-functions/params");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -116,6 +117,101 @@ exports.preSessionAnalysis = onSchedule(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Datos de mercado diarios: L-V a las 18:30 (CDMX), después del cierre de Globex.
+// Toma la sesión del día de Yahoo Finance (contrato continuo) para cada activo del
+// tracker y la agrega a market_tracker/data sin pisar lo que ya exista (OI, perfil
+// de volumen y datos de CME cargados a mano tienen prioridad).
+// ─────────────────────────────────────────────────────────────────────────────
+const YAHOO_SYMBOLS = { ES: "ES=F", NQ: "NQ=F", CL: "CL=F", GC: "GC=F", YM: "YM=F", RTY: "RTY=F", SI: "SI=F", NG: "NG=F" };
+const DECIMALS = { ES: 2, NQ: 2, CL: 2, GC: 2, YM: 0, RTY: 2, SI: 3, NG: 3 };
+
+async function fetchYahooDaily(symbol, decimals, range = "1mo") {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=1d`;
+  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+  if (!res.ok) throw new Error(`Yahoo ${res.status}`);
+  const json = await res.json();
+  const result = json.chart?.result?.[0];
+  if (!result) throw new Error("Yahoo sin resultado");
+  const q = result.indicators.quote[0];
+  const rnd = (v) => (v == null ? null : Number(Number(v).toFixed(decimals)));
+  const rows = [];
+  (result.timestamp || []).forEach((t, i) => {
+    if (q.close[i] == null) return;
+    rows.push({
+      date: new Date(t * 1000).toISOString().slice(0, 10),
+      open: rnd(q.open[i]), high: rnd(q.high[i]), low: rnd(q.low[i]), close: rnd(q.close[i]),
+      vol: q.volume[i] || 0,
+    });
+  });
+  return rows;
+}
+
+async function updateDailyMarketData(range = "1mo") {
+  const ref = db.collection("market_tracker").doc("data");
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" }); // YYYY-MM-DD
+  const summary = {};
+
+  for (const [assetId, symbol] of Object.entries(YAHOO_SYMBOLS)) {
+    let rows;
+    try {
+      rows = await fetchYahooDaily(symbol, DECIMALS[assetId] ?? 2, range);
+    } catch (e) {
+      summary[assetId] = `error: ${e.message}`;
+      continue;
+    }
+    // Solo sesiones cerradas: hasta hoy inclusive (la función corre tras el cierre)
+    rows = rows.filter((r) => r.date <= today);
+
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const allData = snap.exists ? snap.data() : {};
+      const records = Array.isArray(allData[assetId]) ? [...allData[assetId]] : [];
+      const byDate = new Map(records.map((r) => [r.date, r]));
+      let added = 0, filled = 0;
+      for (const r of rows) {
+        const ex = byDate.get(r.date);
+        if (!ex) {
+          records.push({ ...r, oi: null, foi: null, delta: null, poc: null, vah: null, val: null, vwap: null, source: "yahoo" });
+          added++;
+        } else if (!ex.vol && r.vol) {
+          ex.vol = r.vol; filled++;
+        }
+      }
+      if (added || filled) {
+        records.sort((a, b) => a.date.localeCompare(b.date));
+        tx.set(ref, { [assetId]: records }, { merge: true });
+      }
+      summary[assetId] = `+${added} sesiones, ${filled} volúmenes completados, última ${records[records.length - 1]?.date || "-"}`;
+    });
+  }
+  console.log("[dailyMarketData]", JSON.stringify(summary));
+  return summary;
+}
+
+exports.dailyMarketData = onSchedule(
+  { schedule: "30 18 * * 1-5", timeZone: "America/Mexico_City", timeoutSeconds: 300, memory: "256MiB" },
+  async () => { await updateDailyMarketData(); }
+);
+
+// Disparo manual (GET) para probar o rellenar histórico: requiere el token
+// DAILY_DATA_TOKEN en Secret Manager y ?token=... en la URL. Opcional ?range=1y
+// (valores de Yahoo: 5d, 1mo, 3mo, 6mo, 1y) para rellenar sesiones faltantes.
+const DAILY_DATA_TOKEN = defineSecret("DAILY_DATA_TOKEN");
+exports.runDailyMarketData = functions.https.onRequest({ secrets: [DAILY_DATA_TOKEN] }, async (req, res) => {
+  if (!req.query.token || req.query.token !== DAILY_DATA_TOKEN.value()) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    const range = /^(5d|1mo|3mo|6mo|1y|2y)$/.test(req.query.range || "") ? req.query.range : "1mo";
+    const summary = await updateDailyMarketData(range);
+    return res.status(200).json({ ok: true, range, summary });
+  } catch (e) {
+    console.error("[dailyMarketData] error:", e);
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Webhook de PayPal: activa el acceso del comprador automáticamente.
 //
 // PayPal llama a esta URL cada vez que ocurre un evento (pago completado, etc.).
@@ -126,7 +222,6 @@ exports.preSessionAnalysis = onSchedule(
 //   PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET  -> app REST en developer.paypal.com
 //   PAYPAL_WEBHOOK_ID                       -> ID del webhook creado en esa app
 // ─────────────────────────────────────────────────────────────────────────────
-const { defineSecret } = require("firebase-functions/params");
 
 const PAYPAL_CLIENT_ID = defineSecret("PAYPAL_CLIENT_ID");
 const PAYPAL_CLIENT_SECRET = defineSecret("PAYPAL_CLIENT_SECRET");

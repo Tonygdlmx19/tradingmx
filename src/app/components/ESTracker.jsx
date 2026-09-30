@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import { CME_BOOKMARKLET_HREF } from '../utils/cmeBookmarklet';
 
 // ── Asset presets ──────────────────────────────────────────────
 const ASSET_PRESETS = [
@@ -1500,6 +1501,17 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                   {importing ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
                   <span className="hidden sm:inline">{es ? 'Importar' : 'Import'}</span>
                 </button>
+                {/* Marcador CME: arrastrar a la barra de marcadores; se usa dentro de cmegroup.com */}
+                <a
+                  href={CME_BOOKMARKLET_HREF}
+                  onClick={(e) => { e.preventDefault(); alert(es
+                    ? 'Arrastra este enlace a tu barra de marcadores. Luego abre cualquier página de cmegroup.com, haz clic en el marcador, elige el activo y descarga el CSV con volumen y open interest de las últimas 30 sesiones. Impórtalo aquí con "Importar".'
+                    : 'Drag this link to your bookmarks bar. Then open any cmegroup.com page, click the bookmark, pick the asset and download a CSV with volume and open interest for the last 30 sessions. Import it here with "Import".'); }}
+                  title={es ? 'Arrastrar a la barra de marcadores' : 'Drag to bookmarks bar'}
+                  className="text-xs text-blue-200 hover:text-white border border-dashed border-blue-400/40 hover:border-white/60 rounded-lg px-3 py-1.5 transition-colors hidden sm:flex items-center gap-1 cursor-grab"
+                >
+                  CME → CSV
+                </a>
               </>
             )}
             {!isAdmin && (

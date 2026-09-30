@@ -109,6 +109,16 @@ CONTEXTO DEL TRADER:
 - Tu trabajo es usar estos niveles diarios (POC, VAH, VAL, VWAP, Fibonacci, Pivots) para dar recomendaciones ACCIONABLES en el timeframe de ${tradingTimeframe}
 - Las entradas, stops y targets deben ser específicos para operaciones en ${tradingTimeframe}
 
+METODOLOGÍA DEL TRADER: DECISION POINT (DP). Aplica a cualquier activo. Evalúa SIEMPRE estos 7 criterios en orden y dilo explícitamente cuando un dato no alcance para evaluar uno:
+1. Nivel relevante: POC, VAH, VAL, soporte, resistencia, máximo o mínimo. Zona donde el precio puede girar; solo ahí se busca el resto.
+2. Módulo de arranque: rompimiento claro y visible del último máximo descendente (entrada alcista) o del último mínimo ascendente (entrada bajista). Si no se ve a simple vista, no se opera.
+3. Tendencia clara alcista o bajista. Un mercado en rango no sirve.
+4. Vela con DP: vela de impulso en el sentido del rompimiento cuyo CLUSTER DE MÁXIMO VOLUMEN queda en el 50% o menos del recorrido de la vela (en la mitad baja para impulso alcista, en la mitad alta para impulso bajista). Con datos diarios usa el POC de la sesión como el cluster y compáralo con el rango de la vela.
+5. Continuidad del DP: después de formarse, debe haber un impulso claro en el sentido de la tendencia.
+6. Test al DP: cuando el precio regrese al DP, esperar un patrón de entrada con vela y contexto, específicamente una VELA DE AGOTAMIENTO.
+7. Confirmación: vela de agotamiento, reversal o ESR completamente CERRADA. Con la vela abierta no se opera.
+El VOLUMEN y el CLUSTER DE MÁXIMO VOLUMEN son los dos datos que deciden entradas y salidas: volumen creciente con OI creciente confirma dinero nuevo detrás del movimiento; un DP cuyo POC no cumple la regla del 50% NO es válido aunque el precio parezca ir a favor.
+
 NOTA: El campo "Delta" es el delta diario de sesión (diferencia entre volumen de compra y venta agresiva). Delta positivo = presión compradora neta, negativo = presión vendedora neta.
 
 REGLAS DE FORMATO:
@@ -129,6 +139,16 @@ TRADER CONTEXT:
 - The data you receive is DAILY (1D) and serves as macro/institutional context
 - Your job is to use these daily levels (POC, VAH, VAL, VWAP, Fibonacci, Pivots) to give ACTIONABLE recommendations for the ${tradingTimeframe} timeframe
 - Entries, stops and targets must be specific for ${tradingTimeframe} operations
+
+TRADER METHODOLOGY: DECISION POINT (DP). Applies to any asset. ALWAYS evaluate these 7 criteria in order and say explicitly when the data is not enough to evaluate one:
+1. Relevant level: POC, VAH, VAL, support, resistance, high or low. Only there do we look for the rest.
+2. Ignition module: clear, visible break of the last lower high (long) or last higher low (short). If it is not obvious, no trade.
+3. Clear uptrend or downtrend. A ranging market is not tradeable.
+4. DP candle: impulse candle in the break direction whose MAX VOLUME CLUSTER sits in the lower 50% of the candle (bullish) or upper 50% (bearish). With daily data use the session POC as the cluster and compare it with the candle range.
+5. DP continuation: a clear impulse in the trend direction after the DP forms.
+6. DP test: when price returns to the DP, wait for an entry pattern with candle and context, specifically an EXHAUSTION candle.
+7. Confirmation: exhaustion, reversal or ESR candle fully CLOSED. Never trade on an open candle.
+VOLUME and the MAX VOLUME CLUSTER decide entries and exits: rising volume with rising OI confirms new money; a DP whose POC fails the 50% rule is NOT valid even if price seems to move in favor.
 
 NOTE: The "Delta" field is the daily session delta (difference between aggressive buy and sell volume). Positive delta = net buying pressure, negative = net selling pressure.
 
@@ -175,7 +195,7 @@ PP: ${pp.toFixed(2)}
 ${strategiesText ? `\n## ESTRATEGIAS DEL TRADER\n${strategiesText}` : ''}${newsText ? `\n## NOTICIAS RECIENTES\n${newsText}` : ''}${sentimentText ? `\n## SENTIMIENTO DE MERCADO\nFear & Greed por debajo de 25 = miedo extremo (zona de rebote). VIX por encima de 25 = alta volatilidad (stops amplios, posiciones chicas).\n${sentimentText}` : ''}
 
 ## INSTRUCCIONES
-Analisis conciso en Markdown con secciones: 1) RESUMEN 2) ESTRUCTURA DE PRECIO 3) VWAP Y VOLUME PROFILE 4) FLUJO INSTITUCIONAL 5) SESIONES RECIENTES ${strategiesText ? '6) ESTRATEGIAS ' : ''}${strategiesText ? '7' : '6'}) SESGO OPERATIVO ${tradingTimeframe} con escenarios y niveles ${newsText ? `${strategiesText ? '8' : '7'}) NOTICIAS` : ''} ${newsText ? (strategiesText ? '9' : '8') : (strategiesText ? '8' : '7')}) ALERTAS Y RIESGOS`
+Analisis conciso en Markdown con secciones: 1) RESUMEN 2) ESTRUCTURA DE PRECIO 3) VWAP Y VOLUME PROFILE 4) FLUJO INSTITUCIONAL (volumen y OI) 5) SESIONES RECIENTES 6) DECISION POINT: evaluación criterio por criterio (nivel relevante, módulo de arranque, tendencia, vela DP con posición del cluster/POC, continuidad, test pendiente, confirmación) y los niveles exactos donde esperar el test 7) SESGO OPERATIVO ${tradingTimeframe} con escenarios, niveles de entrada, salida e invalidación ${newsText ? '8) NOTICIAS ' : ''}${newsText ? '9' : '8'}) ALERTAS Y RIESGOS`
       : `Analyze ${assetTicker} futures data. Provide institutional technical analysis.
 
 ## ${assetTicker} DATA (last 30 of ${sorted.length} sessions)
@@ -192,7 +212,7 @@ ${pivotLevels.map(p => `${p.label}: ${p.level.toFixed(2)}`).join(' | ')} | PP: $
 Avg range 5d: ${avgRange5.toFixed(2)} | 10d: ${avgRange10.toFixed(2)} | Vol 5d: ${(avgVol5/1e6).toFixed(2)}M | Change: ${totalChange >= 0?'+':''}${totalChange.toFixed(2)} (${totalChangePct}%) | 52w: ${high52.toFixed(2)}/${low52.toFixed(2)}
 ${strategiesText ? `\n## STRATEGIES\n${strategiesText}` : ''}${newsText ? `\n## NEWS\n${newsText}` : ''}${sentimentText ? `\n## SENTIMENT\n${sentimentText}` : ''}
 
-Concise Markdown analysis: 1) SUMMARY 2) PRICE STRUCTURE 3) VWAP & VP 4) INSTITUTIONAL FLOW 5) RECENT SESSIONS ${strategiesText ? '6) STRATEGIES ' : ''}${strategiesText ? '7' : '6'}) TRADING BIAS ${tradingTimeframe} with scenarios ${newsText ? `${strategiesText ? '8' : '7'}) NEWS` : ''} ${newsText ? (strategiesText ? '9' : '8') : (strategiesText ? '8' : '7')}) ALERTS`;
+Concise Markdown analysis: 1) SUMMARY 2) PRICE STRUCTURE 3) VWAP & VP 4) INSTITUTIONAL FLOW (volume and OI) 5) RECENT SESSIONS 6) DECISION POINT: criterion-by-criterion evaluation (relevant level, ignition module, trend, DP candle with cluster/POC position, continuation, pending test, confirmation) and the exact levels to wait for the test 7) TRADING BIAS ${tradingTimeframe} with scenarios, entry, exit and invalidation levels ${newsText ? '8) NEWS ' : ''}${newsText ? '9' : '8'}) ALERTS`;
 
     // ── Streaming response from Anthropic ──
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
