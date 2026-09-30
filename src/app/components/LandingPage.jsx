@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import {
-  TrendingUp,
   BarChart3,
   Target,
   CheckCircle2,
@@ -10,12 +9,8 @@ import {
   PieChart,
   LineChart,
   Clock,
-  DollarSign,
   ChevronDown,
   LogIn,
-  Play,
-  Pause,
-  Sparkles,
   Shield,
   Zap,
   X,
@@ -25,8 +20,6 @@ import {
   Repeat,
   HelpCircle,
   BarChart,
-  Volume2,
-  VolumeX,
   Trophy,
   Star,
   Crown,
@@ -140,12 +133,12 @@ export default function LandingPage({ onLogin }) {
       traders: 'traders',
       realResults: 'Resultados reales de personas como tú',
       testimonials: [
-        { initials: 'RC', name: 'Roberto Castillo', location: 'Guadalajara, México', flag: '🇲🇽', quote: 'Llevaba 2 años operando sin llevar registro. Cuando empecé a usar el journal descubrí que mi win rate real era del 38%, no del 60% que yo creía.', highlight: 'En 3 meses lo subí a 52%', suffix: 'solo siendo consciente de mis errores.', footer: 'Opera futuros desde 2021', color: 'from-emerald-500 to-teal-500' },
-        { initials: 'MF', name: 'Martín Fernández', location: 'Buenos Aires, Argentina', flag: '🇦🇷', quote: 'El calendario económico me salvó varias veces de operar en NFP sin darme cuenta. Pero lo mejor es ver mi curva de equity crecer.', highlight: '+18% en mi cuenta en 2 meses.', suffix: '', footer: 'Opera forex desde 2020', color: 'from-blue-500 to-cyan-500' },
-        { initials: 'CV', name: 'Carolina Vargas', location: 'Lima, Perú', flag: '🇵🇪', quote: 'Antes operaba por impulso. Ahora registro cada trade y reviso mis emociones.', highlight: 'Mi drawdown máximo bajó de 25% a 8%.', suffix: 'La calculadora de riesgo es mi herramienta favorita.', footer: 'Opera crypto desde 2022', color: 'from-purple-500 to-pink-500' },
-        { initials: 'DS', name: 'Diego Soto', location: 'Santiago, Chile', flag: '🇨🇱', quote: 'Simple pero efectivo. No necesitas Excel ni apps complicadas.', highlight: 'En 1 mes ya tenía claro que los lunes eran mi peor día.', suffix: 'Ahora no opero lunes y mi cuenta lo agradece.', footer: 'Opera índices desde 2023', color: 'from-orange-500 to-amber-500' },
-        { initials: 'AG', name: 'Andrea González', location: 'Monterrey, México', flag: '🇲🇽', quote: 'Lo uso desde mi celular mientras viajo. Registro el trade, pongo mi emoción y listo.', highlight: 'Mi profit factor pasó de 0.8 a 1.6.', suffix: 'Por fin soy rentable después de 1 año.', footer: 'Opera MNQ desde 2023', color: 'from-rose-500 to-red-500' },
-        { initials: 'JR', name: 'Juan Rodríguez', location: 'Medellín, Colombia', flag: '🇨🇴', quote: 'Probé como 5 journals diferentes. Este es el único que realmente uso porque es rápido.', highlight: 'Las estadísticas avanzadas valen cada peso.', suffix: 'Sé exactamente en qué activos soy mejor.', footer: 'Opera forex y futuros desde 2019', color: 'from-indigo-500 to-violet-500' }
+        { initials: 'RC', name: 'Roberto Castillo', location: 'Guadalajara, México', flag: '🇲🇽', quote: 'Llevaba 2 años operando sin llevar registro. Cuando empecé a usar el journal descubrí que mi win rate real era del 38%, no del 60% que yo creía.', highlight: 'En 3 meses lo subí a 52%', suffix: 'solo siendo consciente de mis errores.', footer: 'Opera futuros desde 2021' },
+        { initials: 'MF', name: 'Martín Fernández', location: 'Buenos Aires, Argentina', flag: '🇦🇷', quote: 'El calendario económico me salvó varias veces de operar en NFP sin darme cuenta. Pero lo mejor es ver mi curva de equity crecer.', highlight: '+18% en mi cuenta en 2 meses.', suffix: '', footer: 'Opera forex desde 2020' },
+        { initials: 'CV', name: 'Carolina Vargas', location: 'Lima, Perú', flag: '🇵🇪', quote: 'Antes operaba por impulso. Ahora registro cada trade y reviso mis emociones.', highlight: 'Mi drawdown máximo bajó de 25% a 8%.', suffix: 'La calculadora de riesgo es mi herramienta favorita.', footer: 'Opera crypto desde 2022' },
+        { initials: 'DS', name: 'Diego Soto', location: 'Santiago, Chile', flag: '🇨🇱', quote: 'Simple pero efectivo. No necesitas Excel ni apps complicadas.', highlight: 'En 1 mes ya tenía claro que los lunes eran mi peor día.', suffix: 'Ahora no opero lunes y mi cuenta lo agradece.', footer: 'Opera índices desde 2023' },
+        { initials: 'AG', name: 'Andrea González', location: 'Monterrey, México', flag: '🇲🇽', quote: 'Lo uso desde mi celular mientras viajo. Registro el trade, pongo mi emoción y listo.', highlight: 'Mi profit factor pasó de 0.8 a 1.6.', suffix: 'Por fin soy rentable después de 1 año.', footer: 'Opera MNQ desde 2023' },
+        { initials: 'JR', name: 'Juan Rodríguez', location: 'Medellín, Colombia', flag: '🇨🇴', quote: 'Probé como 5 journals diferentes. Este es el único que realmente uso porque es rápido.', highlight: 'Las estadísticas avanzadas valen cada peso.', suffix: 'Sé exactamente en qué activos soy mejor.', footer: 'Opera forex y futuros desde 2019' }
       ],
       // Pricing
       investInYour: 'Invierte en tu',
@@ -276,12 +269,12 @@ export default function LandingPage({ onLogin }) {
       traders: 'traders say',
       realResults: 'Real results from people like you',
       testimonials: [
-        { initials: 'RC', name: 'Roberto Castillo', location: 'Guadalajara, Mexico', flag: '🇲🇽', quote: 'I had been trading for 2 years without keeping records. When I started using the journal I discovered my real win rate was 38%, not the 60% I thought.', highlight: 'In 3 months I raised it to 52%', suffix: 'just by being aware of my mistakes.', footer: 'Trades futures since 2021', color: 'from-emerald-500 to-teal-500' },
-        { initials: 'MF', name: 'Martín Fernández', location: 'Buenos Aires, Argentina', flag: '🇦🇷', quote: 'The economic calendar saved me several times from trading during NFP without realizing it. But the best part is watching my equity curve grow.', highlight: '+18% in my account in 2 months.', suffix: '', footer: 'Trades forex since 2020', color: 'from-blue-500 to-cyan-500' },
-        { initials: 'CV', name: 'Carolina Vargas', location: 'Lima, Peru', flag: '🇵🇪', quote: 'Before I traded on impulse. Now I log every trade and review my emotions.', highlight: 'My max drawdown dropped from 25% to 8%.', suffix: 'The risk calculator is my favorite tool.', footer: 'Trades crypto since 2022', color: 'from-purple-500 to-pink-500' },
-        { initials: 'DS', name: 'Diego Soto', location: 'Santiago, Chile', flag: '🇨🇱', quote: 'Simple but effective. You don\'t need Excel or complicated apps.', highlight: 'In 1 month I clearly knew Mondays were my worst day.', suffix: 'Now I don\'t trade Mondays and my account thanks me.', footer: 'Trades indices since 2023', color: 'from-orange-500 to-amber-500' },
-        { initials: 'AG', name: 'Andrea González', location: 'Monterrey, Mexico', flag: '🇲🇽', quote: 'I use it from my phone while traveling. Log the trade, add my emotion and done.', highlight: 'My profit factor went from 0.8 to 1.6.', suffix: 'Finally profitable after 1 year.', footer: 'Trades MNQ since 2023', color: 'from-rose-500 to-red-500' },
-        { initials: 'JR', name: 'Juan Rodríguez', location: 'Medellín, Colombia', flag: '🇨🇴', quote: 'I tried like 5 different journals. This is the only one I actually use because it\'s fast.', highlight: 'The advanced statistics are worth every penny.', suffix: 'I know exactly which assets I\'m best at.', footer: 'Trades forex and futures since 2019', color: 'from-indigo-500 to-violet-500' }
+        { initials: 'RC', name: 'Roberto Castillo', location: 'Guadalajara, Mexico', flag: '🇲🇽', quote: 'I had been trading for 2 years without keeping records. When I started using the journal I discovered my real win rate was 38%, not the 60% I thought.', highlight: 'In 3 months I raised it to 52%', suffix: 'just by being aware of my mistakes.', footer: 'Trades futures since 2021' },
+        { initials: 'MF', name: 'Martín Fernández', location: 'Buenos Aires, Argentina', flag: '🇦🇷', quote: 'The economic calendar saved me several times from trading during NFP without realizing it. But the best part is watching my equity curve grow.', highlight: '+18% in my account in 2 months.', suffix: '', footer: 'Trades forex since 2020' },
+        { initials: 'CV', name: 'Carolina Vargas', location: 'Lima, Peru', flag: '🇵🇪', quote: 'Before I traded on impulse. Now I log every trade and review my emotions.', highlight: 'My max drawdown dropped from 25% to 8%.', suffix: 'The risk calculator is my favorite tool.', footer: 'Trades crypto since 2022' },
+        { initials: 'DS', name: 'Diego Soto', location: 'Santiago, Chile', flag: '🇨🇱', quote: 'Simple but effective. You don\'t need Excel or complicated apps.', highlight: 'In 1 month I clearly knew Mondays were my worst day.', suffix: 'Now I don\'t trade Mondays and my account thanks me.', footer: 'Trades indices since 2023' },
+        { initials: 'AG', name: 'Andrea González', location: 'Monterrey, Mexico', flag: '🇲🇽', quote: 'I use it from my phone while traveling. Log the trade, add my emotion and done.', highlight: 'My profit factor went from 0.8 to 1.6.', suffix: 'Finally profitable after 1 year.', footer: 'Trades MNQ since 2023' },
+        { initials: 'JR', name: 'Juan Rodríguez', location: 'Medellín, Colombia', flag: '🇨🇴', quote: 'I tried like 5 different journals. This is the only one I actually use because it\'s fast.', highlight: 'The advanced statistics are worth every penny.', suffix: 'I know exactly which assets I\'m best at.', footer: 'Trades forex and futures since 2019' }
       ],
       // Pricing
       investInYour: 'Invest in your',
@@ -387,15 +380,15 @@ export default function LandingPage({ onLogin }) {
   };
 
   const featureIcons = [
-    { icon: <LineChart className="w-7 h-7" />, gradient: "from-blue-500 to-cyan-500" },
-    { icon: <BarChart3 className="w-7 h-7" />, gradient: "from-purple-500 to-pink-500" },
-    { icon: <Target className="w-7 h-7" />, gradient: "from-emerald-500 to-teal-500" },
-    { icon: <Calendar className="w-7 h-7" />, gradient: "from-orange-500 to-amber-500" },
-    { icon: <PieChart className="w-7 h-7" />, gradient: "from-rose-500 to-red-500" },
-    { icon: <Clock className="w-7 h-7" />, gradient: "from-indigo-500 to-violet-500" },
-    { icon: <Bot className="w-7 h-7" />, gradient: "from-purple-500 to-fuchsia-500" },
-    { icon: <GraduationCap className="w-7 h-7" />, gradient: "from-amber-500 to-orange-500" },
-    { icon: <CheckCircle2 className="w-7 h-7" />, gradient: "from-green-500 to-emerald-500" }
+    { icon: <LineChart className="w-7 h-7" /> },
+    { icon: <BarChart3 className="w-7 h-7" /> },
+    { icon: <Target className="w-7 h-7" /> },
+    { icon: <Calendar className="w-7 h-7" /> },
+    { icon: <PieChart className="w-7 h-7" /> },
+    { icon: <Clock className="w-7 h-7" /> },
+    { icon: <Bot className="w-7 h-7" /> },
+    { icon: <GraduationCap className="w-7 h-7" /> },
+    { icon: <CheckCircle2 className="w-7 h-7" /> }
   ];
 
   const problemIcons = [
@@ -416,18 +409,13 @@ export default function LandingPage({ onLogin }) {
 
   // Botón para Hero - Prueba gratis
   const TrialButton = ({ className = '' }) => (
-    <div className={`relative group ${className}`}>
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
+    <div className={`group ${className}`}>
       <button
         onClick={onLogin}
-        className="relative bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 text-white font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-blue-400/50 shadow-lg shadow-blue-500/20 px-5 sm:px-8 py-3 sm:py-4"
+        className="bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors duration-200 px-6 sm:px-8 py-3 sm:py-3.5 shadow-sm"
       >
-        <div className="absolute inset-0 overflow-hidden rounded-xl">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-        </div>
-        <div className="relative flex items-center justify-center gap-2 sm:gap-3">
-          <Sparkles className="w-5 h-5" />
-          <span className="text-base sm:text-lg font-black">{t.trialButton}</span>
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
+          <span className="text-base sm:text-lg">{t.trialButton}</span>
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </div>
       </button>
@@ -436,15 +424,14 @@ export default function LandingPage({ onLogin }) {
 
   // Botón simple para el card de precio
   const BuyButton = ({ className = '' }) => (
-    <div className={`relative group ${className}`}>
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
+    <div className={`group ${className}`}>
       <button
         onClick={handlePayPal}
-        className="relative bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-6 sm:px-8 py-2.5 sm:py-3"
+        className="bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors duration-200 px-6 sm:px-8 py-2.5 sm:py-3 shadow-sm"
       >
-        <div className="relative flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           {isPayPalAvailable(selectedPlan) && <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />}
-          <span className="text-sm sm:text-base font-black">
+          <span className="text-sm sm:text-base">
             {isPayPalAvailable(selectedPlan)
               ? (language === 'es' ? 'Comprar' : 'Buy')
               : (language === 'es' ? 'Comprar por WhatsApp' : 'Buy via WhatsApp')}
@@ -486,7 +473,7 @@ export default function LandingPage({ onLogin }) {
               <p>
                 {section.text}
                 {i === t.termsContent.length - 1 && (
-                  <> <a href="mailto:tmsolucionesdigitales@gmail.com" className="text-emerald-400 hover:underline">tmsolucionesdigitales@gmail.com</a></>
+                  <> <a href="mailto:tmsolucionesdigitales@gmail.com" className="text-blue-400 hover:underline">tmsolucionesdigitales@gmail.com</a></>
                 )}
               </p>
             </section>
@@ -497,7 +484,7 @@ export default function LandingPage({ onLogin }) {
         <div className="p-4 border-t border-slate-700">
           <button
             onClick={() => setShowTerms(false)}
-            className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors"
           >
             {t.understood}
           </button>
@@ -511,14 +498,6 @@ export default function LandingPage({ onLogin }) {
       {/* Modal de Términos */}
       {showTerms && <TermsModal />}
 
-      {/* Estilos para animaciones */}
-      <style jsx global>{`
-        @keyframes gradient-shift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-      `}</style>
-      
       {/* ==================== NAVBAR ==================== */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md py-3">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
@@ -538,7 +517,7 @@ export default function LandingPage({ onLogin }) {
             </button>
             <button
               onClick={onLogin}
-              className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold px-4 sm:px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 sm:px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 text-sm"
             >
               <LogIn className="w-4 h-4" />
               <span>{t.login}</span>
@@ -549,22 +528,17 @@ export default function LandingPage({ onLogin }) {
 
       {/* ==================== HERO ==================== */}
       <section className="pt-28 sm:pt-32 pb-12 sm:pb-20 px-4 relative">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl animate-pulse" />
-        </div>
-
         <div className="max-w-6xl mx-auto relative">
           <div className="text-center mb-8 sm:mb-12">
-            <div className="inline-flex items-center gap-2 mb-4 sm:mb-6 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
-              <span className="text-emerald-400 text-xs sm:text-sm font-medium">{t.tradersUsing}</span>
+            <div className="inline-flex items-center gap-2 mb-4 sm:mb-6 px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-900 border border-slate-800 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              <span className="text-slate-300 text-xs sm:text-sm font-medium">{t.tradersUsing}</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-black mb-4 sm:mb-6 leading-tight px-2">
-              {t.heroTitle1} <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-500">{t.heroTitle2}</span>
+              {t.heroTitle1} <span className="text-red-400">{t.heroTitle2}</span>
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.heroTitle3}</span>
+              <span className="text-slate-100">{t.heroTitle3}</span>
             </h1>
 
             <p className="text-sm sm:text-lg text-slate-400 max-w-xl mx-auto mb-6 sm:mb-8 px-4">
@@ -583,8 +557,8 @@ export default function LandingPage({ onLogin }) {
           {/* App Preview - Aquí puedes poner tu screenshot */}
           <div className="relative px-2">
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none" />
-            <div className="bg-gradient-to-b from-emerald-500/20 to-transparent p-0.5 sm:p-1 rounded-2xl">
-              <div className="bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-emerald-500/10 border border-slate-800">
+            <div className="p-0.5 sm:p-1 rounded-2xl">
+              <div className="bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-slate-800">
                 <img src="/apptj.png" alt="Trading Journal PRO" className="w-full" />
               </div>
             </div>
@@ -594,14 +568,13 @@ export default function LandingPage({ onLogin }) {
 
       {/* ==================== PROBLEMA - MEJORADO ==================== */}
       <section className="py-12 sm:py-20 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-red-950/30 via-slate-950 to-slate-950" />
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-px bg-slate-800" />
 
         <div className="max-w-4xl mx-auto relative">
           <div className="text-center mb-8 sm:mb-12">
-            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full">
+            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-full">
               <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-red-400 text-xs font-medium">{t.theProblem}</span>
+              <span className="text-slate-300 text-xs font-medium">{t.theProblem}</span>
             </div>
             <h2 className="text-xl sm:text-3xl md:text-4xl font-bold">
               {t.soundsFamiliar.split(' ')[0]} <span className="text-red-400">{t.soundsFamiliar.split(' ').slice(1).join(' ')}</span>
@@ -614,12 +587,8 @@ export default function LandingPage({ onLogin }) {
                 key={i}
                 className="group relative"
               >
-                {/* Borde gradiente en hover */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500/50 to-orange-500/50 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
-
-                <div className="relative flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-slate-900/90 border border-red-500/10 group-hover:border-red-500/30 rounded-xl sm:rounded-2xl transition-all duration-300">
-                  {/* Icono mejorado */}
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-red-500/30 group-hover:to-orange-500/30 transition-all">
+                <div className="relative flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-slate-900 border border-slate-800 group-hover:border-slate-700 rounded-xl sm:rounded-2xl transition-colors duration-300">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-500/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
                     <div className="text-red-400">
                       {problemIcons[i]}
                     </div>
@@ -628,8 +597,8 @@ export default function LandingPage({ onLogin }) {
                   <p className="text-slate-300 text-xs sm:text-sm font-medium flex-1">{problemText}</p>
 
                   {/* X decorativa */}
-                  <div className="w-6 h-6 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                    <X className="w-3 h-3 text-red-400/60" />
+                  <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+                    <X className="w-3 h-3 text-slate-500" />
                   </div>
                 </div>
               </div>
@@ -639,8 +608,8 @@ export default function LandingPage({ onLogin }) {
           {/* Transición visual */}
           <div className="flex justify-center mt-8 sm:mt-12">
             <div className="flex flex-col items-center">
-              <div className="w-px h-6 sm:h-8 bg-gradient-to-b from-red-500/50 to-emerald-500/50" />
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 mt-1">
+              <div className="w-px h-6 sm:h-8 bg-slate-700" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mt-1">
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white rotate-90" />
               </div>
             </div>
@@ -650,16 +619,14 @@ export default function LandingPage({ onLogin }) {
 
       {/* ==================== SOLUCIÓN - MEJORADO ==================== */}
       <section className="py-12 sm:py-20 px-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-emerald-950/5 to-slate-950" />
-        
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-8 sm:mb-14">
-            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 text-xs font-medium">{t.theSolution}</span>
+            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              <span className="text-slate-300 text-xs font-medium">{t.theSolution}</span>
             </div>
-            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Trading Journal PRO</span>
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-white">
+              Trading Journal PRO
             </h2>
             <p className="text-sm sm:text-lg text-slate-400 px-4">
               {t.solutionSubtitle}
@@ -672,21 +639,13 @@ export default function LandingPage({ onLogin }) {
                 key={i}
                 className="group relative"
               >
-                {/* Efecto glow en hover */}
-                <div className={`absolute -inset-0.5 bg-gradient-to-r ${featureIcons[i].gradient} rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-40 blur-sm transition-opacity duration-300`} />
-
-                {/* Card */}
-                <div className="relative p-4 sm:p-6 bg-slate-900/80 backdrop-blur-sm border border-slate-800 group-hover:border-slate-700 rounded-xl sm:rounded-2xl transition-all duration-300 h-full">
-                  {/* Icono colorido */}
-                  <div className={`w-11 h-11 sm:w-14 sm:h-14 bg-gradient-to-br ${featureIcons[i].gradient} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-white shadow-lg group-hover:scale-110 group-hover:rotate-2 transition-all duration-300`}>
+                <div className="relative p-4 sm:p-6 bg-slate-900 border border-slate-800 group-hover:border-blue-500/40 rounded-xl sm:rounded-2xl transition-colors duration-300 h-full">
+                  <div className="w-11 h-11 sm:w-14 sm:h-14 bg-blue-500/10 border border-blue-500/20 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-blue-400">
                     {featureIcons[i].icon}
                   </div>
 
                   <h3 className="text-sm sm:text-lg font-bold mb-1 sm:mb-2 text-white">{feature.title}</h3>
                   <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">{feature.description}</p>
-
-                  {/* Decoración sutil */}
-                  <div className={`absolute top-3 right-3 w-16 h-16 bg-gradient-to-br ${featureIcons[i].gradient} rounded-full opacity-5 blur-xl`} />
                 </div>
               </div>
             ))}
@@ -696,37 +655,32 @@ export default function LandingPage({ onLogin }) {
 
       {/* ==================== SIMULADOR DE FONDEO ==================== */}
       <section className="py-12 sm:py-20 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-amber-950/5 to-slate-950" />
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-px bg-slate-800" />
 
         <div className="max-w-4xl mx-auto relative">
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 rounded-[2rem] blur-xl opacity-50" />
-
-            <div className="relative bg-slate-900/90 border border-amber-500/20 rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 backdrop-blur-sm">
+            <div className="relative bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[2rem] p-6 sm:p-10">
               <div className="grid md:grid-cols-2 gap-6 sm:gap-10 items-center">
                 {/* Texto */}
                 <div>
-                  <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
-                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-amber-400 text-xs font-medium">{t.newFeature}</span>
+                  <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full">
+                    <Trophy className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-blue-400 text-xs font-medium">{t.newFeature}</span>
                   </div>
 
-                  <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4">
+                  <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4 text-white">
                     {t.fundingSimulator}{' '}
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-400">{t.fundingTest}</span>
+                    <span className="text-blue-400">{t.fundingTest}</span>
                   </h2>
 
                   <p className="text-slate-400 text-sm sm:text-base mb-4 sm:mb-6 leading-relaxed">
-                    {t.fundingDesc} <span className="text-amber-400 font-medium">{t.beforeRiskingMoney}</span>
+                    {t.fundingDesc} <span className="text-slate-200 font-medium">{t.beforeRiskingMoney}</span>
                   </p>
 
                   <div className="space-y-2">
                     {t.fundingFeatures.map((item, i) => (
                       <div key={i} className="flex items-center gap-2.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 flex items-center justify-center flex-shrink-0">
-                          <CheckCircle2 className="w-3 h-3 text-white" />
-                        </div>
+                        <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
                         <span className="text-slate-300 text-xs sm:text-sm">{item}</span>
                       </div>
                     ))}
@@ -735,11 +689,11 @@ export default function LandingPage({ onLogin }) {
 
                 {/* Visual */}
                 <div className="relative">
-                  <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 space-y-4">
+                  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
                     {/* Header simulado */}
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
-                        <Trophy className="w-5 h-5 text-white" />
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                        <Trophy className="w-5 h-5 text-blue-400" />
                       </div>
                       <div>
                         <p className="text-white font-bold text-sm">FTMO $100,000</p>
@@ -753,31 +707,28 @@ export default function LandingPage({ onLogin }) {
                         <span className="text-slate-400">{t.profitTarget}</span>
                         <span className="text-emerald-400 font-bold">72%</span>
                       </div>
-                      <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" style={{ width: '72%' }} />
+                      <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: '72%' }} />
                       </div>
                     </div>
 
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700/50">
+                      <div className="bg-slate-900 rounded-xl p-3 border border-slate-800">
                         <p className="text-slate-500 text-[10px] uppercase">{t.balance}</p>
                         <p className="text-white font-bold text-sm">$107,200</p>
                       </div>
-                      <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-700/50">
+                      <div className="bg-slate-900 rounded-xl p-3 border border-slate-800">
                         <p className="text-slate-500 text-[10px] uppercase">{t.ddTotal}</p>
-                        <p className="text-emerald-400 font-bold text-sm">1.8%</p>
+                        <p className="text-white font-bold text-sm">1.8%</p>
                       </div>
                     </div>
 
                     {/* Status */}
-                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
-                      <p className="text-emerald-400 text-xs font-bold">{t.challengeInProgress}</p>
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center">
+                      <p className="text-blue-400 text-xs font-semibold">{t.challengeInProgress}</p>
                     </div>
                   </div>
-
-                  {/* Glow decorativo */}
-                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-amber-500/20 blur-2xl rounded-full" />
                 </div>
               </div>
             </div>
@@ -786,18 +737,18 @@ export default function LandingPage({ onLogin }) {
       </section>
 
       {/* ==================== BENEFICIOS ==================== */}
-      <section className="py-12 sm:py-20 px-4 bg-gradient-to-b from-slate-900/50 to-transparent">
+      <section className="py-12 sm:py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div>
-              <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-5 sm:mb-8">
-                {t.convertData} <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.dataToProfit}</span>
+              <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-5 sm:mb-8 text-white">
+                {t.convertData} <span className="text-blue-400">{t.dataToProfit}</span>
               </h2>
               <div className="space-y-2 sm:space-y-3">
                 {t.benefits.map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 sm:p-4 bg-slate-900/50 rounded-xl border border-slate-800 hover:border-emerald-500/30 transition-colors">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 className="w-4 h-4 text-white" />
+                  <div key={i} className="flex items-center gap-3 p-3 sm:p-4 bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-4 h-4 text-blue-400" />
                     </div>
                     <p className="text-slate-300 text-xs sm:text-sm">{benefit}</p>
                   </div>
@@ -805,21 +756,21 @@ export default function LandingPage({ onLogin }) {
               </div>
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6">
               <div className="space-y-3">
                 {[
-                  { label: t.winRate, value: "68%", color: "from-emerald-400 to-teal-400" },
-                  { label: t.profitFactor, value: "2.4", color: "from-blue-400 to-cyan-400" },
-                  { label: t.totalPoints, value: "+1,250", color: "from-cyan-400 to-blue-400" },
-                  { label: t.bestDay, value: "+$847", color: "from-purple-400 to-pink-400" },
-                  { label: t.growth, value: "+24.5%", color: "from-orange-400 to-amber-400" }
+                  { label: t.winRate, value: "68%", positive: false },
+                  { label: t.profitFactor, value: "2.4", positive: false },
+                  { label: t.totalPoints, value: "+1,250", positive: true },
+                  { label: t.bestDay, value: "+$847", positive: true },
+                  { label: t.growth, value: "+24.5%", positive: true }
                 ].map((stat, i) => (
                   <div
                     key={i}
-                    className="flex justify-between items-center p-3 sm:p-4 bg-slate-800/50 rounded-xl border border-slate-700/50"
+                    className="flex justify-between items-center p-3 sm:p-4 bg-slate-950 rounded-xl border border-slate-800"
                   >
                     <span className="text-slate-400 text-xs sm:text-sm">{stat.label}</span>
-                    <span className={`text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>{stat.value}</span>
+                    <span className={`text-xl sm:text-2xl font-bold tabular-nums ${stat.positive ? 'text-emerald-400' : 'text-white'}`}>{stat.value}</span>
                   </div>
                 ))}
               </div>
@@ -832,8 +783,8 @@ export default function LandingPage({ onLogin }) {
       <section className="py-12 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
-              {t.whatTradersSay} <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.traders}</span>
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-white">
+              {t.whatTradersSay} <span className="text-blue-400">{t.traders}</span>
             </h2>
             <p className="text-slate-400 text-xs sm:text-base">
               {t.realResults}
@@ -842,9 +793,9 @@ export default function LandingPage({ onLogin }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {t.testimonials.map((testimonial, i) => (
-              <div key={i} className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-emerald-500/30 transition-all">
+              <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 hover:border-slate-700 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${testimonial.color} flex items-center justify-center text-white font-bold text-lg`}>
+                  <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200 font-semibold text-base">
                     {testimonial.initials}
                   </div>
                   <div>
@@ -856,11 +807,11 @@ export default function LandingPage({ onLogin }) {
                 </div>
                 <div className="flex gap-0.5 mb-3">
                   {[...Array(5)].map((_, j) => (
-                    <span key={j} className="text-yellow-400 text-sm">★</span>
+                    <span key={j} className="text-amber-400 text-sm">★</span>
                   ))}
                 </div>
                 <p className="text-slate-300 text-sm leading-relaxed mb-3">
-                  "{testimonial.quote} <span className="text-emerald-400 font-medium">{testimonial.highlight}</span>{testimonial.suffix ? ` ${testimonial.suffix}` : ''}"
+                  "{testimonial.quote} <span className="text-white font-medium">{testimonial.highlight}</span>{testimonial.suffix ? ` ${testimonial.suffix}` : ''}"
                 </p>
                 <p className="text-slate-500 text-xs">{testimonial.footer}</p>
               </div>
@@ -873,8 +824,8 @@ export default function LandingPage({ onLogin }) {
       <section id="planes-section" className="py-12 sm:py-20 px-4">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-6 sm:mb-10">
-            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
-              {t.investInYour} <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.success}</span>
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-white">
+              {t.investInYour} <span className="text-blue-400">{t.success}</span>
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm">
               {t.choosePlan}
@@ -882,13 +833,9 @@ export default function LandingPage({ onLogin }) {
           </div>
 
           <div className="relative">
-            {/* Glow animado */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 rounded-[1.5rem] sm:rounded-[2rem] blur-xl opacity-30 animate-pulse" />
-
-            <div className="relative bg-gradient-to-b from-slate-800/95 to-slate-900/95 border border-emerald-500/30 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-center backdrop-blur-sm">
+            <div className="relative bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-center">
               {/* Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 text-xs font-bold rounded-full mb-4 sm:mb-6 border border-emerald-500/20">
-                <Sparkles className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-400 text-xs font-semibold rounded-full mb-4 sm:mb-6 border border-blue-500/20">
                 {t.choosePlanBadge}
               </div>
 
@@ -903,14 +850,14 @@ export default function LandingPage({ onLogin }) {
                       onClick={() => setSelectedPlan(plan.id)}
                       className={`relative w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between ${
                         isSelected
-                          ? 'bg-emerald-500/20 border-emerald-500'
-                          : 'bg-slate-800/50 border-slate-700 hover:border-slate-600 hover:bg-slate-800'
+                          ? 'bg-blue-500/10 border-blue-500'
+                          : 'bg-slate-950 border-slate-800 hover:border-slate-700'
                       }`}
                     >
                       {/* Radio button visual */}
                       <div className="flex items-center gap-3">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                          isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-slate-500'
+                          isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
                         }`}>
                           {isSelected && (
                             <div className="w-2 h-2 bg-white rounded-full" />
@@ -920,10 +867,10 @@ export default function LandingPage({ onLogin }) {
                           <div className={`font-bold text-sm sm:text-base ${isSelected ? 'text-white' : 'text-slate-300'}`}>
                             {plan.name}
                           </div>
-                          <div className={`text-xs ${isSelected ? 'text-emerald-300' : 'text-slate-500'}`}>
+                          <div className={`text-xs ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
                             {plan.duration}
                           </div>
-                          <div className={`text-[10px] flex items-center gap-1 mt-0.5 ${isSelected ? 'text-purple-300' : 'text-purple-400'}`}>
+                          <div className={`text-[10px] flex items-center gap-1 mt-0.5 ${isSelected ? 'text-slate-400' : 'text-slate-500'}`}>
                             <GraduationCap size={10} />
                             <span>{plan.aiQueries} {t.aiAnalysisDay}</span>
                           </div>
@@ -933,14 +880,14 @@ export default function LandingPage({ onLogin }) {
                       {/* Precio y badge */}
                       <div className="flex items-center gap-2">
                         {plan.popular && (
-                          <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                          <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">
                             {t.popular}
                           </span>
                         )}
                         <div className={`px-3 py-1.5 rounded-lg font-black text-lg ${
                           isSelected
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-slate-700 text-slate-200'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-800 text-slate-200'
                         }`}>
                           ${plan.price}
                           <span className="text-xs font-medium opacity-70 ml-0.5">USD</span>
@@ -955,27 +902,21 @@ export default function LandingPage({ onLogin }) {
               <div className="space-y-2 mb-6 text-left">
                 {t.pricingFeatures.map((item, i) => (
                   <div key={i} className="flex items-center gap-2.5 p-2 rounded-lg">
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 className="w-3 h-3 text-white" />
-                    </div>
+                    <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
                     <span className="text-slate-300 text-xs sm:text-sm">{item}</span>
                   </div>
                 ))}
               </div>
 
               {/* Botón de Pago */}
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-500" />
+              <div className="group">
                 <button
                   onClick={handlePayPal}
-                  className="relative w-full bg-gradient-to-r from-[#FFC439] via-[#FFD700] to-[#FFC439] text-black font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden border border-yellow-500/50 shadow-lg shadow-yellow-500/20 px-6 py-3 sm:py-4"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors duration-200 px-6 py-3 sm:py-4 shadow-sm"
                 >
-                  <div className="absolute inset-0 overflow-hidden rounded-xl">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  </div>
-                  <div className="relative flex items-center justify-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     {isPayPalAvailable(selectedPlan) && <img src="/paypal.png" alt="PayPal" className="h-5 sm:h-6 w-auto object-contain" />}
-                    <span className="text-base sm:text-lg font-black">
+                    <span className="text-base sm:text-lg">
                       {t.pay} ${selectedPlanData?.price} USD{isPayPalAvailable(selectedPlan) ? '' : (language === 'es' ? ' por WhatsApp' : ' via WhatsApp')}
                     </span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -1002,22 +943,22 @@ export default function LandingPage({ onLogin }) {
       {/* ==================== FAQ ==================== */}
       <section className="py-12 sm:py-20 px-4 bg-slate-900/50">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-xl sm:text-3xl font-bold text-center mb-6 sm:mb-12">
-            {t.faq} <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.frequent}</span>
+          <h2 className="text-xl sm:text-3xl font-bold text-center mb-6 sm:mb-12 text-white">
+            {t.faq} <span className="text-blue-400">{t.frequent}</span>
           </h2>
 
           <div className="space-y-2 sm:space-y-3">
             {t.faqs.map((faq, i) => (
               <div 
                 key={i} 
-                className="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden"
+                className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full p-3 sm:p-4 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors"
                 >
                   <span className="font-medium pr-3 text-xs sm:text-sm">{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 flex-shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="px-3 sm:px-4 pb-3 sm:pb-4">
@@ -1032,13 +973,9 @@ export default function LandingPage({ onLogin }) {
 
       {/* ==================== CTA FINAL ==================== */}
       <section className="py-12 sm:py-20 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
-        </div>
-
         <div className="max-w-3xl mx-auto text-center relative px-4">
-          <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-6">
-            {t.readyToBe} <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{t.profitable}</span>?
+          <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-6 text-white">
+            {t.readyToBe} <span className="text-blue-400">{t.profitable}</span>?
           </h2>
           <p className="text-sm sm:text-lg text-slate-400 mb-6 sm:mb-8">
             {t.joinTraders}
