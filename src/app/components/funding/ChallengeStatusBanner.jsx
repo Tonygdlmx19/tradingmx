@@ -152,7 +152,7 @@ export default function ChallengeStatusBanner({ estado, nivelRiesgo, metricas, r
           <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                metricas.progresoTarget >= 100 ? 'bg-green-500' : 'bg-amber-500'
+                metricas.progresoTarget >= 100 ? 'bg-green-500' : 'bg-blue-500'
               }`}
               style={{ width: `${Math.min(100, Math.max(0, metricas.progresoTarget))}%` }}
             />

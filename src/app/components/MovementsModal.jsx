@@ -5,6 +5,7 @@ import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import { db } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import useEscapeKey from './useEscapeKey';
 
 export default function MovementsModal({
   isOpen,
@@ -14,6 +15,7 @@ export default function MovementsModal({
   cuentasBroker = [],
   trades = []
 }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
 
@@ -308,8 +310,8 @@ export default function MovementsModal({
           isDark ? 'border-slate-700' : 'border-slate-200'
         }`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
-              <DollarSign size={20} className="text-emerald-500" />
+            <div className={`p-2 rounded-xl ${isDark ? 'bg-green-500/20' : 'bg-green-100'}`}>
+              <DollarSign size={20} className="text-green-500" />
             </div>
             <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
               {t.title}
@@ -333,8 +335,8 @@ export default function MovementsModal({
               onClick={() => setShowForm(true)}
               className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${
                 isDark
-                  ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                  : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                  ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                  : 'bg-green-100 text-green-600 hover:bg-green-200'
               }`}
             >
               <Plus size={18} />
@@ -413,7 +415,7 @@ export default function MovementsModal({
                     placeholder="0.00"
                     value={formData.amount}
                     onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                    className={`w-full p-3 pl-8 border rounded-xl text-lg font-bold outline-none focus:border-emerald-500 ${
+                    className={`w-full p-3 pl-8 border rounded-xl text-lg font-bold outline-none focus:border-green-500 ${
                       isDark
                         ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                         : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
@@ -435,7 +437,7 @@ export default function MovementsModal({
                     required
                     value={formData.fecha}
                     onChange={(e) => setFormData(prev => ({ ...prev, fecha: e.target.value }))}
-                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-emerald-500 ${
+                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-green-500 ${
                       isDark
                         ? 'bg-slate-600 border-slate-500 text-white'
                         : 'bg-white border-slate-200 text-slate-700'
@@ -452,7 +454,7 @@ export default function MovementsModal({
                     type="time"
                     value={formData.hora}
                     onChange={(e) => setFormData(prev => ({ ...prev, hora: e.target.value }))}
-                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-emerald-500 ${
+                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-green-500 ${
                       isDark
                         ? 'bg-slate-600 border-slate-500 text-white'
                         : 'bg-white border-slate-200 text-slate-700'
@@ -473,7 +475,7 @@ export default function MovementsModal({
                     <select
                       value={formData.fromCuentaId}
                       onChange={(e) => setFormData(prev => ({ ...prev, fromCuentaId: e.target.value }))}
-                      className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-emerald-500 ${
+                      className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-green-500 ${
                         isDark
                           ? 'bg-slate-600 border-slate-500 text-white'
                           : 'bg-white border-slate-200 text-slate-700'
@@ -501,7 +503,7 @@ export default function MovementsModal({
                     <select
                       value={formData.toCuentaId}
                       onChange={(e) => setFormData(prev => ({ ...prev, toCuentaId: e.target.value }))}
-                      className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-emerald-500 ${
+                      className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-green-500 ${
                         isDark
                           ? 'bg-slate-600 border-slate-500 text-white'
                           : 'bg-white border-slate-200 text-slate-700'
@@ -531,7 +533,7 @@ export default function MovementsModal({
                   <select
                     value={formData.cuentaId}
                     onChange={(e) => setFormData(prev => ({ ...prev, cuentaId: e.target.value }))}
-                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-emerald-500 ${
+                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-green-500 ${
                       isDark
                         ? 'bg-slate-600 border-slate-500 text-white'
                         : 'bg-white border-slate-200 text-slate-700'
@@ -554,9 +556,9 @@ export default function MovementsModal({
 
               {/* Exchange Rate - only for transfers between different currencies */}
               {isDifferentCurrency() && (
-                <div className={`p-3 rounded-xl border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
+                <div className={`p-3 rounded-xl border ${isDark ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[10px] font-bold uppercase ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                    <span className={`text-[10px] font-bold uppercase ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                       {t.differentCurrencies}: {getAccountCurrency(formData.fromCuentaId)} → {getAccountCurrency(formData.toCuentaId)}
                     </span>
                   </div>
@@ -572,7 +574,7 @@ export default function MovementsModal({
                         placeholder="Ej: 17.50"
                         value={formData.tipoCambio}
                         onChange={(e) => setFormData(prev => ({ ...prev, tipoCambio: e.target.value }))}
-                        className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-amber-500 ${
+                        className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
                           isDark
                             ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                             : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -584,7 +586,7 @@ export default function MovementsModal({
                         {t.convertedAmount}
                       </label>
                       <div className={`p-2 border rounded-xl text-sm font-bold ${
-                        isDark ? 'bg-slate-700 border-slate-600 text-amber-400' : 'bg-amber-100 border-amber-200 text-amber-700'
+                        isDark ? 'bg-slate-700 border-slate-600 text-blue-400' : 'bg-blue-100 border-blue-200 text-blue-700'
                       }`}>
                         {getAccountCurrency(formData.toCuentaId) === 'EUR' ? '€' :
                          getAccountCurrency(formData.toCuentaId) === 'GBP' ? '£' :
@@ -608,7 +610,7 @@ export default function MovementsModal({
                   placeholder={t.notesPlaceholder}
                   value={formData.notas}
                   onChange={(e) => setFormData(prev => ({ ...prev, notas: e.target.value }))}
-                  className={`w-full p-2 border rounded-xl text-sm outline-none focus:border-emerald-500 ${
+                  className={`w-full p-2 border rounded-xl text-sm outline-none focus:border-green-500 ${
                     isDark
                       ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                       : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -632,7 +634,7 @@ export default function MovementsModal({
                 <button
                   type="submit"
                   disabled={isSubmitting || !formData.amount}
-                  className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm rounded-xl disabled:opacity-50 transition-colors"
+                  className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? '...' : t.save}
                 </button>
@@ -683,7 +685,7 @@ export default function MovementsModal({
                         </span>
                         {movement.broker && (
                           <span className={`text-[10px] flex items-center gap-1 ${
-                            isDark ? 'text-purple-400' : 'text-purple-500'
+                            isDark ? 'text-blue-400' : 'text-blue-500'
                           }`}>
                             <Briefcase size={10} />
                             {movement.broker}

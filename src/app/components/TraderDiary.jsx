@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../../firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { X, BookOpen, Loader2, Heart, Brain, TrendingUp, MessageCircle, Sparkles, Calendar, ChevronLeft, ChevronRight, PenLine, History } from 'lucide-react';
+import useEscapeKey from './useEscapeKey';
 
 // Emails con consultas ilimitadas
 const UNLIMITED_AI_EMAILS = ['tonytrader19@gmail.com'];
@@ -44,6 +45,7 @@ export default function TraderDiary({
   userType,
   userPlan
 }) {
+  useEscapeKey(onClose, isOpen);
   const [entry, setEntry] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -394,9 +396,9 @@ export default function TraderDiary({
           }}
           className={`h-8 w-8 rounded-full flex items-center justify-center text-sm transition-all
             ${hasEntry
-              ? 'bg-purple-500 text-white hover:bg-purple-600 cursor-pointer'
+              ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer'
               : 'text-slate-400 hover:bg-slate-700/50'}
-            ${isToday && !hasEntry ? 'ring-2 ring-purple-500/50' : ''}
+            ${isToday && !hasEntry ? 'ring-2 ring-blue-500/50' : ''}
           `}
         >
           {day}
@@ -420,7 +422,7 @@ export default function TraderDiary({
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-slate-700">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6">
+        <div className="bg-blue-600 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 p-2 rounded-xl">
@@ -428,7 +430,7 @@ export default function TraderDiary({
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">{t.title}</h2>
-                <p className="text-purple-200 text-sm">{t.subtitle}</p>
+                <p className="text-blue-200 text-sm">{t.subtitle}</p>
               </div>
             </div>
             <button
@@ -446,7 +448,7 @@ export default function TraderDiary({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'write'
                   ? 'bg-white/20 text-white'
-                  : 'text-purple-200 hover:bg-white/10'
+                  : 'text-blue-200 hover:bg-white/10'
               }`}
             >
               <PenLine size={16} />
@@ -457,7 +459,7 @@ export default function TraderDiary({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'history'
                   ? 'bg-white/20 text-white'
-                  : 'text-purple-200 hover:bg-white/10'
+                  : 'text-blue-200 hover:bg-white/10'
               }`}
             >
               <History size={16} />
@@ -473,11 +475,11 @@ export default function TraderDiary({
           {/* Query counter (only show in write tab) */}
           {activeTab === 'write' && (
             <div className="mt-4 flex items-center gap-2 text-sm">
-              <Sparkles size={14} className="text-yellow-300" />
+              <Sparkles size={14} className="text-white/80" />
               {hasUnlimitedQueries() ? (
-                <span className="text-purple-200">{t.unlimited}</span>
+                <span className="text-blue-200">{t.unlimited}</span>
               ) : (
-                <span className="text-purple-200">
+                <span className="text-blue-200">
                   {remaining} {t.queriesRemaining}
                 </span>
               )}
@@ -509,14 +511,14 @@ export default function TraderDiary({
                 value={entry}
                 onChange={(e) => setEntry(e.target.value)}
                 placeholder={t.placeholder}
-                className="w-full h-48 bg-slate-700/50 border border-slate-600 rounded-xl p-4 text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full h-48 bg-slate-700/50 border border-slate-600 rounded-xl p-4 text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
 
               {/* Tips */}
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {t.tips.map((tip, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-slate-400">
-                    <Heart size={12} className="text-pink-400" />
+                    <Heart size={12} className="text-blue-400" />
                     {tip}
                   </div>
                 ))}
@@ -561,7 +563,7 @@ export default function TraderDiary({
               <button
                 onClick={handleAnalyze}
                 disabled={!entry.trim() || isAnalyzing || (remaining <= 0 && !hasUnlimitedQueries())}
-                className="mt-6 w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-slate-600 disabled:to-slate-600 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all"
+                className="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all"
               >
                 <Brain size={18} />
                 {t.analyze}
@@ -574,8 +576,8 @@ export default function TraderDiary({
             <div className="flex flex-col items-center justify-center py-16">
               {/* Animated brain icon */}
               <div className="relative">
-                <div className="absolute inset-0 bg-purple-500/30 rounded-full animate-ping"></div>
-                <div className="relative bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-full">
+                <div className="absolute inset-0 bg-blue-500/30 rounded-full animate-ping"></div>
+                <div className="relative bg-blue-500 p-6 rounded-full">
                   <Brain size={40} className="text-white animate-pulse" />
                 </div>
               </div>
@@ -584,7 +586,7 @@ export default function TraderDiary({
               <div className="mt-8 text-center">
                 <p
                   key={currentPhrase}
-                  className="text-lg text-purple-300 font-medium animate-fade-in"
+                  className="text-lg text-blue-300 font-medium animate-fade-in"
                 >
                   {phrases[currentPhrase]}
                 </p>
@@ -593,7 +595,7 @@ export default function TraderDiary({
                     <div
                       key={i}
                       className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        i === currentPhrase ? 'bg-purple-500 scale-125' : 'bg-slate-600'
+                        i === currentPhrase ? 'bg-blue-500 scale-125' : 'bg-slate-600'
                       }`}
                     />
                   ))}
@@ -602,7 +604,7 @@ export default function TraderDiary({
 
               {/* Loading bar */}
               <div className="mt-8 w-64 h-1 bg-slate-700 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 animate-loading-bar"></div>
+                <div className="h-full bg-blue-500 animate-loading-bar"></div>
               </div>
             </div>
           )}
@@ -612,7 +614,7 @@ export default function TraderDiary({
             <>
               {/* Saved indicator */}
               {savingEntry ? (
-                <div className="mb-4 flex items-center gap-2 text-sm text-purple-300">
+                <div className="mb-4 flex items-center gap-2 text-sm text-blue-300">
                   <Loader2 size={14} className="animate-spin" />
                   Guardando...
                 </div>
@@ -624,19 +626,19 @@ export default function TraderDiary({
               )}
 
               {/* Feedback display */}
-              <div className="bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/30 rounded-xl p-5">
+              <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <MessageCircle size={18} className="text-purple-400" />
-                  <span className="text-purple-300 font-medium">{t.mentorResponse}:</span>
+                  <MessageCircle size={18} className="text-blue-400" />
+                  <span className="text-blue-300 font-medium">{t.mentorResponse}:</span>
                 </div>
                 <div className="prose prose-invert prose-sm max-w-none">
                   <div
                     className="text-slate-200 whitespace-pre-wrap leading-relaxed"
                     dangerouslySetInnerHTML={{
                       __html: feedback
-                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
-                        .replace(/## (.*?)(\n|$)/g, '<h3 class="text-lg font-semibold text-purple-300 mt-4 mb-2">$1</h3>')
-                        .replace(/### (.*?)(\n|$)/g, '<h4 class="text-base font-medium text-indigo-300 mt-3 mb-1">$1</h4>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
+                        .replace(/## (.*?)(\n|$)/g, '<h3 class="text-lg font-semibold text-blue-300 mt-4 mb-2">$1</h3>')
+                        .replace(/### (.*?)(\n|$)/g, '<h4 class="text-base font-medium text-blue-300 mt-3 mb-1">$1</h4>')
                     }}
                   />
                 </div>
@@ -715,7 +717,7 @@ export default function TraderDiary({
                       className="w-full text-left bg-slate-700/30 hover:bg-slate-700/50 rounded-xl p-4 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-purple-400">
+                        <span className="text-xs text-blue-400">
                           {new Date(entryItem.createdAt).toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US', {
                             weekday: 'long',
                             day: 'numeric',
@@ -741,7 +743,7 @@ export default function TraderDiary({
             <>
               <button
                 onClick={() => setSelectedEntry(null)}
-                className="flex items-center gap-2 text-purple-400 hover:text-purple-300 mb-4 transition-colors"
+                className="flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-4 transition-colors"
               >
                 <ChevronLeft size={18} />
                 {t.back}
@@ -765,19 +767,19 @@ export default function TraderDiary({
               </div>
 
               {/* Feedback */}
-              <div className="bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/30 rounded-xl p-5">
+              <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <MessageCircle size={18} className="text-purple-400" />
-                  <span className="text-purple-300 font-medium">{t.mentorResponse}:</span>
+                  <MessageCircle size={18} className="text-blue-400" />
+                  <span className="text-blue-300 font-medium">{t.mentorResponse}:</span>
                 </div>
                 <div className="prose prose-invert prose-sm max-w-none">
                   <div
                     className="text-slate-200 whitespace-pre-wrap leading-relaxed"
                     dangerouslySetInnerHTML={{
                       __html: selectedEntry.feedback
-                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
-                        .replace(/## (.*?)(\n|$)/g, '<h3 class="text-lg font-semibold text-purple-300 mt-4 mb-2">$1</h3>')
-                        .replace(/### (.*?)(\n|$)/g, '<h4 class="text-base font-medium text-indigo-300 mt-3 mb-1">$1</h4>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
+                        .replace(/## (.*?)(\n|$)/g, '<h3 class="text-lg font-semibold text-blue-300 mt-4 mb-2">$1</h3>')
+                        .replace(/### (.*?)(\n|$)/g, '<h4 class="text-base font-medium text-blue-300 mt-3 mb-1">$1</h4>')
                     }}
                   />
                 </div>

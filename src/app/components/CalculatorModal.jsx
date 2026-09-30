@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { X, Calculator, Delete } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import useEscapeKey from './useEscapeKey';
 
 export default function CalculatorModal({ isOpen, onClose }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
 

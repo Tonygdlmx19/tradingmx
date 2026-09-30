@@ -223,7 +223,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
   return (
     <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
       <h3 className={`text-sm font-bold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-        <PlusCircle size={16} className="text-amber-500"/>
+        <PlusCircle size={16} className="text-blue-500"/>
         {t.registerTrade}
       </h3>
 
@@ -254,7 +254,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
             <select
               value={form.activo}
               onChange={e => setForm({...form, activo: e.target.value})}
-              className={`w-full p-2.5 border rounded-xl font-bold text-sm outline-none focus:border-amber-500 ${
+              className={`w-full p-2.5 border rounded-xl font-bold text-sm outline-none focus:border-blue-500 ${
                 isDark
                   ? 'bg-slate-700 border-slate-600 text-white'
                   : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -277,7 +277,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
               min="0.01"
               value={form.lotes}
               onChange={e => setForm({...form, lotes: e.target.value})}
-              className={`w-full p-2.5 border rounded-xl font-bold text-sm outline-none focus:border-amber-500 ${
+              className={`w-full p-2.5 border rounded-xl font-bold text-sm outline-none focus:border-blue-500 ${
                 isDark
                   ? 'bg-slate-700 border-slate-600 text-white'
                   : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -356,7 +356,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
                 placeholder="0.00"
                 value={form.res}
                 onChange={e => setForm({...form, res: e.target.value})}
-                className={`w-full pl-10 p-2.5 border rounded-xl font-mono font-bold outline-none focus:border-amber-500 ${
+                className={`w-full pl-10 p-2.5 border rounded-xl font-mono font-bold outline-none focus:border-blue-500 ${
                   isDark
                     ? 'bg-slate-700 border-slate-600 text-white'
                     : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -379,7 +379,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
                 <div key={index} className={`p-3 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="flex gap-3 items-start">
                     {/* Preview de imagen */}
-                    <div className="relative w-20 h-14 rounded-lg overflow-hidden border border-amber-500 flex-shrink-0">
+                    <div className="relative w-20 h-14 rounded-lg overflow-hidden border border-blue-500 flex-shrink-0">
                       <img src={img.data} alt={`Captura ${index + 1}`} className="w-full h-full object-cover"/>
                     </div>
 
@@ -391,7 +391,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
                       <select
                         value={img.temporalidad}
                         onChange={(e) => handleTemporalidadChange(index, e.target.value)}
-                        className={`w-full p-2 border rounded-lg text-sm font-bold outline-none focus:border-amber-500 ${
+                        className={`w-full p-2 border rounded-lg text-sm font-bold outline-none focus:border-blue-500 ${
                           isDark
                             ? 'bg-slate-600 border-slate-500 text-white'
                             : 'bg-white border-slate-200 text-slate-700'
@@ -438,8 +438,8 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
                 htmlFor="funding-add-image"
                 className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                   isDark
-                    ? 'border-slate-600 hover:border-amber-500 text-slate-400 hover:text-amber-400'
-                    : 'border-slate-300 hover:border-amber-500 text-slate-400 hover:text-amber-500'
+                    ? 'border-slate-600 hover:border-blue-500 text-slate-400 hover:text-blue-400'
+                    : 'border-slate-300 hover:border-blue-500 text-slate-400 hover:text-blue-500'
                 }`}
               >
                 <PlusCircle size={18}/>
@@ -468,7 +468,7 @@ export default function FundingTradeForm({ onAddTrade, reglas, metricas, disable
           disabled={!form.res || disabled}
           className={`w-full py-3 rounded-xl font-bold transition-all ${
             form.res && !disabled
-              ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg active:scale-[0.98]'
+              ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg active:scale-[0.98]'
               : isDark ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
           }`}
         >

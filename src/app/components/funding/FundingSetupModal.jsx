@@ -4,8 +4,10 @@ import { Trophy, X, Building2, DollarSign, Target, Clock, TrendingDown, Calendar
 import { useTheme } from '../ThemeProvider';
 import { useLanguage } from '../LanguageProvider';
 import { FUNDING_PRESETS, getEmpresas, presetToReglas, crearReglasPersonalizadas } from '../../constants/fundingPresets';
+import useEscapeKey from '../useEscapeKey';
 
 export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
 
@@ -132,7 +134,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className={`text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            <Trophy size={20} className="text-amber-500"/> {t.title}
+            <Trophy size={20} className="text-blue-500"/> {t.title}
           </h3>
           <button
             onClick={onClose}
@@ -149,7 +151,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
               onClick={() => setModo('preset')}
               className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition-all ${
                 modo === 'preset'
-                  ? 'bg-amber-500 text-white shadow-lg'
+                  ? 'bg-blue-500 text-white shadow-lg'
                   : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
             >
@@ -160,7 +162,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
               onClick={() => setModo('custom')}
               className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition-all ${
                 modo === 'custom'
-                  ? 'bg-amber-500 text-white shadow-lg'
+                  ? 'bg-blue-500 text-white shadow-lg'
                   : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
             >
@@ -183,7 +185,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                     setEmpresaSeleccionada(e.target.value);
                     setCuentaSeleccionada('');
                   }}
-                  className={`w-full p-3 border rounded-xl font-bold outline-none focus:border-amber-500 transition-colors ${
+                  className={`w-full p-3 border rounded-xl font-bold outline-none focus:border-blue-500 transition-colors ${
                     isDark
                       ? 'bg-slate-700 border-slate-600 text-white'
                       : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -214,7 +216,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                         onClick={() => setCuentaSeleccionada(idx.toString())}
                         className={`py-2.5 px-3 rounded-xl font-bold text-sm transition-all ${
                           cuentaSeleccionada === idx.toString()
-                            ? 'bg-amber-500 text-white shadow-lg'
+                            ? 'bg-blue-500 text-white shadow-lg'
                             : isDark
                               ? 'bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600'
                               : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
@@ -243,7 +245,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                     type="number"
                     value={customConfig.capital}
                     onChange={e => setCustomConfig({...customConfig, capital: Number(e.target.value)})}
-                    className={`w-full pl-8 p-2.5 border rounded-xl font-mono font-bold outline-none focus:border-amber-500 transition-colors ${
+                    className={`w-full pl-8 p-2.5 border rounded-xl font-mono font-bold outline-none focus:border-blue-500 transition-colors ${
                       isDark
                         ? 'bg-slate-700 border-slate-600 text-white'
                         : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -264,7 +266,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                       type="number"
                       value={customConfig.profitTarget}
                       onChange={e => setCustomConfig({...customConfig, profitTarget: Number(e.target.value)})}
-                      className={`w-full pr-8 p-2.5 border rounded-xl font-bold outline-none focus:border-amber-500 transition-colors ${
+                      className={`w-full pr-8 p-2.5 border rounded-xl font-bold outline-none focus:border-blue-500 transition-colors ${
                         isDark
                           ? 'bg-slate-700 border-slate-600 text-white'
                           : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -284,7 +286,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                       type="number"
                       value={customConfig.maxDDDiario}
                       onChange={e => setCustomConfig({...customConfig, maxDDDiario: Number(e.target.value)})}
-                      className={`w-full pr-8 p-2.5 border rounded-xl font-bold outline-none focus:border-amber-500 transition-colors ${
+                      className={`w-full pr-8 p-2.5 border rounded-xl font-bold outline-none focus:border-blue-500 transition-colors ${
                         isDark
                           ? 'bg-slate-700 border-slate-600 text-white'
                           : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -304,7 +306,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                       type="number"
                       value={customConfig.maxDDTotal}
                       onChange={e => setCustomConfig({...customConfig, maxDDTotal: Number(e.target.value)})}
-                      className={`w-full pr-8 p-2.5 border rounded-xl font-bold outline-none focus:border-amber-500 transition-colors ${
+                      className={`w-full pr-8 p-2.5 border rounded-xl font-bold outline-none focus:border-blue-500 transition-colors ${
                         isDark
                           ? 'bg-slate-700 border-slate-600 text-white'
                           : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -323,7 +325,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                     type="number"
                     value={customConfig.diasMin}
                     onChange={e => setCustomConfig({...customConfig, diasMin: Number(e.target.value)})}
-                    className={`w-full p-2.5 border rounded-xl font-bold outline-none focus:border-amber-500 transition-colors ${
+                    className={`w-full p-2.5 border rounded-xl font-bold outline-none focus:border-blue-500 transition-colors ${
                       isDark
                         ? 'bg-slate-700 border-slate-600 text-white'
                         : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -341,7 +343,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
                       type="number"
                       value={customConfig.tiempoLimite}
                       onChange={e => setCustomConfig({...customConfig, tiempoLimite: Number(e.target.value)})}
-                      className={`w-full pr-14 p-2.5 border rounded-xl font-bold outline-none focus:border-amber-500 transition-colors ${
+                      className={`w-full pr-14 p-2.5 border rounded-xl font-bold outline-none focus:border-blue-500 transition-colors ${
                         isDark
                           ? 'bg-slate-700 border-slate-600 text-white'
                           : 'bg-slate-50 border-slate-200 text-slate-700'
@@ -356,8 +358,8 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
 
           {/* Vista previa de reglas */}
           {reglas && (
-            <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-amber-50 border-amber-100'}`}>
-              <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+            <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-blue-50 border-blue-100'}`}>
+              <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                 <Target size={14}/> {t.challengeSummary}
               </h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -406,7 +408,7 @@ export default function FundingSetupModal({ isOpen, onClose, onCreateChallenge }
             disabled={!canCreate || creating}
             className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg ${
               canCreate && !creating
-                ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-[0.98]'
+                ? 'bg-blue-500 hover:bg-blue-600 text-white active:scale-[0.98]'
                 : isDark ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >

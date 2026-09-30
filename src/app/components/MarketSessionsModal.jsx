@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { X, Clock, MapPin } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import useEscapeKey from './useEscapeKey';
 
 // Trading Sessions in UTC with city info
 const SESSIONS = [
@@ -49,10 +50,10 @@ const SESSIONS = [
 ];
 
 const SESSION_COLORS = {
-  blue: { bg: 'bg-blue-500', bgLight: 'bg-blue-500/30', border: 'border-blue-500', text: 'text-blue-500' },
-  pink: { bg: 'bg-pink-500', bgLight: 'bg-pink-500/30', border: 'border-pink-500', text: 'text-pink-500' },
-  green: { bg: 'bg-green-500', bgLight: 'bg-green-500/30', border: 'border-green-500', text: 'text-green-500' },
-  orange: { bg: 'bg-orange-500', bgLight: 'bg-orange-500/30', border: 'border-orange-500', text: 'text-orange-500' },
+  blue:   { bg: 'bg-blue-400', bgLight: 'bg-blue-400/30', border: 'border-blue-400', text: 'text-blue-400' },
+  pink:   { bg: 'bg-blue-600', bgLight: 'bg-blue-600/30', border: 'border-blue-600', text: 'text-blue-600' },
+  green:  { bg: 'bg-slate-400', bgLight: 'bg-slate-400/30', border: 'border-slate-400', text: 'text-slate-400' },
+  orange: { bg: 'bg-blue-800', bgLight: 'bg-blue-800/40', border: 'border-blue-800', text: 'text-blue-700' },
 };
 
 function isSessionActive(session, utcHour) {
@@ -63,6 +64,7 @@ function isSessionActive(session, utcHour) {
 }
 
 export default function MarketSessionsModal({ isOpen, onClose }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -339,11 +341,11 @@ export default function MarketSessionsModal({ isOpen, onClose }) {
           </div>
 
           {/* Overlap Info */}
-          <div className={`p-3 rounded-xl border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
-            <p className={`text-xs font-bold mb-1 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-              💡 {t.overlap} = {t.highVolatility}
+          <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-500/10 border-slate-500/30' : 'bg-slate-50 border-slate-200'}`}>
+            <p className={`text-xs font-bold mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              {t.overlap} = {t.highVolatility}
             </p>
-            <p className={`text-[11px] ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
+            <p className={`text-[11px] ${isDark ? 'text-slate-300/80' : 'text-slate-700'}`}>
               {language === 'es'
                 ? 'Londres + New York (13:00-16:00 UTC) es el período de mayor volumen y volatilidad.'
                 : 'London + New York (13:00-16:00 UTC) is the highest volume and volatility period.'}

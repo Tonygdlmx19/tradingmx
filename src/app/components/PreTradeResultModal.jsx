@@ -3,6 +3,7 @@ import { X, TrendingUp, TrendingDown, AlertTriangle, Target, Shield, ChevronRigh
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import useEscapeKey from './useEscapeKey';
 
 export default function PreTradeResultModal({
   isOpen,
@@ -14,6 +15,7 @@ export default function PreTradeResultModal({
   timeframe,
   preTradeImages = []
 }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -81,32 +83,32 @@ export default function PreTradeResultModal({
     // Add emojis to key sections
     let formatted = text
       // Headers and sections
-      .replace(/##\s*ANÁLISIS DEL SETUP/gi, '## 🔍 ANÁLISIS DEL SETUP')
-      .replace(/##\s*SETUP ANALYSIS/gi, '## 🔍 SETUP ANALYSIS')
-      .replace(/##\s*📊\s*IDEA DE TRADE/gi, '## 💡 IDEA DE TRADE')
-      .replace(/##\s*📊\s*TRADE IDEA/gi, '## 💡 TRADE IDEA')
+      .replace(/##\s*ANÁLISIS DEL SETUP/gi, '## ANÁLISIS DEL SETUP')
+      .replace(/##\s*SETUP ANALYSIS/gi, '## SETUP ANALYSIS')
+      .replace(/##\s*📊\s*IDEA DE TRADE/gi, '## IDEA DE TRADE')
+      .replace(/##\s*📊\s*TRADE IDEA/gi, '## TRADE IDEA')
       // Signals
       .replace(/\*\*Señales a favor\*\*/gi, '**✅ Señales a favor**')
       .replace(/\*\*Signals in favor\*\*/gi, '**✅ Signals in favor**')
       .replace(/\*\*Señales en contra\*\*/gi, '**⚠️ Señales en contra**')
       .replace(/\*\*Signals against\*\*/gi, '**⚠️ Signals against**')
       // Sentiment
-      .replace(/\*\*Sentimiento de mercado\*\*/gi, '**📰 Sentimiento de mercado**')
-      .replace(/\*\*Market sentiment\*\*/gi, '**📰 Market sentiment**')
+      .replace(/\*\*Sentimiento de mercado\*\*/gi, '**Sentimiento de mercado**')
+      .replace(/\*\*Market sentiment\*\*/gi, '**Market sentiment**')
       // Direction
-      .replace(/\*\*Dirección sugerida:\*\*\s*LONG/gi, '**📈 Dirección sugerida:** LONG')
-      .replace(/\*\*Suggested direction:\*\*\s*LONG/gi, '**📈 Suggested direction:** LONG')
-      .replace(/\*\*Dirección sugerida:\*\*\s*SHORT/gi, '**📉 Dirección sugerida:** SHORT')
-      .replace(/\*\*Suggested direction:\*\*\s*SHORT/gi, '**📉 Suggested direction:** SHORT')
+      .replace(/\*\*Dirección sugerida:\*\*\s*LONG/gi, '**Dirección sugerida:** LONG')
+      .replace(/\*\*Suggested direction:\*\*\s*LONG/gi, '**Suggested direction:** LONG')
+      .replace(/\*\*Dirección sugerida:\*\*\s*SHORT/gi, '**Dirección sugerida:** SHORT')
+      .replace(/\*\*Suggested direction:\*\*\s*SHORT/gi, '**Suggested direction:** SHORT')
       // Risk/Reward
       .replace(/\*\*Ratio Riesgo\/Beneficio:\*\*/gi, '**⚖️ Ratio Riesgo/Beneficio:**')
       .replace(/\*\*Risk\/Reward Ratio:\*\*/gi, '**⚖️ Risk/Reward Ratio:**')
       // Management
-      .replace(/\*\*Gestión sugerida:\*\*/gi, '**🎯 Gestión sugerida:**')
-      .replace(/\*\*Suggested management:\*\*/gi, '**🎯 Suggested management:**')
+      .replace(/\*\*Gestión sugerida:\*\*/gi, '**Gestión sugerida:**')
+      .replace(/\*\*Suggested management:\*\*/gi, '**Suggested management:**')
       // History
-      .replace(/\*\*Basado en tu historial\*\*/gi, '**📚 Basado en tu historial**')
-      .replace(/\*\*Based on your history\*\*/gi, '**📚 Based on your history**');
+      .replace(/\*\*Basado en tu historial\*\*/gi, '**Basado en tu historial**')
+      .replace(/\*\*Based on your history\*\*/gi, '**Based on your history**');
 
     return formatted;
   };
@@ -122,7 +124,7 @@ export default function PreTradeResultModal({
       if (line.startsWith('## ')) {
         return (
           <h3 key={index} className={`text-base font-bold mt-4 mb-2 pb-2 border-b ${
-            isDark ? 'text-purple-400 border-purple-500/30' : 'text-purple-600 border-purple-200'
+            isDark ? 'text-blue-400 border-blue-500/30' : 'text-blue-600 border-blue-200'
           }`}>
             {line.replace('## ', '')}
           </h3>
@@ -147,7 +149,7 @@ export default function PreTradeResultModal({
       if (line.trim().startsWith('- ') || line.trim().startsWith('• ')) {
         return (
           <p key={index} className={`text-sm mb-1 ml-3 flex items-start gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-            <ChevronRight size={14} className="mt-1 flex-shrink-0 text-purple-500" />
+            <ChevronRight size={14} className="mt-1 flex-shrink-0 text-blue-500" />
             <span>{line.replace(/^[\s]*[-•]\s*/, '')}</span>
           </p>
         );
@@ -187,12 +189,12 @@ export default function PreTradeResultModal({
         {/* Header */}
         <div className={`flex-shrink-0 px-4 py-3 border-b flex items-center justify-between ${
           isDark
-            ? 'bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-500/30'
-            : 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200'
+            ? 'bg-blue-900/50 border-blue-500/30'
+            : 'bg-blue-50 border-blue-200'
         }`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${isDark ? 'bg-purple-500/20' : 'bg-purple-100'}`}>
-              <Lightbulb size={20} className="text-purple-500" />
+            <div className={`p-2 rounded-xl ${isDark ? 'bg-blue-500/20' : 'bg-blue-100'}`}>
+              <Lightbulb size={20} className="text-blue-500" />
             </div>
             <div>
               <h2 className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>
@@ -221,14 +223,14 @@ export default function PreTradeResultModal({
               preTradeImages.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
             }`}>
               {preTradeImages.map((img, index) => (
-                <div key={index} className="relative rounded-lg overflow-hidden border-2 border-purple-500/50">
+                <div key={index} className="relative rounded-lg overflow-hidden border-2 border-blue-500/50">
                   <img
                     src={img.base64}
                     alt={`Chart ${index + 1}`}
                     className="w-full h-32 object-cover"
                   />
                   <span className={`absolute bottom-1 left-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                    isDark ? 'bg-slate-900/80 text-purple-400' : 'bg-white/90 text-purple-600'
+                    isDark ? 'bg-slate-900/80 text-blue-400' : 'bg-white/90 text-blue-600'
                   }`}>
                     {img.timeframe}
                   </span>
@@ -262,7 +264,7 @@ export default function PreTradeResultModal({
           )}
           {timeframe && (
             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${
-              isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+              isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
             }`}>
               <Clock size={12} />
               {timeframe}
@@ -270,7 +272,7 @@ export default function PreTradeResultModal({
           )}
           {session && (
             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${
-              isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+              isDark ? 'bg-slate-500/20 text-slate-400' : 'bg-slate-100 text-slate-600'
             }`}>
               <Globe size={12} />
               {session}
@@ -291,8 +293,8 @@ export default function PreTradeResultModal({
           )}
 
           {/* Disclaimer inside content so it scrolls */}
-          <div className={`mt-4 p-3 rounded-xl ${isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'}`}>
-            <p className={`text-[10px] ${isDark ? 'text-amber-400/80' : 'text-amber-600'}`}>
+          <div className={`mt-4 p-3 rounded-xl ${isDark ? 'bg-slate-500/10 border border-slate-500/20' : 'bg-slate-50 border border-slate-200'}`}>
+            <p className={`text-[10px] ${isDark ? 'text-slate-400/80' : 'text-slate-600'}`}>
               ⚠️ {t.disclaimer}
             </p>
           </div>
@@ -317,7 +319,7 @@ export default function PreTradeResultModal({
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl text-xs font-bold bg-purple-500 hover:bg-purple-600 text-white transition-colors"
+            className="px-6 py-2.5 rounded-xl text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white transition-colors"
           >
             {t.close}
           </button>

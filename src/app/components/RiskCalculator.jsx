@@ -530,14 +530,14 @@ export default function RiskCalculator({ balance }) {
         {/* Spread (Forex y Sintéticos Weltrade) */}
         {(isForex(activo) || isSyntheticWeltrade(activo)) && (
           <div className="space-y-1">
-            <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+            <label className={`text-[10px] uppercase font-bold pl-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               {isSyntheticWeltrade(activo) ? t.spreadPoints : t.spreadPips}
             </label>
             <input
               type="number"
               step="0.1"
-              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-amber-500 ${
-                isDark ? 'bg-slate-800 border-amber-700/50 text-amber-400 placeholder:text-amber-700/50' : 'bg-amber-50 border-amber-200 text-amber-700 placeholder:text-amber-400'
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-slate-500 ${
+                isDark ? 'bg-slate-800 border-slate-700/50 text-slate-400 placeholder:text-slate-700/50' : 'bg-slate-50 border-slate-200 text-slate-700 placeholder:text-slate-400'
               }`}
               value={spread}
               onChange={e => setSpread(e.target.value)}
@@ -549,14 +549,14 @@ export default function RiskCalculator({ balance }) {
         {/* Riesgo % y USD */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className={`text-[10px] uppercase font-bold pl-1 flex items-center ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+            <label className={`text-[10px] uppercase font-bold pl-1 flex items-center ${isDark ? 'text-green-400' : 'text-green-600'}`}>
               <Percent size={10} className="mr-1"/> {t.riskPercent}
             </label>
             <input
               type="number"
               step="0.1"
-              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-emerald-500 ${
-                isDark ? 'bg-slate-800 border-slate-700 text-emerald-400 placeholder:text-emerald-800' : 'bg-slate-50 border-slate-200 text-emerald-600 placeholder:text-emerald-300'
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-green-500 ${
+                isDark ? 'bg-slate-800 border-slate-700 text-green-400 placeholder:text-green-800' : 'bg-slate-50 border-slate-200 text-green-600 placeholder:text-green-300'
               }`}
               value={riesgoPorcentaje}
               onChange={e => handleRiesgoPctChange(e.target.value)}
@@ -564,13 +564,13 @@ export default function RiskCalculator({ balance }) {
             />
           </div>
           <div className="space-y-1">
-            <label className={`text-[10px] uppercase font-bold pl-1 flex items-center ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+            <label className={`text-[10px] uppercase font-bold pl-1 flex items-center ${isDark ? 'text-green-400' : 'text-green-600'}`}>
               <DollarSign size={10} className="mr-1"/> {t.riskUSD}
             </label>
             <input
               type="number"
-              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-emerald-500 ${
-                isDark ? 'bg-slate-800 border-slate-700 text-emerald-400 placeholder:text-emerald-800' : 'bg-slate-50 border-slate-200 text-emerald-600 placeholder:text-emerald-300'
+              className={`w-full border rounded-xl p-2.5 text-sm font-bold outline-none focus:border-green-500 ${
+                isDark ? 'bg-slate-800 border-slate-700 text-green-400 placeholder:text-green-800' : 'bg-slate-50 border-slate-200 text-green-600 placeholder:text-green-300'
               }`}
               value={riesgoUSD}
               onChange={e => handleRiesgoUSDChange(e.target.value)}
@@ -580,7 +580,7 @@ export default function RiskCalculator({ balance }) {
         </div>
 
         {/* Resultado */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 shadow-lg">
+        <div className="bg-blue-600 rounded-xl p-4 shadow-lg">
           <div className="flex justify-between items-center mb-3">
             <div>
               <p className="text-[10px] text-blue-100 uppercase font-bold mb-1">{t.suggestedPosition}</p>

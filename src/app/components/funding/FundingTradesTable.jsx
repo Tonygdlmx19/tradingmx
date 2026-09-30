@@ -122,7 +122,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
                     <button
                       onClick={() => setSelectedTrade(trade)}
                       className={`p-1.5 rounded-lg transition-colors ${
-                        isDark ? 'hover:bg-amber-500/20 text-amber-400' : 'hover:bg-amber-50 text-amber-500'
+                        isDark ? 'hover:bg-blue-500/20 text-blue-400' : 'hover:bg-blue-50 text-blue-500'
                       }`}
                       title={t.viewImages(trade.imagenes.length)}
                     >
@@ -188,7 +188,7 @@ export default function FundingTradesTable({ trades, onDeleteTrade }) {
               {selectedTrade.imagenes.map((img, idx) => (
                 <div key={idx} className="relative">
                   <span className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-bold ${
-                    isDark ? 'bg-slate-900/80 text-amber-400' : 'bg-white/90 text-amber-600'
+                    isDark ? 'bg-slate-900/80 text-blue-400' : 'bg-white/90 text-blue-600'
                   }`}>
                     {img.temporalidad}
                   </span>

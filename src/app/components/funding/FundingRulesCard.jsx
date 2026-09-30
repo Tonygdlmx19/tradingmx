@@ -82,12 +82,12 @@ export default function FundingRulesCard({ reglas, metricas, empresa }) {
   return (
     <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
       <div className="flex items-center gap-2 mb-4">
-        <Shield size={18} className="text-amber-500"/>
+        <Shield size={18} className="text-blue-500"/>
         <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
           {t.challengeRules}
         </h3>
         {empresa && empresa !== 'custom' && (
-          <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
             {empresa}
           </span>
         )}

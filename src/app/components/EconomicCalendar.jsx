@@ -3,8 +3,10 @@ import { useEffect, useRef } from 'react';
 import { Calendar, X } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import useEscapeKey from './useEscapeKey';
 
 export default function EconomicCalendar({ isOpen, onClose }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const containerRef = useRef(null);

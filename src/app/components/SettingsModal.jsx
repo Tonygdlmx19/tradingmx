@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Settings, X, Target, User, TrendingUp, Plus, Trash2, ClipboardCheck, HelpCircle, Briefcase, Eye, EyeOff, Server, ChevronUp, ChevronDown, Camera, ArrowLeftRight, Edit3, ImagePlus, Image, Maximize2, Wallet, BarChart3, AlertTriangle, AlertCircle, Info, Pencil, Check } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import useEscapeKey from './useEscapeKey';
 
 // Lista completa de activos disponibles para sugerir
 const ACTIVOS_DISPONIBLES = [
@@ -56,6 +57,7 @@ const ACTIVOS_DISPONIBLES = [
 ];
 
 export default function SettingsModal({ isOpen, onClose, config, setConfig, onSaveToCloud, onRestartTour, trades = [], movements = [], onMovements }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [activeSection, setActiveSection] = useState('profile');
@@ -1026,7 +1028,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 <input
                   type="text"
                   placeholder={t.brokerPlaceholder}
-                  className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-purple-500 transition-all ${
+                  className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-blue-500 transition-all ${
                     isDark
                       ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                       : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1037,7 +1039,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 <input
                   type="text"
                   placeholder={t.accountNumber}
-                  className={`w-full p-3 border-2 rounded-xl font-mono font-medium outline-none focus:border-purple-500 transition-all ${
+                  className={`w-full p-3 border-2 rounded-xl font-mono font-medium outline-none focus:border-blue-500 transition-all ${
                     isDark
                       ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                       : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1050,7 +1052,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 <input
                   type="text"
                   placeholder={t.serverPlaceholder}
-                  className={`col-span-2 w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-purple-500 transition-all ${
+                  className={`col-span-2 w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-blue-500 transition-all ${
                     isDark
                       ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                       : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1059,7 +1061,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                   onChange={e => setNuevaCuenta({ ...nuevaCuenta, servidor: e.target.value })}
                 />
                 <select
-                  className={`w-full p-3 border-2 rounded-xl font-bold outline-none focus:border-purple-500 transition-all ${
+                  className={`w-full p-3 border-2 rounded-xl font-bold outline-none focus:border-blue-500 transition-all ${
                     isDark
                       ? 'bg-slate-600 border-slate-500 text-white'
                       : 'bg-white border-slate-200 text-slate-700'
@@ -1082,7 +1084,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                     type="number"
                     step="0.01"
                     placeholder={t.initialBalance}
-                    className={`w-full p-3 pl-7 border-2 rounded-xl font-bold outline-none focus:border-purple-500 transition-all ${
+                    className={`w-full p-3 pl-7 border-2 rounded-xl font-bold outline-none focus:border-blue-500 transition-all ${
                       isDark
                         ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                         : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1094,7 +1096,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 <input
                   type="password"
                   placeholder={t.investorPassword}
-                  className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-purple-500 transition-all ${
+                  className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-blue-500 transition-all ${
                     isDark
                       ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                       : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1109,7 +1111,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 disabled={!nuevaCuenta.broker.trim() || !nuevaCuenta.numero.trim()}
                 className={`w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
                   nuevaCuenta.broker.trim() && nuevaCuenta.numero.trim()
-                    ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-lg'
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg'
                     : isDark ? 'bg-slate-600 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -1146,7 +1148,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                             <span className={`text-xs px-2 py-0.5 rounded-lg font-bold ${
                               cuenta.divisa === 'USD' ? 'bg-green-500/20 text-green-500' :
                               cuenta.divisa === 'EUR' ? 'bg-blue-500/20 text-blue-500' :
-                              'bg-amber-500/20 text-amber-500'
+                              'bg-slate-500/20 text-slate-500'
                             }`}>{cuenta.divisa}</span>
                           </div>
                           {cuenta.servidor && (
@@ -1189,8 +1191,8 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 onClick={onMovements}
                 className={`w-full py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-3 ${
                   isDark
-                    ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                    : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                    ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                    : 'bg-green-100 text-green-600 hover:bg-green-200'
                 }`}
               >
                 <ArrowLeftRight size={20}/>
@@ -1217,7 +1219,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
               <input
                 type="text"
                 placeholder={t.strategyPlaceholder}
-                className={`flex-1 p-3 border-2 rounded-xl font-medium outline-none focus:border-amber-500 transition-all ${
+                className={`flex-1 p-3 border-2 rounded-xl font-medium outline-none focus:border-blue-500 transition-all ${
                   isDark
                     ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
                     : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1237,7 +1239,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                 disabled={!nuevaEstrategia.trim()}
                 className={`px-5 rounded-xl font-bold transition-all ${
                   nuevaEstrategia.trim()
-                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
                     : isDark ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -1256,12 +1258,12 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                       onClick={() => setSelectedStrategyId(strategy.id)}
                       className={`px-4 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${
                         selectedStrategy?.id === strategy.id
-                          ? 'bg-amber-500 text-white shadow-lg'
+                          ? 'bg-blue-500 text-white shadow-lg'
                           : isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
                       {strategy.nombre}
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${selectedStrategy?.id === strategy.id ? 'bg-amber-600' : isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${selectedStrategy?.id === strategy.id ? 'bg-blue-600' : isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
                         {strategy.reglas?.length || 0}
                       </span>
                     </button>
@@ -1278,7 +1280,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                             type="text"
                             value={editingStrategyName.nombre}
                             onChange={(e) => setEditingStrategyName({ ...editingStrategyName, nombre: e.target.value })}
-                            className={`flex-1 p-2 border-2 rounded-lg font-bold outline-none focus:border-amber-500 ${
+                            className={`flex-1 p-2 border-2 rounded-lg font-bold outline-none focus:border-blue-500 ${
                               isDark ? 'bg-slate-600 border-slate-500 text-white' : 'bg-white border-slate-200 text-slate-700'
                             }`}
                             autoFocus
@@ -1290,7 +1292,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                           <button
                             type="button"
                             onClick={saveStrategyName}
-                            className="p-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white"
+                            className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
                           >
                             <Check size={16}/>
                           </button>
@@ -1339,7 +1341,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                             placeholder={language === 'es' ? 'Contexto' : 'Context'}
                             value={selectedStrategy.imagenContexto?.nombre || ''}
                             onChange={(e) => updateStrategyImageName('imagenContexto', e.target.value)}
-                            className={`w-full p-2 text-xs border rounded-lg outline-none focus:border-amber-500 ${
+                            className={`w-full p-2 text-xs border rounded-lg outline-none focus:border-blue-500 ${
                               isDark ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
                             }`}
                           />
@@ -1379,7 +1381,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                             placeholder={language === 'es' ? 'Ejecucion' : 'Execution'}
                             value={selectedStrategy.imagenEjecucion?.nombre || ''}
                             onChange={(e) => updateStrategyImageName('imagenEjecucion', e.target.value)}
-                            className={`w-full p-2 text-xs border rounded-lg outline-none focus:border-amber-500 ${
+                            className={`w-full p-2 text-xs border rounded-lg outline-none focus:border-blue-500 ${
                               isDark ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
                             }`}
                           />
@@ -1419,7 +1421,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                             placeholder="Order Flow"
                             value={selectedStrategy.imagenOrderFlow?.nombre || ''}
                             onChange={(e) => updateStrategyImageName('imagenOrderFlow', e.target.value)}
-                            className={`w-full p-2 text-xs border rounded-lg outline-none focus:border-amber-500 ${
+                            className={`w-full p-2 text-xs border rounded-lg outline-none focus:border-blue-500 ${
                               isDark ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400' : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
                             }`}
                           />
@@ -1459,7 +1461,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                       <input
                         type="text"
                         placeholder={t.rulePlaceholder}
-                        className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-amber-500 transition-all ${
+                        className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-blue-500 transition-all ${
                           isDark
                             ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                             : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1469,7 +1471,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                       />
                       <textarea
                         placeholder={t.ruleDescPlaceholder}
-                        className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-amber-500 transition-all resize-none ${
+                        className={`w-full p-3 border-2 rounded-xl font-medium outline-none focus:border-blue-500 transition-all resize-none ${
                           isDark
                             ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
                             : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
@@ -1498,7 +1500,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                             onClick={() => setNuevaReglaImportancia('media')}
                             className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                               nuevaReglaImportancia === 'media'
-                                ? 'bg-amber-500 text-white'
+                                ? 'bg-blue-500 text-white'
                                 : isDark ? 'bg-slate-600 text-slate-400 hover:bg-slate-500' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                             }`}
                           >
@@ -1542,7 +1544,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                           disabled={!nuevaRegla.trim()}
                           className={`ml-auto px-5 py-2 rounded-xl font-bold transition-all ${
                             nuevaRegla.trim()
-                              ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                              ? 'bg-blue-500 hover:bg-blue-600 text-white'
                               : isDark ? 'bg-slate-600 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                           }`}
                         >
@@ -1569,14 +1571,14 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                                 /* Edit Mode */
                                 <div className="p-3 space-y-2">
                                   <div className="flex items-center gap-2">
-                                    <span className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-sm font-bold text-white shadow-sm flex-shrink-0">
+                                    <span className="w-7 h-7 rounded-full bg-slate-500 flex items-center justify-center text-sm font-bold text-white shadow-sm flex-shrink-0">
                                       {index + 1}
                                     </span>
                                     <input
                                       type="text"
                                       value={editingRuleData.texto}
                                       onChange={(e) => setEditingRuleData({ ...editingRuleData, texto: e.target.value })}
-                                      className={`flex-1 p-2 border-2 rounded-lg font-medium outline-none focus:border-amber-500 text-sm ${
+                                      className={`flex-1 p-2 border-2 rounded-lg font-medium outline-none focus:border-blue-500 text-sm ${
                                         isDark ? 'bg-slate-700 border-slate-500 text-white' : 'bg-white border-slate-200 text-slate-700'
                                       }`}
                                       autoFocus
@@ -1586,7 +1588,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                                     value={editingRuleData.descripcion}
                                     onChange={(e) => setEditingRuleData({ ...editingRuleData, descripcion: e.target.value })}
                                     placeholder={t.ruleDescPlaceholder}
-                                    className={`w-full p-2 border-2 rounded-lg font-medium outline-none focus:border-amber-500 text-xs resize-none ${
+                                    className={`w-full p-2 border-2 rounded-lg font-medium outline-none focus:border-blue-500 text-xs resize-none ${
                                       isDark ? 'bg-slate-700 border-slate-500 text-white placeholder-slate-400' : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
                                     }`}
                                     rows={2}
@@ -1602,7 +1604,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                                     <button
                                       type="button"
                                       onClick={saveEditingRule}
-                                      className="px-3 py-1.5 rounded-lg text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1"
+                                      className="px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-1"
                                     >
                                       <Check size={14}/> {language === 'es' ? 'Guardar' : 'Save'}
                                     </button>
@@ -1614,7 +1616,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                                   <div className="p-3 space-y-2">
                                     {/* Row 1: Number + Importance + Info badge */}
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0">
+                                      <span className="w-6 h-6 rounded-full bg-slate-500 flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0">
                                         {index + 1}
                                       </span>
                                       {/* Importance indicator - click to change (inline buttons) */}
@@ -1669,7 +1671,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                                         </span>
                                       )}
                                       {regla.imagen && (
-                                        <span className={`${isDark ? 'text-emerald-400' : 'text-emerald-500'}`}>
+                                        <span className={`${isDark ? 'text-green-400' : 'text-green-500'}`}>
                                           <Image size={14}/>
                                         </span>
                                       )}
@@ -1698,14 +1700,14 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                                       {/* Image button - add or view */}
                                       <label className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
                                         regla.imagen
-                                          ? 'text-emerald-400 hover:bg-emerald-500/20'
+                                          ? 'text-green-400 hover:bg-green-500/20'
                                           : isDark ? 'text-slate-400 hover:bg-slate-500' : 'text-slate-400 hover:bg-slate-100'
                                       }`} title={regla.imagen ? t.changeImage : t.addImage}>
                                         <ImagePlus size={14}/>
                                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleEditRuleImage(index, e)} />
                                       </label>
                                       {regla.imagen && (
-                                        <button type="button" onClick={() => setViewingRuleImage(regla.imagen)} className="p-1.5 text-emerald-400 hover:bg-emerald-500/20 rounded-lg" title={t.viewImage}>
+                                        <button type="button" onClick={() => setViewingRuleImage(regla.imagen)} className="p-1.5 text-green-400 hover:bg-green-500/20 rounded-lg" title={t.viewImage}>
                                           <Eye size={14}/>
                                         </button>
                                       )}

@@ -10,6 +10,7 @@ import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import { db } from '../../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import useEscapeKey from './useEscapeKey';
 
 // =====================================================
 // SVG DIAGRAM COMPONENTS
@@ -1420,6 +1421,7 @@ Process where big players gradually sell:
 // =====================================================
 
 export default function TradingAcademy({ isOpen, onClose, userId }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -1512,10 +1514,10 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
 
   const colorClasses = {
     emerald: {
-      bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50',
-      border: 'border-emerald-500/30',
-      text: 'text-emerald-500',
-      progressBg: 'bg-emerald-500'
+      bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50',
+      border: 'border-blue-500/30',
+      text: 'text-blue-500',
+      progressBg: 'bg-blue-500'
     },
     blue: {
       bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50',
@@ -1524,10 +1526,10 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
       progressBg: 'bg-blue-500'
     },
     purple: {
-      bg: isDark ? 'bg-purple-500/10' : 'bg-purple-50',
-      border: 'border-purple-500/30',
-      text: 'text-purple-500',
-      progressBg: 'bg-purple-500'
+      bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50',
+      border: 'border-blue-500/30',
+      text: 'text-blue-500',
+      progressBg: 'bg-blue-500'
     }
   };
 
@@ -1559,7 +1561,7 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
                 </button>
               )}
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
                   <GraduationCap size={22} className="text-white" />
                 </div>
                 <div>
@@ -1584,11 +1586,11 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
                   </span>
                   <div className={`w-24 h-2 rounded-full ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all"
+                      className="h-full rounded-full bg-blue-500 transition-all"
                       style={{ width: `${totalProgress()}%` }}
                     />
                   </div>
-                  <span className={`text-xs font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                  <span className={`text-xs font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                     {totalProgress()}%
                   </span>
                 </div>
@@ -1608,7 +1610,7 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
         <div className="overflow-y-auto max-h-[calc(95vh-100px)] p-4 sm:p-6">
           {loadingProgress ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
             </div>
           ) : selectedLesson ? (
             // Lesson view
@@ -1633,15 +1635,15 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
 
               {/* Key points */}
               {selectedLesson.keyPoints && (
-                <div className={`p-4 rounded-xl ${isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'}`}>
-                  <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
+                <div className={`p-4 rounded-xl ${isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'}`}>
+                  <h4 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
                     <Zap size={16} />
                     {content.keyPoints}
                   </h4>
                   <ul className="space-y-2">
                     {selectedLesson.keyPoints.map((point, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 size={14} className={`mt-0.5 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                        <CheckCircle2 size={14} className={`mt-0.5 flex-shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                         <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{point}</span>
                       </li>
                     ))}
@@ -1680,10 +1682,10 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
                   onClick={() => toggleLessonComplete(selectedLesson.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
                     completedLessons.includes(selectedLesson.id)
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-green-500 text-white'
                       : isDark
-                        ? 'bg-slate-800 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-400'
-                        : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'
+                        ? 'bg-slate-800 text-slate-300 hover:bg-green-500/20 hover:text-green-400'
+                        : 'bg-slate-100 text-slate-600 hover:bg-green-50 hover:text-green-600'
                   }`}
                 >
                   {completedLessons.includes(selectedLesson.id) ? (
@@ -1713,14 +1715,14 @@ export default function TradingAcademy({ isOpen, onClose, userId }) {
                     onClick={() => setSelectedLesson(lesson)}
                     className={`w-full p-4 rounded-xl border text-left transition-all ${
                       isDark
-                        ? `bg-slate-800/50 border-slate-700 hover:border-slate-600 ${isCompleted ? 'border-emerald-500/30' : ''}`
-                        : `bg-white border-slate-200 hover:border-slate-300 ${isCompleted ? 'border-emerald-300' : ''}`
+                        ? `bg-slate-800/50 border-slate-700 hover:border-slate-600 ${isCompleted ? 'border-green-500/30' : ''}`
+                        : `bg-white border-slate-200 hover:border-slate-300 ${isCompleted ? 'border-green-300' : ''}`
                     }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                         isCompleted
-                          ? 'bg-emerald-500 text-white'
+                          ? 'bg-green-500 text-white'
                           : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {isCompleted ? <CheckCircle2 size={20} /> : <span className="font-bold">{index + 1}</span>}

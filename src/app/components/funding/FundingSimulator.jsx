@@ -271,7 +271,7 @@ export default function FundingSimulator({ user, onClose }) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <div className="text-center">
-          <Loader2 size={32} className="animate-spin text-amber-500 mx-auto mb-3"/>
+          <Loader2 size={32} className="animate-spin text-blue-500 mx-auto mb-3"/>
           <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.loading}</p>
         </div>
       </div>
@@ -286,7 +286,7 @@ export default function FundingSimulator({ user, onClose }) {
         <div className={`px-4 py-3 border-b ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Trophy size={24} className="text-amber-500"/>
+              <Trophy size={24} className="text-blue-500"/>
               <h1 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 {t.title}
               </h1>
@@ -305,9 +305,9 @@ export default function FundingSimulator({ user, onClose }) {
         {/* Welcome */}
         <div className="max-w-md mx-auto p-6 mt-20 text-center">
           <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${
-            isDark ? 'bg-amber-500/20' : 'bg-amber-100'
+            isDark ? 'bg-blue-500/20' : 'bg-blue-100'
           }`}>
-            <Trophy size={40} className="text-amber-500"/>
+            <Trophy size={40} className="text-blue-500"/>
           </div>
 
           <h2 className={`text-2xl font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
@@ -319,7 +319,7 @@ export default function FundingSimulator({ user, onClose }) {
 
           <button
             onClick={() => setShowSetupModal(true)}
-            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98]"
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98]"
           >
             <Plus size={18} className="inline mr-2"/>
             {t.createChallenge}
@@ -341,7 +341,7 @@ export default function FundingSimulator({ user, onClose }) {
                 </span>
               ))}
               <span className={`text-xs px-3 py-1 rounded-full ${
-                isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
               }`}>
                 {t.custom}
               </span>

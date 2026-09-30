@@ -67,7 +67,7 @@ export default function FundingDashboard({
       <div className={`sticky top-0 z-40 px-4 py-3 border-b ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Trophy size={24} className="text-amber-500"/>
+            <Trophy size={24} className="text-blue-500"/>
             <div>
               <h1 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 {nombreChallenge}

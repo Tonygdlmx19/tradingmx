@@ -291,7 +291,7 @@ export default function OnboardingTour({ userEmail, onComplete, forceStart, onFo
         style={{ maxHeight: 'calc(100vh - 160px)' }}
       >
         {/* Header con icono */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4">
+        <div className="bg-blue-500 p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
               <Icon className="text-white" size={20} />

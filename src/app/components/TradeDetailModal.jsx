@@ -6,6 +6,7 @@ import { useLanguage } from './LanguageProvider';
 import PostTradeResultModal from './PostTradeResultModal';
 import { db } from '../../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import useEscapeKey from './useEscapeKey';
 
 // AI Query limits by plan
 const AI_QUERY_LIMITS = {
@@ -24,6 +25,7 @@ const TEMPORALIDADES = ['1D', '4H', '1H', '30M', '15M', '5M', '1M', 'Ejecución'
 const EMOCIONES = ['Neutral', 'Calmado', 'Ansioso', 'Venganza', 'Miedo', 'Eufórico', 'Frustrado'];
 
 export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onDelete, cuentasBroker = [], userId, userEmail, userType, userPlan }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
 
@@ -298,19 +300,6 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
     return language === 'en'
       ? `${months[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
       : `${parseInt(d)} de ${months[parseInt(m) - 1]}, ${y}`;
-  };
-
-  const getEmojiForEmotion = (emo) => {
-    const emojis = {
-      'Neutral': '😐',
-      'Calmado': '😌',
-      'Ansioso': '😰',
-      'Venganza': '😤',
-      'Miedo': '😨',
-      'Euforico': '🤑',
-      'Frustrado': '😔',
-    };
-    return emojis[emo] || '😐';
   };
 
   // Comprimir imagen
@@ -631,7 +620,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
               {editData.dir}
             </span>
             {editData.fechaEntrada !== editData.fechaSalida && (
-              <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-500/20 text-amber-500">
+              <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-500/20 text-blue-500">
                 SWING
               </span>
             )}
@@ -662,8 +651,8 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
         {/* Resultado principal con lotes */}
         <div className={`px-4 py-4 border-b ${
           isWin
-            ? 'bg-gradient-to-r from-green-500/10 to-green-500/5'
-            : 'bg-gradient-to-r from-red-500/10 to-red-500/5'
+            ? 'bg-green-500/10'
+            : 'bg-red-500/10'
         } ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
           <div className="flex items-center justify-center gap-3">
             <p className={`text-4xl font-black ${isWin ? 'text-green-500' : 'text-red-500'}`}>
@@ -683,7 +672,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
               {t.netResult}: <span className={isWin ? 'text-green-500' : 'text-red-500'}>
                 {isWin ? '+' : '-'}${(Math.abs(currentRes) - editData.swap).toFixed(2)}
               </span>
-              <span className="text-amber-500 ml-2">(Swap: -${parseFloat(editData.swap).toFixed(2)})</span>
+              <span className="text-slate-500 ml-2">(Swap: -${parseFloat(editData.swap).toFixed(2)})</span>
             </p>
           )}
         </div>
@@ -870,7 +859,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                   onChange={e => handleFieldChange('emo', e.target.value)}
                 >
                   {EMOCIONES.map(e => (
-                    <option key={e} value={e}>{getEmojiForEmotion(e)} {e}</option>
+                    <option key={e} value={e}>{e}</option>
                   ))}
                 </select>
               </div>
@@ -884,8 +873,8 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-amber-500 ${
-                    isDark ? 'bg-slate-700 border-slate-600 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-600'
+                  className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-slate-500 ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
                   }`}
                   value={editData.swap || ''}
                   onChange={e => handleFieldChange('swap', e.target.value)}
@@ -899,8 +888,8 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                     {t.account}
                   </label>
                   <select
-                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-purple-500 ${
-                      isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-purple-50 border-purple-200 text-slate-700'
+                    className={`w-full p-2 border rounded-xl text-sm font-bold outline-none focus:border-blue-500 ${
+                      isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-blue-50 border-blue-200 text-slate-700'
                     }`}
                     value={editData.cuentaId || ''}
                     onChange={e => handleFieldChange('cuentaId', e.target.value)}
@@ -966,9 +955,9 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                       </p>
                     </div>
                     {trade.puntos !== null && trade.puntos !== undefined && (
-                      <div className={`p-2 -m-2 rounded-lg ${isDark ? 'bg-cyan-500/10' : 'bg-cyan-50'}`}>
-                        <p className={`text-[9px] uppercase ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{t.points}</p>
-                        <p className={`text-base font-black ${trade.puntos >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>
+                      <div className={`p-2 -m-2 rounded-lg ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+                        <p className={`text-[9px] uppercase ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{t.points}</p>
+                        <p className={`text-base font-black ${trade.puntos >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
                           {trade.puntos >= 0 ? '+' : ''}{trade.puntos.toFixed(1)}
                         </p>
                       </div>
@@ -979,25 +968,25 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
 
               {/* Swap (si existe) */}
               {editData.swap > 0 && (
-                <div className={`p-3 rounded-xl flex items-center justify-between ${isDark ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
+                <div className={`p-3 rounded-xl flex items-center justify-between ${isDark ? 'bg-slate-500/10' : 'bg-slate-50'}`}>
                   <div>
-                    <p className={`text-[9px] font-bold uppercase ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                    <p className={`text-[9px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                       Swap/Comisión
                     </p>
-                    <p className="text-lg font-black text-amber-500">
+                    <p className="text-lg font-black text-slate-500">
                       -${parseFloat(editData.swap).toFixed(2)}
                     </p>
                   </div>
-                  <DollarSign size={20} className="text-amber-500" />
+                  <DollarSign size={20} className="text-slate-500" />
                 </div>
               )}
 
               {/* Cuenta de broker */}
               {trade.broker && (
-                <div className={`p-3 rounded-xl flex items-center gap-3 ${isDark ? 'bg-purple-500/10' : 'bg-purple-50'}`}>
-                  <Briefcase size={16} className="text-purple-500" />
+                <div className={`p-3 rounded-xl flex items-center gap-3 ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+                  <Briefcase size={16} className="text-blue-500" />
                   <div>
-                    <p className={`text-[9px] font-bold uppercase ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                    <p className={`text-[9px] font-bold uppercase ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                       {t.account}
                     </p>
                     <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-700'}`}>
@@ -1017,7 +1006,7 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                     {getEmotionLabel(editData.emo)}
                   </p>
                 </div>
-                <span className="text-3xl">{getEmojiForEmotion(editData.emo)}</span>
+                
               </div>
             </>
           )}
@@ -1117,12 +1106,12 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                           !canMakeQuery()
                             ? 'bg-slate-500/20 text-slate-400 cursor-not-allowed'
                             : analyzingIndex === index
-                              ? 'bg-purple-500/20 text-purple-400 cursor-wait'
+                              ? 'bg-blue-500/20 text-blue-400 cursor-wait'
                               : aiAnalysis[index]?.text
-                                ? 'bg-purple-500/20 text-purple-500 hover:bg-purple-500/30'
+                                ? 'bg-blue-500/20 text-blue-500 hover:bg-blue-500/30'
                                 : isDark
-                                  ? 'hover:bg-purple-500/20 text-purple-400'
-                                  : 'hover:bg-purple-100 text-purple-500'
+                                  ? 'hover:bg-blue-500/20 text-blue-400'
+                                  : 'hover:bg-blue-100 text-blue-500'
                         }`}
                         title={canMakeQuery() ? `${t.analyzeWithAI} (${queriesRemaining} ${t.queriesRemaining})` : t.queryLimitReached}
                       >
@@ -1160,22 +1149,22 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                     {/* Resultado del análisis de IA */}
                     {aiAnalysis[index] && (
                       <div className={`mt-2 rounded-lg overflow-hidden ${
-                        isDark ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-purple-50 border border-purple-200'
+                        isDark ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'
                       }`}>
                         <button
                           type="button"
                           onClick={() => toggleAnalysisExpanded(index)}
                           className={`w-full px-3 py-2 flex items-center justify-between ${
-                            isDark ? 'hover:bg-purple-500/20' : 'hover:bg-purple-100'
+                            isDark ? 'hover:bg-blue-500/20' : 'hover:bg-blue-100'
                           }`}
                         >
                           <span className={`text-xs font-bold flex items-center gap-2 ${
-                            isDark ? 'text-purple-400' : 'text-purple-600'
+                            isDark ? 'text-blue-400' : 'text-blue-600'
                           }`}>
                             <Bot size={18} />
                             {t.aiAnalysis}
                           </span>
-                          <span className={`text-[10px] ${isDark ? 'text-purple-400' : 'text-purple-500'}`}>
+                          <span className={`text-[10px] ${isDark ? 'text-blue-400' : 'text-blue-500'}`}>
                             {aiAnalysis[index]?.expanded ? t.hideAnalysis : t.showAnalysis}
                           </span>
                         </button>
@@ -1194,8 +1183,8 @@ export default function TradeDetailModal({ trade, isOpen, onClose, onUpdate, onD
                                   onClick={() => setShowPostTradeModal(true)}
                                   className={`mt-2 w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors ${
                                     isDark
-                                      ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400'
-                                      : 'bg-purple-100 hover:bg-purple-200 text-purple-600'
+                                      ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400'
+                                      : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
                                   }`}
                                 >
                                   <Eye size={14} />

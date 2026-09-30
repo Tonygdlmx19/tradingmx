@@ -273,7 +273,7 @@ export default function PatternAnalysis({ trades, currencySymbol = '$' }) {
       {/* Header + tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h3 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-          <Grid3x3 size={16} className={isDark ? 'text-cyan-400' : 'text-cyan-500'} />
+          <Grid3x3 size={16} className={isDark ? 'text-blue-400' : 'text-blue-500'} />
           {t.title}
         </h3>
         <div className={`flex items-center gap-0.5 p-0.5 rounded-lg overflow-x-auto ${isDark ? 'bg-slate-900/50' : 'bg-slate-100'}`}>
@@ -535,8 +535,8 @@ export default function PatternAnalysis({ trades, currencySymbol = '$' }) {
 
           {/* Discipline insight */}
           {disciplineData.plan.yes.count > 0 && disciplineData.plan.no.count > 0 && (
-            <div className={`rounded-xl p-3 border ${isDark ? 'bg-purple-500/5 border-purple-500/20' : 'bg-purple-50 border-purple-200'}`}>
-              <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>Insight</div>
+            <div className={`rounded-xl p-3 border ${isDark ? 'bg-blue-500/5 border-blue-500/20' : 'bg-blue-50 border-blue-200'}`}>
+              <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Insight</div>
               <p className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                 {(() => {
                   const withPlan = disciplineData.plan.yes;

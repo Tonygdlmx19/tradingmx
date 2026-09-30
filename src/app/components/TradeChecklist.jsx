@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { ClipboardCheck, X, CheckCircle, AlertTriangle, XCircle, Image, Maximize2, AlertCircle, Info } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import useEscapeKey from './useEscapeKey';
 
 export default function TradeChecklist({ reglas, isOpen, onClose, onConfirm, strategyName }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [marcadas, setMarcadas] = useState(reglas.map(() => false));

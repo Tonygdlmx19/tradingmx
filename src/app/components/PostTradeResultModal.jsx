@@ -3,6 +3,7 @@ import { X, TrendingUp, TrendingDown, Award, Star, AlertTriangle, CheckCircle, X
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
+import useEscapeKey from './useEscapeKey';
 
 export default function PostTradeResultModal({
   isOpen,
@@ -11,6 +12,7 @@ export default function PostTradeResultModal({
   trade,
   image
 }) {
+  useEscapeKey(onClose, isOpen);
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -200,8 +202,8 @@ export default function PostTradeResultModal({
         {/* Header */}
         <div className={`flex-shrink-0 px-4 py-3 border-b flex items-center justify-between ${
           isDark
-            ? 'bg-gradient-to-r from-blue-900/50 to-cyan-900/50 border-blue-500/30'
-            : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+            ? 'bg-blue-900/50 border-blue-500/30'
+            : 'bg-blue-50 border-blue-200'
         }`}>
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-xl ${isDark ? 'bg-blue-500/20' : 'bg-blue-100'}`}>
@@ -310,7 +312,7 @@ export default function PostTradeResultModal({
           {/* Disclaimer inside content so it scrolls */}
           <div className={`mt-4 p-3 rounded-xl ${isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'}`}>
             <p className={`text-[10px] ${isDark ? 'text-blue-400/80' : 'text-blue-600'}`}>
-              💡 {t.disclaimer}
+              {t.disclaimer}
             </p>
           </div>
         </div>
