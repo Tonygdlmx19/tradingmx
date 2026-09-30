@@ -9,9 +9,9 @@ import {
   Upload, FileDown, Brain, Loader2, ChevronUp, ChevronDown, Pencil, Clock, Newspaper, ExternalLink
 } from 'lucide-react';
 import {
-  LineChart, Line, Bar, ComposedChart,
+  LineChart, Line, Bar, Area, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  ReferenceLine,
+  ReferenceLine, Customized, usePlotArea, useYAxisDomain,
 } from 'recharts';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -581,7 +581,18 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
     [sorted, chartRange]
   );
   const volChartData = useMemo(() =>
-    chartSorted.map(r => ({ name: r.date.slice(5), vol: r.vol, oi: r.oi })), [chartSorted]
+    chartSorted.map((r, i) => {
+      const win = chartSorted.slice(Math.max(0, i - 4), i + 1).filter(x => x.vol);
+      return {
+        name: r.date.slice(5),
+        vol: r.vol,
+        oi: r.oi,
+        bullish: r.close >= r.open,
+        oiChange: i > 0 && r.oi != null && chartSorted[i - 1].oi ? ((r.oi - chartSorted[i - 1].oi) / chartSorted[i - 1].oi) * 100 : null,
+        // Promedio móvil de 5 sesiones: referencia para "volumen sobre/bajo promedio"
+        volAvg5: win.length ? Math.round(win.reduce((s, x) => s + x.vol, 0) / win.length) : null,
+      };
+    }), [chartSorted]
   );
 
   const deltaChartData = useMemo(() => {
@@ -658,12 +669,21 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
   }, [chartSorted]);
 
   const priceChartData = useMemo(() =>
-    chartSorted.map((r, i) => ({
+    chartSorted.map((r, i) => {
+      const prev = i > 0 ? chartSorted[i - 1] : null;
+      const day = classifyDay(r, chartSorted.slice(Math.max(0, i - 5), i));
+      return ({
       name: r.date.slice(5),
+      date: r.date,
       open: r.open,
       high: r.high,
       low: r.low,
       close: r.close,
+      vol: r.vol,
+      oi: r.oi,
+      change: prev ? r.close - prev.close : null,
+      changePct: prev && prev.close ? ((r.close - prev.close) / prev.close) * 100 : null,
+      dayType: day.label,
       // For candlestick body: [min(open,close), max(open,close)]
       body: [Math.min(r.open, r.close), Math.max(r.open, r.close)],
       // For wick: [low, high]
@@ -676,7 +696,8 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
       deltaAbs: r.delta != null ? Math.abs(r.delta) : null,
       deltaPositive: r.delta != null ? r.delta >= 0 : null,
       vwap: vwapData?.points[i]?.vwap || null,
-    })), [chartSorted, vwapData]
+      });
+    }), [chartSorted, vwapData]
   );
 
   // ── Technical Levels (52-week based) ──────────────────────
@@ -1434,6 +1455,112 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
   };
 
 
+  // ── Gráfica de precio: helpers ─────────────────────────
+  const priceDecimals = asset.step >= 1 ? 0 : asset.step >= 0.05 ? 2 : 3;
+  const fmtPrice = (v) => v == null ? '—' : Number(v).toLocaleString('en-US', { minimumFractionDigits: priceDecimals, maximumFractionDigits: priceDecimals });
+  // Eje y etiquetas de nivel: sin decimales en índices (tick de 0.25 o más), compactos
+  const tickDecimals = asset.step >= 0.25 ? 0 : priceDecimals;
+  const fmtTick = (v) => v == null ? '—' : Number(v).toLocaleString('en-US', { minimumFractionDigits: tickDecimals, maximumFractionDigits: tickDecimals });
+  const priceDomain = useMemo(() => {
+    if (!chartSorted.length) return ['auto', 'auto'];
+    const lo = Math.min(...chartSorted.map(r => r.low));
+    const hi = Math.max(...chartSorted.map(r => r.high));
+    const pad = (hi - lo) * 0.05 || 1;
+    return [lo - pad, hi + pad];
+  }, [chartSorted]);
+  const xInterval = Math.max(0, Math.ceil(chartSorted.length / 8) - 1);
+  const axisColor = isDark ? '#64748b' : '#94a3b8';
+  const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+  // Niveles a dibujar: Fibonacci (neutro), pivots (S/R semántico) y último precio
+  const levelLines = useMemo(() => {
+    const out = [];
+    if (showFib && techLevels) techLevels.fib.forEach(f => out.push({
+      key: `fib-${f.pct}`, y: f.level, label: `${f.pct}%`, color: isDark ? '#94a3b8' : '#64748b', dash: '2 4', opacity: 0.6, kind: 'fib',
+    }));
+    if (showPivots && techLevels) techLevels.pivots.forEach(p => out.push({
+      key: `pv-${p.label}`, y: p.level, label: p.label,
+      color: p.type === 'resistance' ? '#dc2626' : p.type === 'support' ? '#16a34a' : '#2563eb', dash: '6 4', opacity: 0.7, kind: 'pivot',
+    }));
+    const last = chartSorted[chartSorted.length - 1];
+    if (last) out.push({ key: 'last', y: last.close, label: '', color: last.close >= last.open ? '#16a34a' : '#dc2626', dash: '1 3', opacity: 0.9, kind: 'last' });
+    return out;
+  }, [showFib, showPivots, techLevels, chartSorted, isDark]);
+
+  // Capa SVG: líneas horizontales + etiquetas en la columna derecha con separación automática
+  const LevelsLayer = ({ levels }) => {
+    const plot = usePlotArea();
+    const domain = useYAxisDomain('price');
+    if (!plot || !domain || !Array.isArray(domain) || typeof domain[0] !== 'number') return null;
+    const [dMin, dMax] = domain;
+    if (dMax <= dMin) return null;
+    const toY = (v) => plot.y + plot.height - ((v - dMin) / (dMax - dMin)) * plot.height;
+    const visible = levels.filter(l => l.y >= dMin && l.y <= dMax).map(l => ({ ...l, py: toY(l.y) }));
+    // Etiquetas: ordenar por y y empujar hacia abajo para que no se encimen
+    const LABEL_H = 13, GAP = 2;
+    const labels = [...visible].sort((a, b) => a.py - b.py).map(l => ({ ...l, ly: l.py }));
+    for (let i = 1; i < labels.length; i++) {
+      if (labels[i].ly - labels[i - 1].ly < LABEL_H + GAP) labels[i].ly = labels[i - 1].ly + LABEL_H + GAP;
+    }
+    const overflow = labels.length ? labels[labels.length - 1].ly + LABEL_H / 2 - (plot.y + plot.height) : 0;
+    if (overflow > 0) labels.forEach(l => { l.ly -= overflow; });
+    const x0 = plot.x, x1 = plot.x + plot.width;
+    return (
+      <g>
+        {visible.map(l => (
+          <line key={l.key} x1={x0} x2={x1} y1={l.py} y2={l.py} stroke={l.color} strokeDasharray={l.dash} strokeWidth={l.kind === 'last' ? 1 : 0.8} strokeOpacity={l.opacity} />
+        ))}
+        {labels.map(l => {
+          const text = l.kind === 'last' ? fmtPrice(l.y) : `${l.label} ${fmtTick(l.y)}`;
+          const w = text.length * 5.6 + 8;
+          const isLast = l.kind === 'last';
+          return (
+            <g key={`lbl-${l.key}`}>
+              <rect x={x1 + 2} y={l.ly - LABEL_H / 2} width={w} height={LABEL_H} rx={2}
+                fill={isLast ? l.color : (isDark ? '#1e293b' : '#ffffff')} stroke={l.color} strokeWidth={isLast ? 0 : 0.8} strokeOpacity={0.9} />
+              <text x={x1 + 2 + w - 4} y={l.ly + 3.5} textAnchor="end" fontSize={9} fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+                fontWeight={isLast ? 700 : 600} fill={isLast ? '#ffffff' : l.color}>{text}</text>
+            </g>
+          );
+        })}
+      </g>
+    );
+  };
+
+  const CandleShape = (props) => {
+    const { x, y, width, height, payload } = props;
+    if (!payload?.wick || !payload?.body) return null;
+    const up = payload.bullish;
+    const color = up ? '#16a34a' : '#dc2626';
+    const cx = x + width / 2;
+    const wickRange = payload.wick[1] - payload.wick[0];
+    if (wickRange <= 0 || height <= 0) return null;
+    const pxPerUnit = height / wickRange;
+    const bodyTop = y + (payload.wick[1] - payload.body[1]) * pxPerUnit;
+    const bodyH = Math.max((payload.body[1] - payload.body[0]) * pxPerUnit, 1);
+    const bodyW = Math.max(2, Math.min(12, width * 0.72));
+    const pocY = payload.poc && payload.poc >= payload.wick[0] && payload.poc <= payload.wick[1] ? y + (payload.wick[1] - payload.poc) * pxPerUnit : null;
+    return (
+      <g>
+        <line x1={cx} x2={cx} y1={y} y2={y + height} stroke={color} strokeWidth={1} />
+        <rect x={cx - bodyW / 2} y={bodyTop} width={bodyW} height={bodyH} fill={color} rx={0.5} />
+        {pocY != null && <line x1={cx - bodyW / 2 - 3} x2={cx + bodyW / 2 + 3} y1={pocY} y2={pocY} stroke="#2563eb" strokeWidth={2} strokeLinecap="round" />}
+      </g>
+    );
+  };
+
+  const VolumeBarShape = (props) => {
+    const { x, y, width, height, payload } = props;
+    if (!payload || !payload.vol || height <= 0) return null;
+    const barW = Math.max(1.5, Math.min(14, width * 0.72));
+    return <rect x={x + width / 2 - barW / 2} y={y} width={barW} height={height} fill={payload.bullish ? '#16a34a' : '#dc2626'} opacity={0.5} rx={0.5} />;
+  };
+
+  const tipBox = `px-3 py-2 rounded-lg border shadow-lg text-[11px] leading-relaxed font-mono ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-700'}`;
+  const tipRow = (label, value, cls = '') => (
+    <div className="flex justify-between gap-4"><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{label}</span><span className={`tabular-nums font-semibold ${cls}`}>{value}</span></div>
+  );
+
   return (
     <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
       {/* ── Header (sticky nav) ─────────────────────────── */}
@@ -1964,7 +2091,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                         onClick={() => setShowFib(!showFib)}
                         className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                           showFib
-                            ? 'bg-purple-500 text-white'
+                            ? 'bg-blue-600 text-white'
                             : isDark ? 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700' : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-200'
                         }`}
                       >
@@ -1974,7 +2101,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                         onClick={() => setShowPivots(!showPivots)}
                         className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                           showPivots
-                            ? 'bg-blue-500 text-white'
+                            ? 'bg-blue-600 text-white'
                             : isDark ? 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700' : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-200'
                         }`}
                       >
@@ -1987,7 +2114,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                       onClick={() => setShowVwap(!showVwap)}
                       className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                         showVwap
-                          ? 'bg-amber-500 text-white'
+                          ? 'bg-blue-600 text-white'
                           : isDark ? 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700' : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-200'
                       }`}
                     >
@@ -2009,85 +2136,52 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                   >
                     <p className={`text-[9px] font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.priceChart}</p>
                     <ResponsiveContainer width="100%" height={300}>
-                      <ComposedChart data={priceChartData} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
-                        <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
-                        <YAxis yAxisId="price" orientation="right" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8', fontFamily:'monospace' }} axisLine={false} tickLine={false} domain={['dataMin','dataMax']} tickFormatter={v=>v.toFixed(0)} padding={{ top: 10, bottom: 10 }} tickCount={12} />
-                        <Tooltip content={({ active, payload, label }) => {
+                      <ComposedChart data={priceChartData} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
+                        <defs>
+                          <linearGradient id="tracker-close-area" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#2563eb" stopOpacity={0.22} />
+                            <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid horizontal vertical={false} stroke={gridColor} strokeDasharray="2 4" />
+                        <XAxis dataKey="name" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} interval={xInterval} minTickGap={20} />
+                        <YAxis yAxisId="price" orientation="right" width={78} domain={priceDomain} tick={{ fontSize: 10, fill: axisColor, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} axisLine={false} tickLine={false} tickFormatter={fmtTick} tickCount={8} />
+                        <Tooltip cursor={false} isAnimationActive={false} content={({ active, payload }) => {
                           if (!active || !payload?.length) return null;
                           const d = payload[0]?.payload;
                           if (!d) return null;
+                          const up = d.bullish;
                           return (
-                            <div className={`px-3 py-2 rounded-lg border shadow-lg text-xs ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
-                              <p className="font-bold mb-1">{label}</p>
-                              <p>O: {d.open?.toFixed(2)} <span style={{ color: d.bullish ? '#22c55e' : '#ef4444' }}>C: {d.close?.toFixed(2)}</span></p>
-                              <p>H: <span className="text-green-500">{d.high?.toFixed(2)}</span> L: <span className="text-red-500">{d.low?.toFixed(2)}</span></p>
-                              {d.vwap && <p style={{ color:'#f59e0b' }}>VWAP: {d.vwap}</p>}
-                              {d.poc && <p style={{ color:'#e879f9' }}>POC: {d.poc?.toFixed(2)}</p>}
-                              {d.vah && <p style={{ color:'#fb7185' }}>VAH: {d.vah?.toFixed(2)}</p>}
-                              {d.val && <p style={{ color:'#34d399' }}>VAL: {d.val?.toFixed(2)}</p>}
-                              {d.delta != null && <p style={{ color: d.delta >= 0 ? '#22c55e' : '#ef4444' }}>Delta: {d.delta?.toLocaleString()}</p>}
+                            <div className={tipBox} style={{ minWidth: 190 }}>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-bold">{d.date}</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{d.dayType}</span>
+                              </div>
+                              {tipRow('O', fmtPrice(d.open))}
+                              {tipRow('H', fmtPrice(d.high))}
+                              {tipRow('L', fmtPrice(d.low))}
+                              {tipRow('C', fmtPrice(d.close), up ? 'text-green-600' : 'text-red-600')}
+                              {d.change != null && tipRow(es ? 'Cambio' : 'Change', `${d.change >= 0 ? '+' : ''}${fmtPrice(d.change)} (${d.changePct >= 0 ? '+' : ''}${d.changePct.toFixed(2)}%)`, d.change >= 0 ? 'text-green-600' : 'text-red-600')}
+                              {tipRow(es ? 'Rango' : 'Range', fmtPrice(d.high - d.low))}
+                              {tipRow('Vol', fmtVol(d.vol))}
+                              {d.oi != null && tipRow('OI', fmtVol(d.oi))}
+                              {d.vwap && tipRow('VWAP', fmtPrice(d.vwap), 'text-blue-600')}
+                              {d.poc && tipRow('POC', fmtPrice(d.poc), 'text-blue-600')}
+                              {d.vah && tipRow('VAH', fmtPrice(d.vah))}
+                              {d.val && tipRow('VAL', fmtPrice(d.val))}
+                              {d.delta != null && tipRow('Delta', d.delta.toLocaleString(), d.delta >= 0 ? 'text-green-600' : 'text-red-600')}
                             </div>
                           );
-                        }} cursor={false} />
-                        {/* Candlesticks (up to 90d) or Line (6m+) */}
-                        {chartSorted.length <= 90 ? (
-                        <Bar yAxisId="price" dataKey="wick" isAnimationActive={false} shape={(props) => {
-                          const { x, y, width, height, payload } = props;
-                          if (!payload?.wick || !payload?.body) return null;
-                          const color = payload.bullish ? '#22c55e' : '#ef4444';
-                          const strokeColor = payload.bullish ? '#16a34a' : '#dc2626';
-                          const wickX = x + width / 2;
-                          const wickTop = y;
-                          const wickBottom = y + height;
-                          const wickRange = payload.wick[1] - payload.wick[0];
-                          if (wickRange <= 0) return null;
-                          const pxPerUnit = height / wickRange;
-                          const bodyTop = wickTop + (payload.wick[1] - payload.body[1]) * pxPerUnit;
-                          const bodyBottom = wickTop + (payload.wick[1] - payload.body[0]) * pxPerUnit;
-                          const bodyH = Math.max(bodyBottom - bodyTop, 1);
-                          const n = chartSorted.length;
-                          const bodyW = n > 120 ? 3 : n > 60 ? 5 : 8;
-                          // Volume Profile markers on candle
-                          const markW = bodyW + 4;
-                          const pocY = payload.poc && payload.poc >= payload.wick[0] && payload.poc <= payload.wick[1]
-                            ? wickTop + (payload.wick[1] - payload.poc) * pxPerUnit : null;
-                          return (
-                            <g>
-                              <line x1={wickX} y1={wickTop} x2={wickX} y2={wickBottom} stroke={color} strokeWidth={1} />
-                              <rect
-                                x={wickX - bodyW / 2}
-                                y={bodyTop}
-                                width={bodyW}
-                                height={bodyH}
-                                fill={color}
-                                stroke={strokeColor}
-                                strokeWidth={0.5}
-                                rx={0.5}
-                              />
-                              {pocY != null && (
-                                <line x1={wickX - markW / 2} y1={pocY} x2={wickX + markW / 2} y2={pocY}
-                                  stroke="#3b82f6" strokeWidth={2} strokeLinecap="round" />
-                              )}
-                            </g>
-                          );
                         }} />
+                        {chartSorted.length <= 120 ? (
+                          <Bar yAxisId="price" dataKey="wick" isAnimationActive={false} shape={CandleShape} />
                         ) : (
-                          <Line yAxisId="price" type="monotone" dataKey="close" name={t.close} stroke={asset.color} strokeWidth={1.5} dot={false} activeDot={{ r:3 }} />
+                          <Area yAxisId="price" type="monotone" dataKey="close" stroke="#2563eb" strokeWidth={1.5} fill="url(#tracker-close-area)" dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
                         )}
-                        {/* Fibonacci levels */}
-                        {showFib && techLevels && techLevels.fib.map(f => (
-                          <ReferenceLine yAxisId="price" key={`fib-${f.pct}`} y={f.level} stroke={f.color} strokeDasharray="10 5" strokeWidth={0.8} strokeOpacity={0.65}
-                            label={{ value: `F ${f.label}  ${f.level.toFixed(0)}`, position: 'insideTopLeft', fontSize: 7, fill: f.color, fontWeight: 700 }} />
-                        ))}
-                        {/* Pivot S/R levels */}
-                        {showPivots && techLevels && techLevels.pivots.map(p => (
-                          <ReferenceLine yAxisId="price" key={`pv-${p.label}`} y={p.level} stroke={p.color} strokeDasharray="4 3" strokeWidth={1} strokeOpacity={0.75}
-                            label={{ value: `${p.label}  ${p.level.toFixed(0)}`, position: 'insideTopRight', fontSize: 7, fill: p.color, fontWeight: 700 }} />
-                        ))}
-                        {/* VWAP */}
                         {showVwap && (
-                          <Line yAxisId="price" type="monotone" dataKey="vwap" name="VWAP" stroke="#f59e0b" strokeWidth={2} dot={false} strokeOpacity={0.9} />
+                          <Line yAxisId="price" type="monotone" dataKey="vwap" stroke={isDark ? '#f8fafc' : '#0f172a'} strokeWidth={1.25} strokeDasharray="5 3" dot={false} isAnimationActive={false} connectNulls={false} />
                         )}
+                        <Customized component={<LevelsLayer levels={levelLines} />} />
                       </ComposedChart>
                     </ResponsiveContainer>
                     {crosshair.visible && crosshair.chartId === 'price' && (
@@ -2157,15 +2251,38 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                     onMouseMove={handleChartMouseMove('vol')}
                     onMouseLeave={handleChartMouseLeave}
                   >
-                    <p className={`text-[9px] font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.volChart}</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className={`text-[9px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.volChart}</p>
+                      <div className={`flex items-center gap-3 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-600/60" /><span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-600/60 -ml-0.5" />{t.volume}</span>
+                        <span className="flex items-center gap-1"><span className={`inline-block w-3 h-0.5 ${isDark ? 'bg-slate-300' : 'bg-slate-600'}`} />{es ? 'Prom. 5s' : '5s avg'}</span>
+                        <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-blue-600" />OI</span>
+                      </div>
+                    </div>
                     <ResponsiveContainer width="100%" height={220}>
-                      <ComposedChart data={volChartData}>
-                        <XAxis dataKey="name" tick={{ fontSize:9, fill:isDark?'#64748b':'#94a3b8' }} axisLine={false} tickLine={false} interval={chartSorted.length > 90 ? Math.floor(chartSorted.length / 20) : 'preserveStartEnd'} />
-                        <YAxis yAxisId="vol" orientation="left" tick={{ fontSize:9, fill:'#3b82f6', fontFamily:'monospace' }} axisLine={false} tickLine={false} tickFormatter={v=>(v/1e6).toFixed(1)+'M'} tickCount={8} />
-                        <YAxis yAxisId="oi" orientation="right" tick={{ fontSize:9, fill:'#f59e0b', fontFamily:'monospace' }} axisLine={false} tickLine={false} tickFormatter={v=>(v/1e6).toFixed(2)+'M'} tickCount={8} />
-                        <Tooltip content={<CustomTooltip />} cursor={false} />
-                        <Bar yAxisId="vol" dataKey="vol" name={t.volume} fill="rgba(59,130,246,0.45)" radius={[1,1,0,0]} />
-                        <Line yAxisId="oi" type="monotone" dataKey="oi" name="OI" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
+                      <ComposedChart data={volChartData} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
+                        <CartesianGrid horizontal vertical={false} stroke={gridColor} strokeDasharray="2 4" />
+                        <XAxis dataKey="name" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} interval={xInterval} minTickGap={20} />
+                        <YAxis yAxisId="vol" orientation="left" width={46} tick={{ fontSize: 10, fill: axisColor, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} axisLine={false} tickLine={false} tickFormatter={fmtVol} tickCount={5} />
+                        <YAxis yAxisId="oi" orientation="right" width={54} domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#2563eb', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} axisLine={false} tickLine={false} tickFormatter={fmtVol} tickCount={5} />
+                        <Tooltip cursor={{ fill: isDark ? 'rgba(148,163,184,0.08)' : 'rgba(15,23,42,0.05)' }} isAnimationActive={false} content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null;
+                          const d = payload[0]?.payload;
+                          if (!d) return null;
+                          const vsAvg = d.volAvg5 ? ((d.vol - d.volAvg5) / d.volAvg5) * 100 : null;
+                          return (
+                            <div className={tipBox} style={{ minWidth: 170 }}>
+                              <p className="font-bold mb-1">{label}</p>
+                              {tipRow('Vol', fmtVol(d.vol), d.bullish ? 'text-green-600' : 'text-red-600')}
+                              {vsAvg != null && tipRow(es ? 'vs prom. 5s' : 'vs 5s avg', `${vsAvg >= 0 ? '+' : ''}${vsAvg.toFixed(0)}%`)}
+                              {tipRow('OI', fmtVol(d.oi), 'text-blue-600')}
+                              {d.oiChange != null && tipRow('OI Δ', `${d.oiChange >= 0 ? '+' : ''}${d.oiChange.toFixed(2)}%`, d.oiChange >= 0 ? 'text-green-600' : 'text-red-600')}
+                            </div>
+                          );
+                        }} />
+                        <Bar yAxisId="vol" dataKey="vol" isAnimationActive={false} shape={VolumeBarShape} />
+                        <Line yAxisId="vol" type="monotone" dataKey="volAvg5" stroke={isDark ? '#cbd5e1' : '#475569'} strokeWidth={1.25} dot={false} isAnimationActive={false} />
+                        <Line yAxisId="oi" type="monotone" dataKey="oi" stroke="#2563eb" strokeWidth={1.5} dot={false} connectNulls={false} isAnimationActive={false} />
                       </ComposedChart>
                     </ResponsiveContainer>
                     {crosshair.visible && crosshair.chartId === 'vol' && (
