@@ -9,11 +9,18 @@ import {
   updateDoc,
   onSnapshot,
   serverTimestamp,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
 } from 'firebase/firestore';
+import { DEMO_ACCOUNT, buildDemoTrades } from '../utils/demoData';
 import {
   ShieldCheck,
   Users,
   Ticket,
+  Database,
   Search,
   Copy,
   Check,
@@ -61,6 +68,62 @@ export default function AdminPanel({ user, onClose }) {
   const [activating, setActivating] = useState(false);
   const [generatingCodes, setGeneratingCodes] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoMsg, setDemoMsg] = useState('');
+
+  // ── Datos demo: llena la cuenta del admin con trades ficticios para capturas ──
+  const loadDemoData = async () => {
+    if (!user?.uid) return;
+    setDemoBusy(true); setDemoMsg('');
+    try {
+      // 1) Cuenta demo en la configuración (si no existe)
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      const cfg = snap.exists() ? (snap.data().config || {}) : {};
+      const cuentas = cfg.cuentasBroker || [];
+      if (!cuentas.some(c => c.id === DEMO_ACCOUNT.id)) {
+        await setDoc(userRef, { config: { ...cfg, cuentasBroker: [...cuentas, DEMO_ACCOUNT] } }, { merge: true });
+      }
+      // 2) Borrar demo previa para no duplicar
+      const prev = await getDocs(query(collection(db, 'trades'), where('uid', '==', user.uid), where('demo', '==', true)));
+      if (!prev.empty) {
+        const del = writeBatch(db);
+        prev.forEach(d => del.delete(d.ref));
+        await del.commit();
+      }
+      // 3) Crear trades
+      const trades = buildDemoTrades(user.uid);
+      const batch = writeBatch(db);
+      trades.forEach(t => batch.set(doc(collection(db, 'trades')), t));
+      await batch.commit();
+      setDemoMsg(`${trades.length} trades demo cargados en la cuenta "${DEMO_ACCOUNT.broker} #${DEMO_ACCOUNT.numero}". Selecciónala en el dashboard.`);
+    } catch (err) {
+      console.error('Error cargando datos demo:', err);
+      setDemoMsg('Error: ' + err.message);
+    }
+    setDemoBusy(false);
+  };
+
+  const clearDemoData = async () => {
+    if (!user?.uid) return;
+    setDemoBusy(true); setDemoMsg('');
+    try {
+      const prev = await getDocs(query(collection(db, 'trades'), where('uid', '==', user.uid), where('demo', '==', true)));
+      const del = writeBatch(db);
+      prev.forEach(d => del.delete(d.ref));
+      await del.commit();
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      const cfg = snap.exists() ? (snap.data().config || {}) : {};
+      const cuentas = (cfg.cuentasBroker || []).filter(c => c.id !== DEMO_ACCOUNT.id);
+      await setDoc(userRef, { config: { ...cfg, cuentasBroker: cuentas } }, { merge: true });
+      setDemoMsg(`${prev.size} trades demo eliminados y cuenta demo retirada.`);
+    } catch (err) {
+      console.error('Error borrando datos demo:', err);
+      setDemoMsg('Error: ' + err.message);
+    }
+    setDemoBusy(false);
+  };
 
   // Load users in real-time
   useEffect(() => {
@@ -367,6 +430,17 @@ export default function AdminPanel({ user, onClose }) {
             <Ticket size={16} />
             Códigos ({codes.length})
           </button>
+          <button
+            onClick={() => setTab('demo')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all ${
+              tab === 'demo'
+                ? `${cardBg} ${text} shadow-sm`
+                : `${textMuted} hover:${text}`
+            }`}
+          >
+            <Database size={16} />
+            Datos demo
+          </button>
         </div>
       </div>
 
@@ -530,6 +604,38 @@ export default function AdminPanel({ user, onClose }) {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* DEMO TAB */}
+        {tab === 'demo' && (
+          <div className={`p-4 rounded-xl border ${cardBg} ${border}`}>
+            <h3 className={`text-sm font-bold mb-1 ${text}`}>Datos de demostración</h3>
+            <p className={`text-xs mb-4 ${textMuted}`}>
+              Crea la cuenta "{DEMO_ACCOUNT.broker} #{DEMO_ACCOUNT.numero}" en tu configuración y la llena con unas 9 semanas de
+              trades ficticios (MNQ, NQ, ES, EUR/USD, XAU/USD) para capturas y videos. Tus cuentas reales no se tocan.
+              Los trades quedan marcados como demo y se pueden borrar en un clic.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={loadDemoData}
+                disabled={demoBusy}
+                className="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold flex items-center justify-center gap-2"
+              >
+                {demoBusy ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />}
+                Cargar datos demo
+              </button>
+              <button
+                onClick={clearDemoData}
+                disabled={demoBusy}
+                className={`flex-1 py-2.5 rounded-lg border text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 ${
+                  isDark ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Borrar datos demo
+              </button>
+            </div>
+            {demoMsg && <p className={`text-xs mt-3 ${demoMsg.startsWith('Error') ? 'text-red-500' : 'text-green-600'}`}>{demoMsg}</p>}
           </div>
         )}
 
