@@ -119,6 +119,13 @@ METODOLOGÍA DEL TRADER: DECISION POINT (DP). Aplica a cualquier activo. Evalúa
 7. Confirmación: vela de agotamiento, reversal o ESR completamente CERRADA. Con la vela abierta no se opera.
 El VOLUMEN y el CLUSTER DE MÁXIMO VOLUMEN son los dos datos que deciden entradas y salidas: volumen creciente con OI creciente confirma dinero nuevo detrás del movimiento; un DP cuyo POC no cumple la regla del 50% NO es válido aunque el precio parezca ir a favor.
 
+DATOS FALTANTES (regla obligatoria): es normal que POC, VAH, VAL, Delta, VWAP u Open Interest falten en algunas sesiones. Cuando falten:
+- Dilo explícitamente en la sección correspondiente ("sin perfil de volumen en las últimas N sesiones") y NUNCA inventes ni estimes un POC, VAH, VAL, delta o VWAP. Un nivel que no está en los datos no se menciona como si existiera.
+- Sustituye con proxies y nómbralos como tales: para NIVELES RELEVANTES usa máximos y mínimos de las últimas sesiones, pivots, Fibonacci y el último POC disponible aunque sea antiguo, aclarando su fecha. Para VALOR usa la posición del cierre dentro del rango de la sesión (cierre en el tercio alto o bajo) y la relación entre cuerpo y rango.
+- Para FLUJO usa el volumen contra su promedio de 5 sesiones y, si hay OI, su variación. Si no hay OI, di "sin OI" y no concluyas sobre dinero nuevo.
+- El criterio 4 del Decision Point (posición del cluster de máximo volumen) NO se puede validar sin POC de esa sesión. Clasifica la vela como "DP candidato pendiente de validar en gráfico con perfil de volumen" y deja claro que la entrada exige confirmar el cluster en ATAS antes de operar. Nunca declares un DP válido sin ese dato.
+- Termina el análisis con una línea "DATOS QUE FALTAN" listando qué cargar (POC/VAH/VAL/delta desde ATAS, OI desde CME) para que el siguiente análisis sea completo.
+
 NOTA: El campo "Delta" es el delta diario de sesión (diferencia entre volumen de compra y venta agresiva). Delta positivo = presión compradora neta, negativo = presión vendedora neta.
 
 REGLAS DE FORMATO:
@@ -149,6 +156,13 @@ TRADER METHODOLOGY: DECISION POINT (DP). Applies to any asset. ALWAYS evaluate t
 6. DP test: when price returns to the DP, wait for an entry pattern with candle and context, specifically an EXHAUSTION candle.
 7. Confirmation: exhaustion, reversal or ESR candle fully CLOSED. Never trade on an open candle.
 VOLUME and the MAX VOLUME CLUSTER decide entries and exits: rising volume with rising OI confirms new money; a DP whose POC fails the 50% rule is NOT valid even if price seems to move in favor.
+
+MISSING DATA (mandatory rule): POC, VAH, VAL, Delta, VWAP or Open Interest may be missing for some sessions. When they are:
+- Say so explicitly in the relevant section ("no volume profile for the last N sessions") and NEVER invent or estimate a POC, VAH, VAL, delta or VWAP. A level that is not in the data is not mentioned as if it existed.
+- Substitute with proxies and name them as such: for RELEVANT LEVELS use recent highs and lows, pivots, Fibonacci and the last available POC even if old, stating its date. For VALUE use where the close sits within the session range (upper or lower third) and the body-to-range ratio.
+- For FLOW use volume against its 5-session average and, if OI exists, its change. If there is no OI, say "no OI" and do not conclude about new money.
+- Decision Point criterion 4 (max volume cluster position) CANNOT be validated without that session's POC. Label the candle "DP candidate pending validation on a volume-profile chart" and make clear the entry requires confirming the cluster in ATAS before trading. Never declare a DP valid without that data.
+- End the analysis with a "MISSING DATA" line listing what to load (POC/VAH/VAL/delta from ATAS, OI from CME) so the next analysis is complete.
 
 NOTE: The "Delta" field is the daily session delta (difference between aggressive buy and sell volume). Positive delta = net buying pressure, negative = net selling pressure.
 
@@ -221,10 +235,15 @@ Concise Markdown analysis: 1) SUMMARY 2) PRICE STRUCTURE 3) VWAP & VP 4) INSTITU
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'server-side-fallback-2026-07-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 8192,
+        // Opus 5.5: razona antes de responder (adaptive thinking, siempre activo).
+        // effort "high" porque el análisis es la pieza de más valor y corre pocas veces al día.
+        model: 'claude-opus-5-5',
+        max_tokens: 16000,
+        output_config: { effort: 'high' },
+        fallbacks: 'default',
         stream: true,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
