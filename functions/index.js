@@ -115,64 +115,237 @@ exports.preSessionAnalysis = onSchedule(
   }
 );
 
-exports.paypalWebhook = functions.https.onRequest(async (req, res) => {
-  // Permitir CORS
-  res.set("Access-Control-Allow-Origin", "*");
-  
-  if (req.method === "OPTIONS") {
-    res.set("Access-Control-Allow-Methods", "POST, GET");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
-    return res.status(204).send("");
+// ─────────────────────────────────────────────────────────────────────────────
+// Webhook de PayPal: activa el acceso del comprador automáticamente.
+//
+// PayPal llama a esta URL cada vez que ocurre un evento (pago completado, etc.).
+// Antes de confiar en el evento se verifica su firma contra la API de PayPal,
+// de modo que nadie pueda inventarse un pago y darse acceso.
+//
+// Secretos requeridos (firebase functions:secrets:set NOMBRE):
+//   PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET  -> app REST en developer.paypal.com
+//   PAYPAL_WEBHOOK_ID                       -> ID del webhook creado en esa app
+// ─────────────────────────────────────────────────────────────────────────────
+const { defineSecret } = require("firebase-functions/params");
+
+const PAYPAL_CLIENT_ID = defineSecret("PAYPAL_CLIENT_ID");
+const PAYPAL_CLIENT_SECRET = defineSecret("PAYPAL_CLIENT_SECRET");
+const PAYPAL_WEBHOOK_ID = defineSecret("PAYPAL_WEBHOOK_ID");
+// "live" (producción) o "sandbox" (pruebas). Se puede cambiar con la variable
+// de entorno PAYPAL_ENV en functions/.env; sin ella se usa producción.
+const PAYPAL_ENV = process.env.PAYPAL_ENV || "live";
+
+// Monto en USD -> plan. Debe coincidir con los precios de los enlaces de pago.
+const PLAN_BY_AMOUNT = {
+  "10.00": { id: "1month", months: 1 },
+  "20.00": { id: "3months", months: 3 },
+  "50.00": { id: "1year", months: 12 },
+  "100.00": { id: "lifetime", months: null },
+};
+
+// Eventos que confirman dinero recibido. CHECKOUT.ORDER.APPROVED se ignora a
+// propósito: el comprador aprobó pero el cobro aún no se ha capturado.
+const PAID_EVENTS = new Set(["PAYMENT.CAPTURE.COMPLETED", "PAYMENT.SALE.COMPLETED"]);
+
+function paypalApiBase() {
+  return PAYPAL_ENV === "sandbox"
+    ? "https://api-m.sandbox.paypal.com"
+    : "https://api-m.paypal.com";
+}
+
+async function paypalAccessToken() {
+  const credentials = Buffer.from(
+    `${PAYPAL_CLIENT_ID.value()}:${PAYPAL_CLIENT_SECRET.value()}`
+  ).toString("base64");
+  const res = await fetch(`${paypalApiBase()}/v1/oauth2/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
+  if (!res.ok) throw new Error(`PayPal OAuth falló: ${res.status} ${await res.text()}`);
+  return (await res.json()).access_token;
+}
+
+// Pide a PayPal que confirme que este evento lo firmó PayPal para nuestro webhook.
+// Se envía el cuerpo crudo tal cual llegó: cualquier re-serialización rompe la firma.
+async function verifyPaypalSignature(req, token) {
+  const h = (name) => req.get(name) || "";
+  const payload =
+    `{"auth_algo":${JSON.stringify(h("paypal-auth-algo"))},` +
+    `"cert_url":${JSON.stringify(h("paypal-cert-url"))},` +
+    `"transmission_id":${JSON.stringify(h("paypal-transmission-id"))},` +
+    `"transmission_sig":${JSON.stringify(h("paypal-transmission-sig"))},` +
+    `"transmission_time":${JSON.stringify(h("paypal-transmission-time"))},` +
+    `"webhook_id":${JSON.stringify(PAYPAL_WEBHOOK_ID.value())},` +
+    `"webhook_event":${req.rawBody.toString("utf8")}}`;
+
+  const res = await fetch(`${paypalApiBase()}/v1/notifications/verify-webhook-signature`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: payload,
+  });
+  if (!res.ok) {
+    // PayPal no pudo validar (cabeceras mal formadas, etc.): se trata como firma inválida.
+    console.warn(`Verificación de firma rechazada: ${res.status} ${await res.text()}`);
+    return false;
   }
+  return (await res.json()).verification_status === "SUCCESS";
+}
 
-  if (req.method === "GET") {
-    return res.status(200).json({ status: "ok", message: "PayPal webhook activo" });
+// Los eventos de captura no traen el correo del comprador; se obtiene de la orden.
+async function fetchOrderPayerEmail(orderId, token) {
+  if (!orderId) return null;
+  const res = await fetch(`${paypalApiBase()}/v2/checkout/orders/${orderId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    console.warn(`No se pudo leer la orden ${orderId}: ${res.status}`);
+    return null;
   }
+  const order = await res.json();
+  return order.payer?.email_address || null;
+}
 
-  if (req.method !== "POST") {
-    return res.status(405).send("Method not allowed");
-  }
+function extractPayment(body) {
+  const r = body.resource || {};
+  const amount = r.amount || r.purchase_units?.[0]?.amount || {};
+  return {
+    email:
+      r.payer?.email_address ||
+      r.purchaser?.email_address ||
+      r.subscriber?.email_address ||
+      null,
+    orderId: r.supplementary_data?.related_ids?.order_id || null,
+    amountValue: amount.value != null ? Number(amount.value).toFixed(2) : null,
+    currency: amount.currency_code || null,
+    transactionId: r.id || null,
+  };
+}
 
-  try {
-    const body = req.body;
-    console.log("Webhook PayPal recibido:", JSON.stringify(body, null, 2));
+// Activa o extiende el plan del usuario. Un pago encima de una suscripción
+// vigente se suma al final de la vigencia; un lifetime nunca se degrada.
+async function grantAccess(email, plan, payment, eventType) {
+  const ref = db.collection("authorized_users").doc(email);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists ? snap.data() : {};
+    const now = new Date();
 
-    const eventType = body.event_type;
+    const keepsLifetime = current.type === "lifetime" && current.status === "active";
+    let type, subscriptionEnd;
 
-    if (
-      eventType === "CHECKOUT.ORDER.APPROVED" ||
-      eventType === "PAYMENT.CAPTURE.COMPLETED" ||
-      eventType === "PAYMENT.SALE.COMPLETED"
-    ) {
-      // Extraer email del comprador
-      const email =
-        body.resource?.payer?.email_address ||
-        body.resource?.purchaser?.email_address ||
-        body.resource?.subscriber?.email_address;
-
-      if (email) {
-        const emailLower = email.toLowerCase();
-        
-        // Agregar a authorized_users
-        await db.collection("authorized_users").doc(emailLower).set({
-          email: emailLower,
-          status: "active",
-          type: "paid",
-          trialStart: null,
-          trialEnd: null,
-          authorizedAt: admin.firestore.FieldValue.serverTimestamp(),
-          paypalEvent: eventType,
-          paypalTransactionId: body.resource?.id || body.id,
-        }, { merge: true });
-
-        console.log("Usuario autorizado:", emailLower);
-        return res.status(200).json({ success: true, email: emailLower });
-      }
+    if (plan.months === null || keepsLifetime) {
+      type = "lifetime";
+      subscriptionEnd = null;
+    } else {
+      type = "subscription";
+      const currentEnd = current.subscriptionEnd?.toDate?.() || null;
+      const base =
+        current.type === "subscription" && current.status === "active" && currentEnd && currentEnd > now
+          ? currentEnd
+          : now;
+      subscriptionEnd = new Date(base);
+      subscriptionEnd.setMonth(subscriptionEnd.getMonth() + plan.months);
     }
 
-    return res.status(200).json({ success: true, message: "Evento recibido" });
-  } catch (error) {
-    console.error("Error procesando webhook:", error);
-    return res.status(500).json({ success: false, error: error.message });
+    tx.set(
+      ref,
+      {
+        email,
+        status: "active",
+        type,
+        subscriptionPlan: keepsLifetime ? current.subscriptionPlan || "lifetime" : plan.id,
+        subscriptionStart: admin.firestore.FieldValue.serverTimestamp(),
+        subscriptionEnd,
+        trialStart: null,
+        trialEnd: null,
+        authorizedAt: admin.firestore.FieldValue.serverTimestamp(),
+        paypalEvent: eventType,
+        paypalTransactionId: payment.transactionId,
+        paypalAmount: `${payment.amountValue} ${payment.currency}`,
+        lastPaymentAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  });
+}
+
+exports.paypalWebhook = functions.https.onRequest(
+  { secrets: [PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_WEBHOOK_ID] },
+  async (req, res) => {
+    if (req.method === "GET") {
+      return res.status(200).json({ status: "ok", message: "PayPal webhook activo" });
+    }
+    if (req.method !== "POST") {
+      return res.status(405).send("Method not allowed");
+    }
+
+    const body = req.body || {};
+    const eventId = body.id;
+    const eventType = body.event_type;
+
+    // Sin cabeceras de firma no vale la pena ni preguntarle a PayPal.
+    const SIGNATURE_HEADERS = ["paypal-transmission-id", "paypal-transmission-sig", "paypal-cert-url", "paypal-auth-algo", "paypal-transmission-time"];
+    if (SIGNATURE_HEADERS.some((h) => !req.get(h)) || !eventId || !req.rawBody) {
+      console.warn("Webhook rechazado: faltan cabeceras de firma", { eventId, eventType });
+      return res.status(400).json({ success: false, error: "missing signature" });
+    }
+
+    try {
+      const token = await paypalAccessToken();
+
+      const verified = await verifyPaypalSignature(req, token);
+      if (!verified) {
+        console.warn("Webhook rechazado: firma inválida", { eventId, eventType });
+        return res.status(400).json({ success: false, error: "invalid signature" });
+      }
+
+      if (!PAID_EVENTS.has(eventType)) {
+        return res.status(200).json({ success: true, ignored: eventType });
+      }
+
+      // PayPal reintenta si no recibe 200; cada evento se procesa una sola vez.
+      const eventRef = db.collection("paypal_events").doc(eventId);
+      if ((await eventRef.get()).exists) {
+        return res.status(200).json({ success: true, duplicate: true });
+      }
+
+      const payment = extractPayment(body);
+      if (!payment.email) {
+        payment.email = await fetchOrderPayerEmail(payment.orderId, token);
+      }
+      const email = payment.email ? payment.email.toLowerCase().trim() : null;
+      const plan = payment.currency === "USD" ? PLAN_BY_AMOUNT[payment.amountValue] : null;
+
+      const record = {
+        eventType,
+        email,
+        amount: payment.amountValue,
+        currency: payment.currency,
+        transactionId: payment.transactionId,
+        orderId: payment.orderId,
+        receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (!email || !plan) {
+        // Pago real pero no se pudo mapear: queda registrado para activarlo a mano.
+        await eventRef.set({ ...record, status: "needs_review",
+          reason: !email ? "sin correo del comprador" : "monto no coincide con ningún plan" });
+        console.warn("Pago requiere revisión manual:", record);
+        return res.status(200).json({ success: true, needsReview: true });
+      }
+
+      await grantAccess(email, plan, payment, eventType);
+      await eventRef.set({ ...record, status: "processed", plan: plan.id });
+      console.log(`Acceso activado: ${email} -> ${plan.id}`);
+      return res.status(200).json({ success: true, email, plan: plan.id });
+    } catch (error) {
+      // 500 hace que PayPal reintente más tarde. No se exponen detalles internos.
+      console.error("Error procesando webhook:", error);
+      return res.status(500).json({ success: false });
+    }
   }
-});
+);

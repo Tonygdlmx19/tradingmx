@@ -1,14 +1,14 @@
 // Enlaces de pago de PayPal — ÚNICO lugar donde se definen.
 // Para actualizarlos: PayPal Business > Herramientas de venta > Enlaces y botones de pago.
 //
-// null = enlace no disponible (cuenta PayPal limitada, 2026-07-18). Mientras un
-// plan no tenga enlace, el botón de pago abre WhatsApp con un mensaje prellenado.
-// Al recuperar la cuenta, basta con poner aquí los enlaces nuevos.
+// Si un plan queda en null (p. ej. cuenta PayPal limitada), el botón de pago
+// abre WhatsApp con un mensaje prellenado en lugar de un enlace roto.
+// Cuenta restaurada 2026-09-29: los enlaces originales volvieron a funcionar.
 export const PAYPAL_LINKS = {
-  '1month': null,
-  '3months': null,
-  '1year': null,
-  lifetime: null,
+  '1month': 'https://www.paypal.com/ncp/payment/X3GWT63PZQ8J6',
+  '3months': 'https://www.paypal.com/ncp/payment/FGTPJDA5NBTEU',
+  '1year': 'https://www.paypal.com/ncp/payment/8DV9WS43YAXV8',
+  lifetime: 'https://www.paypal.com/ncp/payment/Z2NETX47DZ5K4',
 };
 
 export const PAYMENT_WHATSAPP = '523316145522';
