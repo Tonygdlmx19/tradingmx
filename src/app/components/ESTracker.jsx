@@ -905,7 +905,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
           const vx = sentiment.vix;
           const vxLabel = vx.current < 15 ? (es ? 'Baja' : 'Low') : vx.current < 20 ? 'Normal' : vx.current < 25 ? (es ? 'Elevada' : 'Elevated') : (es ? 'Alta' : 'High');
           const vxColor = vx.current < 15 ? [34,197,94] : vx.current < 20 ? [132,204,22] : vx.current < 25 ? [234,179,8] : vx.current < 30 ? [249,115,22] : [239,68,68];
-          y = kvRow('VIX', `${vx.current.toFixed(2)}  (${vxLabel})  ${vx.change >= 0 ? '+' : ''}${vx.change.toFixed(2)}`, y, vxColor);
+          y = kvRow('VIX', `${vx.current.toFixed(2)}  (${vxLabel})${vx.change != null ? `  ${vx.change >= 0 ? '+' : ''}${vx.change.toFixed(2)}` : ''}`, y, vxColor);
         }
         y += 3;
       }
@@ -1777,9 +1777,11 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color, backgroundColor: color + '15' }}>{getLabel(v)}</span>
                             <span className="text-sm font-black" style={{ color }}>{v.toFixed(1)}</span>
-                            <span className={`text-[10px] font-bold ${sentiment.vix.change >= 0 ? 'text-red-400' : 'text-green-400'}`}>
-                              {sentiment.vix.change >= 0 ? '+' : ''}{sentiment.vix.change.toFixed(2)}
-                            </span>
+                            {sentiment.vix.change != null && (
+                              <span className={`text-[10px] font-bold ${sentiment.vix.change >= 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                {sentiment.vix.change >= 0 ? '+' : ''}{sentiment.vix.change.toFixed(2)}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className={`w-full h-2.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>

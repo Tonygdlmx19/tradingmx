@@ -86,7 +86,7 @@ export async function POST(request) {
       if (marketSentiment.vix) {
         const vx = marketSentiment.vix;
         const level = vx.current < 15 ? 'Low' : vx.current < 20 ? 'Normal' : vx.current < 25 ? 'Elevated' : 'High';
-        parts.push(`VIX: ${vx.current.toFixed(2)} (${level}) | Change: ${vx.change >= 0 ? '+' : ''}${vx.change.toFixed(2)} (${vx.changePercent.toFixed(1)}%)`);
+        parts.push(`VIX: ${vx.current.toFixed(2)} (${level})${vx.change != null ? ` | Change: ${vx.change >= 0 ? '+' : ''}${vx.change.toFixed(2)} (${(vx.changePercent ?? 0).toFixed(1)}%)` : ''}`);
       }
       if (parts.length > 0) sentimentText = parts.join('\n');
     }

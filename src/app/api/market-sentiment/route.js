@@ -1,129 +1,61 @@
 import { NextResponse } from 'next/server';
 
+// Sentimiento de mercado para el tracker y el análisis IA.
+// Regla: solo datos reales. Si una fuente falla, el campo va en null y la UI
+// y el prompt lo omiten. Nunca se estima ni se sustituye por otro índice.
+export const dynamic = 'force-dynamic';
+
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+async function fetchFearGreed() {
+  const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
+    cache: 'no-store',
+    headers: { 'User-Agent': UA, Accept: 'application/json', Referer: 'https://www.cnn.com/markets/fear-and-greed' },
+  });
+  if (!res.ok) return null;
+  const fg = (await res.json())?.fear_and_greed;
+  if (!fg || fg.score == null) return null;
+  const cap = (s) => (s || '').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return {
+    score: Math.round(fg.score),
+    rating: cap(fg.rating),
+    previousClose: fg.previous_close != null ? Math.round(fg.previous_close) : null,
+    oneWeekAgo: fg.previous_1_week != null ? Math.round(fg.previous_1_week) : null,
+    oneMonthAgo: fg.previous_1_month != null ? Math.round(fg.previous_1_month) : null,
+    updatedAt: fg.timestamp || null,
+    source: 'CNN',
+  };
+}
+
+async function fetchVix() {
+  // Índice ^VIX real. range=5d para tener el cierre previo aunque el mercado esté cerrado.
+  const res = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?range=5d&interval=1d', {
+    cache: 'no-store',
+    headers: { 'User-Agent': UA },
+  });
+  if (!res.ok) return null;
+  const result = (await res.json())?.chart?.result?.[0];
+  const closes = (result?.indicators?.quote?.[0]?.close || []).filter(v => v != null);
+  const current = result?.meta?.regularMarketPrice ?? closes[closes.length - 1];
+  if (!current) return null;
+  // Cierre previo: penúltimo cierre distinto del actual (evita el +0.00 cuando la última vela es hoy)
+  const prev = result?.meta?.chartPreviousClose ?? (closes.length > 1 ? closes[closes.length - 2] : null);
+  const change = prev ? current - prev : null;
+  return {
+    current: Number(current.toFixed(2)),
+    previousClose: prev != null ? Number(prev.toFixed(2)) : null,
+    change: change != null ? Number(change.toFixed(2)) : null,
+    changePercent: change != null && prev ? Number(((change / prev) * 100).toFixed(2)) : null,
+    marketTime: result?.meta?.regularMarketTime || null,
+    label: 'VIX',
+    source: 'Yahoo Finance',
+  };
+}
+
 export async function GET() {
-  try {
-    const results = { fearGreed: null, vix: null };
-
-    // ── Fear & Greed Index via CNN (primary) + Alternative.me (fallback) ──
-    // Try CNN first
-    try {
-      const fgRes = await fetch(
-        'https://production.dataviz.cnn.io/index/fearandgreed/graphdata',
-        { cache: 'no-store', headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json',
-          'Referer': 'https://www.cnn.com/markets/fear-and-greed',
-        } }
-      );
-      if (fgRes.ok) {
-        const fgData = await fgRes.json();
-        const fg = fgData?.fear_and_greed;
-        if (fg) {
-          results.fearGreed = {
-            score: Math.round(fg.score),
-            rating: fg.rating?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-            previousClose: fg.previous_close ? Math.round(fg.previous_close) : null,
-            oneWeekAgo: fg.previous_1_week ? Math.round(fg.previous_1_week) : null,
-            oneMonthAgo: fg.previous_1_month ? Math.round(fg.previous_1_month) : null,
-            source: 'CNN',
-          };
-        }
-      }
-    } catch (_) { /* CNN failed */ }
-
-    // Fallback: Alternative.me (crypto-based but reliable from any server)
-    if (!results.fearGreed) {
-      try {
-        const altRes = await fetch(
-          'https://api.alternative.me/fng/?limit=31&format=json',
-          { cache: 'no-store' }
-        );
-        if (altRes.ok) {
-          const altData = await altRes.json();
-          const entries = altData?.data;
-          if (entries?.length > 0) {
-            const today = entries[0];
-            results.fearGreed = {
-              score: parseInt(today.value),
-              rating: today.value_classification?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-              previousClose: entries[1] ? parseInt(entries[1].value) : null,
-              oneWeekAgo: entries[7] ? parseInt(entries[7].value) : null,
-              oneMonthAgo: entries[30] ? parseInt(entries[30].value) : null,
-              source: 'Alternative.me',
-            };
-          }
-        }
-      } catch (_) { /* Alternative.me also failed */ }
-    }
-
-    // ── VIX: try multiple sources ──
-
-    // Source 1: Yahoo Finance (no API key needed, real VIX index)
-    try {
-      const yRes = await fetch(
-        'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?range=1d&interval=1d',
-        { cache: 'no-store', headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        } }
-      );
-      if (yRes.ok) {
-        const yData = await yRes.json();
-        const meta = yData?.chart?.result?.[0]?.meta;
-        if (meta && meta.regularMarketPrice) {
-          results.vix = {
-            current: meta.regularMarketPrice,
-            change: meta.regularMarketPrice - meta.chartPreviousClose,
-            changePercent: ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100,
-            previousClose: meta.chartPreviousClose,
-            label: 'VIX',
-          };
-        }
-      }
-    } catch (_) { /* Yahoo failed */ }
-
-    // Source 2: Alpha Vantage VIXY ETF (fallback)
-    if (!results.vix) {
-      const avKey = process.env.ALPHAVANTAGE_API_KEY;
-      if (avKey) {
-        try {
-          const vixRes = await fetch(
-            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=VIXY&apikey=${avKey}`,
-            { cache: 'no-store' }
-          );
-          if (vixRes.ok) {
-            const vixData = await vixRes.json();
-            const q = vixData?.['Global Quote'];
-            if (q && q['05. price']) {
-              results.vix = {
-                current: parseFloat(q['05. price']),
-                change: parseFloat(q['09. change'] || 0),
-                changePercent: parseFloat((q['10. change percent'] || '0').replace('%', '')),
-                previousClose: parseFloat(q['08. previous close'] || 0),
-                label: 'VIXY',
-              };
-            }
-          }
-        } catch (_) { /* Alpha Vantage failed */ }
-      }
-    }
-
-    // Source 3: Hardcoded VIX range estimate from Fear & Greed score
-    if (!results.vix && results.fearGreed) {
-      // F&G correlates inversely with VIX. Rough estimate for display.
-      const fg = results.fearGreed.score;
-      const estimatedVix = fg < 20 ? 30 + (20 - fg) * 0.5 : fg < 40 ? 22 + (40 - fg) * 0.4 : fg < 60 ? 16 + (60 - fg) * 0.3 : fg < 80 ? 13 + (80 - fg) * 0.15 : 12;
-      results.vix = {
-        current: Math.round(estimatedVix * 10) / 10,
-        change: 0,
-        changePercent: 0,
-        previousClose: 0,
-        label: 'VIX (est.)',
-      };
-    }
-
-    return NextResponse.json(results);
-  } catch (error) {
-    console.error('Market sentiment error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const [fearGreed, vix] = await Promise.all([
+    fetchFearGreed().catch(() => null),
+    fetchVix().catch(() => null),
+  ]);
+  return NextResponse.json({ fearGreed, vix, fetchedAt: new Date().toISOString() });
 }
