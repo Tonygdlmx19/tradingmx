@@ -167,12 +167,21 @@ async function updateDailyMarketData(range = "1mo") {
       const allData = snap.exists ? snap.data() : {};
       const records = Array.isArray(allData[assetId]) ? [...allData[assetId]] : [];
       const byDate = new Map(records.map((r) => [r.date, r]));
+      // Yahoo repite el volumen del día anterior en la última barra y lo corrige al
+      // día siguiente, así que las sesiones recientes que vinieron de Yahoo se
+      // refrescan en cada corrida. Las que ya tienen OI (CME o captura manual) no se tocan.
+      const refreshFrom = new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10);
       let added = 0, filled = 0;
       for (const r of rows) {
         const ex = byDate.get(r.date);
         if (!ex) {
           records.push({ ...r, oi: null, foi: null, delta: null, poc: null, vah: null, val: null, vwap: null, source: "yahoo" });
           added++;
+        } else if (ex.source === "yahoo" && ex.oi == null && r.date >= refreshFrom) {
+          if (ex.open !== r.open || ex.high !== r.high || ex.low !== r.low || ex.close !== r.close || ex.vol !== r.vol) {
+            Object.assign(ex, { open: r.open, high: r.high, low: r.low, close: r.close, vol: r.vol });
+            filled++;
+          }
         } else if (!ex.vol && r.vol) {
           ex.vol = r.vol; filled++;
         }
@@ -181,7 +190,7 @@ async function updateDailyMarketData(range = "1mo") {
         records.sort((a, b) => a.date.localeCompare(b.date));
         tx.set(ref, { [assetId]: records }, { merge: true });
       }
-      summary[assetId] = `+${added} sesiones, ${filled} volúmenes completados, última ${records[records.length - 1]?.date || "-"}`;
+      summary[assetId] = `+${added} sesiones, ${filled} actualizadas, última ${records[records.length - 1]?.date || "-"}`;
     });
   }
   console.log("[dailyMarketData]", JSON.stringify(summary));
