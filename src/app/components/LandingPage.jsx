@@ -166,7 +166,7 @@ export default function LandingPage({ onLogin }) {
       faqs: [
         { q: "¿Cómo recibo acceso después de pagar?", a: "Al pagar con PayPal, usa el mismo correo que usarás para iniciar sesión con Google. Tu acceso se activa automáticamente en 1-2 minutos. Solo haz clic en 'Ingresar' y selecciona Google." },
         { q: "¿Cuáles son los planes disponibles?", a: "Tenemos 4 planes: 1 Mes ($10), 3 Meses ($20), 1 Año ($50) y De por vida ($100). Todos incluyen acceso completo a todas las funciones." },
-        { q: "¿Funciona para Forex, Futuros, Crypto?", a: "Sí, funciona para cualquier mercado. Puedes registrar trades de Forex, Futuros, Acciones, Crypto, Opciones Binarias y más." },
+        { q: "¿Funciona para Forex, Futuros, Crypto?", a: "Sí, funciona para cualquier mercado. Puedes registrar trades de Forex, Futuros, Acciones, Crypto y más." },
         { q: "¿Mis datos están seguros?", a: "Absolutamente. Usamos Firebase con encriptación de nivel bancario. Tus datos son privados y solo tú puedes verlos." },
         { q: "¿Hay garantía de devolución?", a: "Sí, tienes 7 días para probar la aplicación. Si no te convence, te devolvemos el 100% de tu dinero sin preguntas." },
         { q: "¿Puedo usarlo en mi celular?", a: "Sí, la aplicación es 100% responsive. Funciona perfecto en computadora, tablet y celular." }
@@ -302,7 +302,7 @@ export default function LandingPage({ onLogin }) {
       faqs: [
         { q: "How do I get access after paying?", a: "When paying with PayPal, use the same email you'll use to sign in with Google. Your access is automatically activated in 1-2 minutes. Just click 'Login' and select Google." },
         { q: "What plans are available?", a: "We have 4 plans: 1 Month ($10), 3 Months ($20), 1 Year ($50) and Lifetime ($100). All include full access to all features." },
-        { q: "Does it work for Forex, Futures, Crypto?", a: "Yes, it works for any market. You can log trades from Forex, Futures, Stocks, Crypto, Binary Options and more." },
+        { q: "Does it work for Forex, Futures, Crypto?", a: "Yes, it works for any market. You can log trades from Forex, Futures, Stocks, Crypto and more." },
         { q: "Is my data secure?", a: "Absolutely. We use Firebase with bank-level encryption. Your data is private and only you can see it." },
         { q: "Is there a refund guarantee?", a: "Yes, you have 7 days to try the app. If you're not convinced, we'll refund 100% of your money, no questions asked." },
         { q: "Can I use it on my phone?", a: "Yes, the app is 100% responsive. It works perfectly on computer, tablet and phone." }

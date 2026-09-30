@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { PlusCircle, Save, Camera, X, ToggleLeft, ToggleRight, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Bot, Loader2, Eye, Trash2, Globe, Search, TrendingUp, TrendingDown, History, ChevronRight } from 'lucide-react';
+import { PlusCircle, Save, Camera, X, Percent, ClipboardCheck, CheckCircle, AlertTriangle, XCircle, Bot, Loader2, Eye, Trash2, Globe, Search, TrendingUp, TrendingDown, History, ChevronRight } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useLanguage } from './LanguageProvider';
 import TradeChecklist from './TradeChecklist';
@@ -160,7 +160,10 @@ export default function TradeForm({
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [imagenes, setImagenes] = useState([]);
-  const [isBinaryOptions, setIsBinaryOptions] = useState(false);
+  // El modo binarias ya no es un interruptor del formulario: lo define la cuenta activa
+  // (marcada como "opciones binarias" en Configuración > Cuentas).
+  const cuentaSeleccionada = cuentasBroker.find(c => c.id === form.cuentaId);
+  const isBinaryOptions = Boolean(cuentaSeleccionada?.esBinarias);
   const [showChecklist, setShowChecklist] = useState(false);
   const [selectedStrategyId, setSelectedStrategyId] = useState(null);
   const [showStrategySelector, setShowStrategySelector] = useState(false);
@@ -650,17 +653,13 @@ export default function TradeForm({
     ? form.montoInvertido !== '' && form.montoInvertido > 0
     : form.res !== '' && form.res !== null && form.res !== undefined;
 
-  // Toggle opciones binarias
-  const handleBinaryToggle = () => {
-    setIsBinaryOptions(!isBinaryOptions);
-    // Resetear campos específicos
-    setForm(prev => ({
-      ...prev,
-      res: '',
-      montoInvertido: '',
-      porcentajePago: 80,
-      resultadoBinario: 'win'
-    }));
+  // Al cambiar de cuenta, si cambia el modo (binarias <-> normal) se limpian los campos de resultado
+  const handleCuentaChange = (cuentaId) => {
+    const nueva = cuentasBroker.find(c => c.id === cuentaId);
+    const cambiaModo = Boolean(nueva?.esBinarias) !== isBinaryOptions;
+    setForm(prev => cambiaModo
+      ? { ...prev, cuentaId, res: '', montoInvertido: '', porcentajePago: 80, resultadoBinario: 'win' }
+      : { ...prev, cuentaId });
   };
 
   // Calcular P&L para opciones binarias
@@ -998,38 +997,6 @@ export default function TradeForm({
         );
       })()}
 
-      {/* Toggle Opciones Binarias */}
-      <div 
-        onClick={handleBinaryToggle}
-        className={`mb-4 p-3 rounded-xl border cursor-pointer transition-all ${
-          isBinaryOptions 
-            ? 'bg-blue-500/10 border-blue-500/50' 
-            : isDark ? 'bg-slate-700/50 border-slate-600 hover:border-slate-500' : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-        }`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isBinaryOptions ? (
-              <ToggleRight size={24} className="text-blue-500" />
-            ) : (
-              <ToggleLeft size={24} className={isDark ? 'text-slate-500' : 'text-slate-400'} />
-            )}
-            <span className={`text-sm font-bold ${isBinaryOptions ? 'text-blue-500' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              {t.binaryOptions}
-            </span>
-          </div>
-          <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${
-            isBinaryOptions 
-              ? 'bg-blue-500 text-white' 
-              : isDark ? 'bg-slate-600 text-slate-400' : 'bg-slate-200 text-slate-500'
-          }`}>
-            {isBinaryOptions ? 'ON' : 'OFF'}
-          </span>
-        </div>
-        <p className={`text-[10px] mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-          IQ Option, Olymp Trade, Quotex, etc.
-        </p>
-      </div>
 
       {/* Pre-Trade AI Analysis Section */}
       <div className={`mb-4 rounded-xl border overflow-hidden ${
@@ -1549,7 +1516,7 @@ export default function TradeForm({
                   : 'bg-white border-slate-200 text-slate-700'
               }`}
               value={form.cuentaId || ''}
-              onChange={e => setForm({...form, cuentaId: e.target.value})}
+              onChange={e => handleCuentaChange(e.target.value)}
             >
               <option value="">{t.selectAccount}</option>
               {cuentasBroker.map(cuenta => (

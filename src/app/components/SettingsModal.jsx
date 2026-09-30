@@ -76,7 +76,7 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
   const [openImportanceDropdown, setOpenImportanceDropdown] = useState(null); // index of rule with open dropdown
   const [viewingRuleImage, setViewingRuleImage] = useState(null);
   const [expandedRules, setExpandedRules] = useState({});
-  const [nuevaCuenta, setNuevaCuenta] = useState({ broker: '', numero: '', servidor: '', password: '', divisa: 'USD', saldoInicial: '' });
+  const [nuevaCuenta, setNuevaCuenta] = useState({ broker: '', numero: '', servidor: '', password: '', divisa: 'USD', saldoInicial: '', esBinarias: false });
   const [showPassword, setShowPassword] = useState({});
   const [editingSaldo, setEditingSaldo] = useState({});
 
@@ -135,6 +135,9 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       investorPassword: 'Password inversor',
       investorPasswordHint: 'Solo lectura, no permite operar',
       addAccount: 'Agregar cuenta',
+      binaryAccount: 'Cuenta de opciones binarias',
+      binaryAccountHint: 'Pago fijo por operación. El formulario pedirá monto invertido y porcentaje de pago en lugar de P&L.',
+      binaryBadge: 'Binarias',
       noAccountsYet: 'No has agregado cuentas aun',
       currency: 'Divisa',
       capitalMovements: 'Movimientos de Capital',
@@ -200,6 +203,9 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       investorPassword: 'Investor password',
       investorPasswordHint: 'Read-only, cannot trade',
       addAccount: 'Add account',
+      binaryAccount: 'Binary options account',
+      binaryAccountHint: 'Fixed payout per trade. The form will ask for invested amount and payout percentage instead of P&L.',
+      binaryBadge: 'Binary',
       noAccountsYet: 'You haven\'t added any accounts yet',
       currency: 'Currency',
       capitalMovements: 'Capital Movements',
@@ -641,9 +647,10 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
       password: nuevaCuenta.password.trim() || null,
       divisa: nuevaCuenta.divisa || 'USD',
       saldoInicial: parseFloat(nuevaCuenta.saldoInicial) || 0,
+      esBinarias: Boolean(nuevaCuenta.esBinarias),
     };
     setConfig({ ...config, cuentasBroker: [...actuales, cuenta] });
-    setNuevaCuenta({ broker: '', numero: '', servidor: '', password: '', divisa: 'USD', saldoInicial: '' });
+    setNuevaCuenta({ broker: '', numero: '', servidor: '', password: '', divisa: 'USD', saldoInicial: '', esBinarias: false });
   };
 
   const eliminarCuenta = (id) => {
@@ -1105,6 +1112,20 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                   onChange={e => setNuevaCuenta({ ...nuevaCuenta, password: e.target.value })}
                 />
               </div>
+              <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer ${
+                isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(nuevaCuenta.esBinarias)}
+                  onChange={e => setNuevaCuenta({ ...nuevaCuenta, esBinarias: e.target.checked })}
+                  className="mt-0.5 h-4 w-4 accent-blue-600"
+                />
+                <span>
+                  <span className={`block text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{t.binaryAccount}</span>
+                  <span className={`block text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.binaryAccountHint}</span>
+                </span>
+              </label>
               <button
                 type="button"
                 onClick={agregarCuenta}
@@ -1150,6 +1171,16 @@ export default function SettingsModal({ isOpen, onClose, config, setConfig, onSa
                               cuenta.divisa === 'EUR' ? 'bg-blue-500/20 text-blue-500' :
                               'bg-slate-500/20 text-slate-500'
                             }`}>{cuenta.divisa}</span>
+                            <button
+                              type="button"
+                              onClick={() => setConfig({ ...config, cuentasBroker: (config.cuentasBroker || []).map(c => c.id === cuenta.id ? { ...c, esBinarias: !c.esBinarias } : c) })}
+                              title={t.binaryAccount}
+                              className={`text-xs px-2 py-0.5 rounded-lg font-bold transition-colors ${
+                                cuenta.esBinarias
+                                  ? 'bg-blue-500/20 text-blue-500'
+                                  : isDark ? 'bg-slate-700 text-slate-500 hover:text-slate-300' : 'bg-slate-100 text-slate-400 hover:text-slate-600'
+                              }`}
+                            >{t.binaryBadge}</button>
                           </div>
                           {cuenta.servidor && (
                             <div className={`flex items-center gap-1 text-xs mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
