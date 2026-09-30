@@ -350,7 +350,7 @@ export default function AdminPanel({ user, onClose }) {
     }
     if (u.status === 'active' && type === 'subscription') {
       return (
-        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
           <Star size={12} />
           {planName || 'Suscripción'} {daysLeft !== null ? `(${daysLeft}d)` : ''}
         </span>
@@ -358,7 +358,7 @@ export default function AdminPanel({ user, onClose }) {
     }
     if (u.status === 'active' && (type === 'lifetime' || type === 'paid')) {
       return (
-        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
           <Infinity size={12} />
           Lifetime
         </span>
@@ -390,7 +390,7 @@ export default function AdminPanel({ user, onClose }) {
       <div className={`px-4 py-3 border-b ${cardBg} ${border}`}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <ShieldCheck size={24} className="text-purple-500" />
+            <ShieldCheck size={24} className="text-blue-600" />
             <h1 className={`font-bold ${text}`}>Panel de Admin</h1>
           </div>
           <button
@@ -461,7 +461,7 @@ export default function AdminPanel({ user, onClose }) {
                     isDark
                       ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-500'
                       : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-400`}
+                  } focus:outline-none focus:ring-2 focus:ring-blue-400`}
                 />
                 <button
                   onClick={() => activateTrial(activateEmail)}
@@ -476,18 +476,12 @@ export default function AdminPanel({ user, onClose }) {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {SUBSCRIPTION_PLANS.map((plan) => {
                   const Icon = plan.icon;
-                  const colorClasses = {
-                    blue: 'bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300',
-                    purple: 'bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300',
-                    amber: 'bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300',
-                    green: 'bg-green-500 hover:bg-green-600 disabled:bg-green-300',
-                  };
                   return (
                     <button
                       key={plan.id}
                       onClick={() => activateSubscription(activateEmail, plan.id)}
                       disabled={activating || !activateEmail.trim()}
-                      className={`px-3 py-2 ${colorClasses[plan.color]} text-white text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1`}
+                      className={`px-3 py-2 text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-1 ${activating || !activateEmail.trim() ? (isDark ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed') : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
                       {activating ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} />}
                       {plan.name}
@@ -509,14 +503,14 @@ export default function AdminPanel({ user, onClose }) {
                   isDark
                     ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500'
                     : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400'
-                } focus:outline-none focus:ring-2 focus:ring-purple-400`}
+                } focus:outline-none focus:ring-2 focus:ring-blue-400`}
               />
             </div>
 
             {/* Users list */}
             {loadingUsers ? (
               <div className="text-center py-8">
-                <Loader2 size={24} className="animate-spin text-purple-500 mx-auto" />
+                <Loader2 size={24} className="animate-spin text-blue-500 mx-auto" />
               </div>
             ) : (
               <div className="space-y-2">
@@ -544,7 +538,7 @@ export default function AdminPanel({ user, onClose }) {
                           onClick={() => toggleTrackerAccess(u.email)}
                           className={`p-1.5 rounded-lg transition-colors ${
                             u.hasTrackerAccess
-                              ? 'text-cyan-500 bg-cyan-500/10 hover:bg-cyan-500/20'
+                              ? 'text-blue-500 bg-blue-500/10 hover:bg-blue-500/20'
                               : isDark ? 'text-slate-600 hover:bg-slate-700' : 'text-slate-300 hover:bg-slate-100'
                           }`}
                           title={u.hasTrackerAccess ? 'Tracker: Activado' : 'Tracker: Desactivado'}
@@ -567,21 +561,21 @@ export default function AdminPanel({ user, onClose }) {
                         </button>
                         <button
                           onClick={() => activateSubscription(u.email, '3months')}
-                          className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 transition-colors"
+                          className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
                           title="3 Meses"
                         >
                           <Star size={16} />
                         </button>
                         <button
                           onClick={() => activateSubscription(u.email, '1year')}
-                          className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors"
+                          className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
                           title="1 Año"
                         >
                           <Crown size={16} />
                         </button>
                         <button
                           onClick={() => activateSubscription(u.email, 'lifetime')}
-                          className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors"
+                          className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
                           title="Lifetime"
                         >
                           <Infinity size={16} />
@@ -649,7 +643,7 @@ export default function AdminPanel({ user, onClose }) {
                 <button
                   onClick={() => generateCodes(1)}
                   disabled={generatingCodes}
-                  className="px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
                 >
                   {generatingCodes ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                   Generar 1 código
@@ -657,7 +651,7 @@ export default function AdminPanel({ user, onClose }) {
                 <button
                   onClick={() => generateCodes(5)}
                   disabled={generatingCodes}
-                  className="px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
                 >
                   {generatingCodes ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                   Generar 5 códigos
@@ -676,7 +670,7 @@ export default function AdminPanel({ user, onClose }) {
             {/* Codes list */}
             {loadingCodes ? (
               <div className="text-center py-8">
-                <Loader2 size={24} className="animate-spin text-purple-500 mx-auto" />
+                <Loader2 size={24} className="animate-spin text-blue-500 mx-auto" />
               </div>
             ) : (
               <div className="space-y-2">
