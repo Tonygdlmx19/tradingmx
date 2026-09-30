@@ -90,14 +90,14 @@ const dayColorMap = {
   purple: { badge:'bg-purple-500/15 text-purple-400', text:'text-purple-400' },
 };
 
-function fmtVol(n) { return n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(0)+'K' : String(n); }
+function fmtVol(n) { if (n == null || isNaN(n)) return '—'; return n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(0)+'K' : String(n); }
 function pct(n) { return n.toFixed(1) + '%'; }
 function delta(curr, prev) {
-  if (prev == null) return '—';
+  if (prev == null || curr == null) return '—';
   const d = (curr - prev) / prev * 100;
   return (d >= 0 ? '+' : '') + d.toFixed(1) + '%';
 }
-function deltaIsUp(curr, prev) { return prev == null ? null : curr >= prev; }
+function deltaIsUp(curr, prev) { return prev == null || curr == null ? null : curr >= prev; }
 
 // ── Component ──────────────────────────────────────────────────
 export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
@@ -340,6 +340,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         close: ['Last', 'Latest', 'Close', 'Cierre', 'Settle', 'Adj Close', 'Закрытие'],
         vol:   ['Volume', 'Vol', 'Volumen', 'Объём', 'Объем'],
         oi:    ['Open Int', 'Open Interest', 'OI', 'OpenInt', 'Prev. Day Open Interest', 'Открытый интерес'],
+        foi:   ['FOI', 'Front OI', 'Front Month OI', 'OI Front Month'],
         // Orderflow / perfil de volumen (ATAS)
         delta: ['Delta', 'Дельта'],
         poc:   ['POC', 'Point of Control', 'PoC'],
@@ -417,7 +418,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         const close = parseNum(findCol(row, COLS.close));
         if (!dt || close == null) return;
         const rec = { idx, date: dt.date, ts: dt.ts, close };
-        for (const k of ['open', 'high', 'low', 'vol', 'oi', 'delta', 'poc', 'vah', 'val', 'vwap']) {
+        for (const k of ['open', 'high', 'low', 'vol', 'oi', 'foi', 'delta', 'poc', 'vah', 'val', 'vwap']) {
           rec[k] = parseNum(findCol(row, COLS[k]));
         }
         parsed.push(rec);
@@ -437,7 +438,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             high: p.high ?? p.close,
             low: p.low ?? p.close,
             close: p.close,
-            vol: p.vol, oi: p.oi, delta: p.delta,
+            vol: p.vol, oi: p.oi, foi: p.foi, delta: p.delta,
             poc: p.poc, vah: p.vah, val: p.val, vwap: p.vwap,
           });
           continue;
@@ -447,7 +448,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         cur.close = p.close;
         if (p.vol != null) cur.vol = (cur.vol ?? 0) + p.vol;
         if (p.delta != null) cur.delta = (cur.delta ?? 0) + p.delta;
-        for (const k of ['oi', 'poc', 'vah', 'val', 'vwap']) {
+        for (const k of ['oi', 'foi', 'poc', 'vah', 'val', 'vwap']) {
           if (p[k] != null) cur[k] = p[k];
         }
       }
@@ -455,6 +456,7 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
         ...r,
         vol: r.vol != null ? Math.round(r.vol) : null,
         oi: r.oi != null ? Math.round(r.oi) : null,
+        foi: r.foi != null ? Math.round(r.foi) : null,
         delta: r.delta != null ? Math.round(r.delta) : null,
       }));
 
@@ -470,11 +472,12 @@ export default function ESTracker({ onClose, isAdmin, estrategias = [] }) {
             const out = ex ? { ...ex } : { date: n.date, foi: null };
             // Solo sobrescribe con valores que sí vienen en el archivo;
             // los campos ausentes conservan lo que ya había.
-            for (const k of ['open', 'high', 'low', 'close', 'vol', 'oi', 'delta', 'poc', 'vah', 'val', 'vwap']) {
+            for (const k of ['open', 'high', 'low', 'close', 'vol', 'oi', 'foi', 'delta', 'poc', 'vah', 'val', 'vwap']) {
               if (n[k] != null) out[k] = n[k];
             }
             if (out.vol == null) out.vol = 0;
-            if (out.oi == null) out.oi = 0;
+            // OI ausente queda en null: 0 sería un dato falso y rompe los Δ% de OI
+            if (out.oi === undefined) out.oi = null;
             for (const k of ['delta', 'poc', 'vah', 'val', 'vwap']) {
               if (out[k] === undefined) out[k] = null;
             }

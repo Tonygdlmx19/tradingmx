@@ -27,7 +27,7 @@ export async function POST(request) {
       const eff = range > 0 ? ((body / range) * 100).toFixed(1) : '0';
       const dir = r.close >= r.open ? 'UP' : 'DOWN';
       const volDelta = prevR ? (((r.vol - prevR.vol) / prevR.vol) * 100).toFixed(1) + '%' : '-';
-      const oiDelta = prevR ? (((r.oi - prevR.oi) / prevR.oi) * 100).toFixed(1) + '%' : '-';
+      const oiDelta = prevR && r.oi != null && prevR.oi ? (((r.oi - prevR.oi) / prevR.oi) * 100).toFixed(1) + '%' : '-';
       const foiPct = r.foi && r.oi ? ((r.foi / r.oi) * 100).toFixed(1) + '%' : '-';
       const idx5 = Math.max(0, i - 4);
       const d5d = arr.slice(idx5, i + 1).reduce((s, d) => s + (d.delta || 0), 0);
@@ -39,7 +39,7 @@ export async function POST(request) {
         r.poc ? `POC:${r.poc}` : null, r.vah ? `VAH:${r.vah}` : null, r.val ? `VAL:${r.val}` : null,
         r.delta != null ? `Delta:${r.delta}` : null, hasD5d ? `D5d:${d5d}` : null, r.delta != null ? `Div:${div}` : null,
       ].filter(Boolean).join(' ');
-      return `${r.date} | O:${r.open} H:${r.high} L:${r.low} C:${r.close} | Dir:${dir} Body:${body.toFixed(2)} Range:${range.toFixed(2)} Eff:${eff}% | Vol:${r.vol} (${volDelta}) OI:${r.oi} (${oiDelta}) FOI:${foiPct}${vpData ? ' | ' + vpData : ''}`;
+      return `${r.date} | O:${r.open} H:${r.high} L:${r.low} C:${r.close} | Dir:${dir} Body:${body.toFixed(2)} Range:${range.toFixed(2)} Eff:${eff}% | Vol:${r.vol} (${volDelta}) OI:${r.oi ?? 'n/d'} (${oiDelta}) FOI:${foiPct}${vpData ? ' | ' + vpData : ''}`;
     }).join('\n');
 
     const avgRange5 = last5.reduce((s, r) => s + (r.high - r.low), 0) / last5.length;
